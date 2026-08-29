@@ -1,0 +1,120 @@
+---
+import PageIntro from '../components/PageIntro.astro';
+import { t } from '../data/i18n';
+import type { Locale } from '../data/routes';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const copy = t(locale);
+---
+
+<BaseLayout locale={locale} page="policy">
+  <PageIntro kicker={copy.policy.kicker} title={copy.policy.title} intro={copy.policy.intro} />
+
+  <article class="policy-content section-shell">
+    <p class="draft-status">{copy.policy.draftLabel}</p>
+    <ol class="policy-rules">
+      {
+        copy.policy.rules.map((rule) => (
+          <li>
+            <h2>{rule.title}</h2>
+            <p>{rule.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+
+    <section class="policy-contact" aria-labelledby="policy-contact-title">
+      <h2 id="policy-contact-title">{copy.policy.questionsTitle}</h2>
+      <p>{copy.policy.questionsBody}</p>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .policy-content {
+    padding-block: var(--space-6) var(--space-7);
+  }
+
+  .draft-status {
+    width: fit-content;
+    margin: 0 0 var(--space-6);
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-signal-red);
+    color: var(--color-signal-red);
+    font-size: var(--step--2);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .policy-rules {
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--color-gray-dark);
+    list-style: none;
+  }
+
+  .policy-rules li {
+    display: grid;
+    grid-template-columns: minmax(15rem, 0.7fr) minmax(0, 1.3fr);
+    gap: var(--space-6);
+    padding-block: var(--space-5);
+    border-bottom: 1px solid var(--color-gray-dark);
+  }
+
+  .policy-rules h2,
+  .policy-rules p {
+    margin: 0;
+  }
+
+  .policy-rules h2 {
+    color: var(--color-soft-linen);
+    font-size: var(--step-0);
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+
+  .policy-rules p {
+    max-width: 52rem;
+    color: var(--color-pale-slate);
+    font-size: var(--step-0);
+  }
+
+  .policy-contact {
+    display: grid;
+    grid-template-columns: 0.7fr 1.3fr;
+    gap: var(--space-6);
+    margin-top: var(--space-7);
+    padding: var(--space-5);
+    background: var(--color-soft-linen);
+    color: var(--color-black);
+  }
+
+  .policy-contact h2,
+  .policy-contact p {
+    margin: 0;
+  }
+
+  .policy-contact h2 {
+    font-size: var(--step-2);
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .policy-contact p {
+    color: var(--color-gray-dark);
+  }
+
+  @media (max-width: 47.99rem) {
+    .policy-rules li,
+    .policy-contact {
+      grid-template-columns: 1fr;
+      gap: var(--space-3);
+    }
+  }
+</style>

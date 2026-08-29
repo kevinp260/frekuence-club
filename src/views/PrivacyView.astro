@@ -1,0 +1,85 @@
+---
+import PageIntro from '../components/PageIntro.astro';
+import { t } from '../data/i18n';
+import type { Locale } from '../data/routes';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const copy = t(locale);
+---
+
+<BaseLayout locale={locale} page="privacy">
+  <PageIntro kicker={copy.privacy.kicker} title={copy.privacy.title} intro={copy.privacy.intro} />
+
+  <article class="privacy-content section-shell">
+    <p class="draft-status">{copy.privacy.draftLabel}</p>
+    <div class="privacy-sections">
+      {
+        copy.privacy.sections.map((section) => (
+          <section>
+            <h2>{section.title}</h2>
+            <p>{section.body}</p>
+          </section>
+        ))
+      }
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .privacy-content {
+    padding-block: var(--space-6) var(--space-7);
+  }
+
+  .draft-status {
+    max-width: 50rem;
+    margin: 0 0 var(--space-6);
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-signal-red);
+    color: var(--color-signal-red);
+    font-size: var(--step--2);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .privacy-sections {
+    border-top: 1px solid var(--color-gray-dark);
+  }
+
+  .privacy-sections section {
+    display: grid;
+    grid-template-columns: minmax(15rem, 0.7fr) minmax(0, 1.3fr);
+    gap: var(--space-6);
+    padding-block: var(--space-5);
+    border-bottom: 1px solid var(--color-gray-dark);
+  }
+
+  .privacy-sections h2,
+  .privacy-sections p {
+    margin: 0;
+  }
+
+  .privacy-sections h2 {
+    font-size: var(--step-0);
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+
+  .privacy-sections p {
+    max-width: 54rem;
+    color: var(--color-pale-slate);
+    font-size: var(--step-0);
+  }
+
+  @media (max-width: 47.99rem) {
+    .privacy-sections section {
+      grid-template-columns: 1fr;
+      gap: var(--space-3);
+    }
+  }
+</style>

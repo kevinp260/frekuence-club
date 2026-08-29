@@ -1,0 +1,15 @@
+.git
+.astro
+.env
+.env.*
+!.env.example
+dist
+node_modules
+playwright-report
+test-results
+screenshots
+*.log
+*.pdf
+FREKUENCE_WEBSITE_IMPLEMENTATION_INSTRUCTIONS.md
+docs
+deploy/nginx/frekuence.club.conf.example

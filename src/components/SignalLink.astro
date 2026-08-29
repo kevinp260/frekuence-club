@@ -1,0 +1,79 @@
+---
+import { ArrowUpRight, ExternalLink } from '@lucide/astro';
+
+interface Props {
+  href: string;
+  external?: boolean;
+  variant?: 'light' | 'red';
+}
+
+const { href, external = false, variant = 'light' } = Astro.props;
+const LinkIcon = external ? ExternalLink : ArrowUpRight;
+---
+
+<a
+  class:list={['signal-link', `signal-link--${variant}`]}
+  href={href}
+  target={external ? '_blank' : undefined}
+  rel={external ? 'external noopener noreferrer' : undefined}
+>
+  <span><slot /></span>
+  <LinkIcon class="signal-link__icon" size={20} stroke-width={1.8} />
+</a>
+
+<style>
+  .signal-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    min-width: min(100%, 15rem);
+    min-height: 3.5rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid currentColor;
+    color: var(--color-white);
+    font-size: var(--step--1);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+
+  .signal-link:hover {
+    background: var(--color-white);
+    color: var(--color-black);
+  }
+
+  .signal-link :global(.signal-link__icon) {
+    flex: 0 0 auto;
+    transition: transform 150ms ease;
+  }
+
+  .signal-link:hover :global(.signal-link__icon) {
+    transform: translate(0.15rem, -0.15rem);
+  }
+
+  .signal-link--red {
+    border-color: var(--color-signal-red);
+    background: var(--color-signal-red);
+    color: var(--color-black);
+  }
+
+  .signal-link--red:hover {
+    background: var(--color-white);
+    border-color: var(--color-white);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .signal-link {
+      transition: none;
+    }
+
+    .signal-link :global(.signal-link__icon) {
+      transition: none;
+    }
+  }
+</style>

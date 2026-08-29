@@ -1,0 +1,193 @@
+---
+import PageIntro from '../components/PageIntro.astro';
+import SignalLink from '../components/SignalLink.astro';
+import { t } from '../data/i18n';
+import type { Locale } from '../data/routes';
+import { SITE, venueStructuredData } from '../data/site';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const copy = t(locale);
+const practicalSignals = [
+  { title: copy.visit.openingTitle, body: copy.visit.openingBody },
+  { title: copy.visit.entryTitle, body: copy.visit.entryBody },
+  { title: copy.visit.mediaTitle, body: copy.visit.mediaBody },
+  { title: copy.visit.reservationsTitle, body: copy.visit.reservationsBody },
+];
+---
+
+<BaseLayout locale={locale} page="visit" structuredData={venueStructuredData}>
+  <PageIntro kicker={copy.visit.kicker} title={copy.visit.title} intro={copy.visit.intro} />
+
+  <div class="visit-content section-shell">
+    <section class="visit-location" aria-labelledby="location-title">
+      <p class="kicker">{copy.visit.locationLabel}</p>
+      <div class="visit-location__grid">
+        <div>
+          <h2 id="location-title">{SITE.name}</h2>
+          <address>
+            {SITE.address.venue}<br />
+            {SITE.address.locality}, {SITE.address.country}
+          </address>
+        </div>
+        <div class="visit-location__coordinates">
+          <p>{copy.visit.coordinatesLabel}</p>
+          <p>{SITE.coordinates.latitude}<br />{SITE.coordinates.longitude}</p>
+          <SignalLink href={SITE.maps} external>{copy.common.directions}</SignalLink>
+        </div>
+      </div>
+    </section>
+
+    <section class="visit-practical" aria-labelledby="practical-title">
+      <p class="kicker">{copy.visit.practicalLabel}</p>
+      <h2 id="practical-title">{copy.visit.practicalLabel}</h2>
+      <dl>
+        {
+          practicalSignals.map((signal, index) => (
+            <div>
+              <dt>
+                <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                {signal.title}
+              </dt>
+              <dd>{signal.body}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <div class="visit-channel">
+        <p class="availability-status">{copy.common.reservationsStatus}</p>
+        <SignalLink href={SITE.instagram} external>{copy.common.instagram}</SignalLink>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .visit-content {
+    padding-block: var(--space-7);
+  }
+
+  .visit-location,
+  .visit-practical {
+    padding-bottom: var(--space-7);
+    border-bottom: 1px solid var(--color-gray-dark);
+  }
+
+  .visit-location__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 0.7fr);
+    gap: var(--space-6);
+    margin-top: var(--space-6);
+  }
+
+  .visit-location h2 {
+    margin: 0;
+    font-size: var(--step-5);
+    line-height: 0.86;
+    letter-spacing: -0.07em;
+    text-transform: uppercase;
+  }
+
+  address {
+    margin-top: var(--space-4);
+    color: var(--color-pale-slate);
+    font-size: var(--step-1);
+    font-style: normal;
+  }
+
+  .visit-location__coordinates {
+    align-self: end;
+  }
+
+  .visit-location__coordinates > p {
+    margin: 0;
+    padding-block: 0.8rem;
+    border-top: 1px solid var(--color-gray-dark);
+    color: var(--color-pale-slate);
+    font-size: var(--step--1);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .visit-location__coordinates :global(.signal-link) {
+    width: 100%;
+    margin-top: var(--space-4);
+  }
+
+  .visit-practical {
+    padding-block: var(--space-7);
+    border-bottom: 0;
+  }
+
+  .visit-practical > h2 {
+    max-width: 10ch;
+    margin-block: var(--space-5) var(--space-6);
+    font-size: var(--step-5);
+    line-height: 0.86;
+    letter-spacing: -0.07em;
+    text-transform: uppercase;
+  }
+
+  dl {
+    margin: 0;
+    border-top: 1px solid var(--color-gray-dark);
+  }
+
+  dl > div {
+    display: grid;
+    grid-template-columns: minmax(15rem, 0.7fr) minmax(0, 1.3fr);
+    gap: var(--space-5);
+    padding-block: var(--space-4);
+    border-bottom: 1px solid var(--color-gray-dark);
+  }
+
+  dt {
+    display: flex;
+    gap: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  dt span {
+    color: var(--color-signal-red);
+  }
+
+  dd {
+    margin: 0;
+    color: var(--color-pale-slate);
+  }
+
+  .visit-channel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    margin-top: var(--space-6);
+  }
+
+  .availability-status {
+    margin: 0;
+    color: var(--color-soft-linen);
+    font-size: var(--step--1);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 47.99rem) {
+    .visit-location__grid,
+    dl > div {
+      grid-template-columns: 1fr;
+    }
+
+    .visit-channel {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+</style>

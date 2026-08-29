@@ -1,0 +1,215 @@
+---
+import { Menu, X } from '@lucide/astro';
+import { Image } from 'astro:assets';
+import symbol from '../assets/brand/temporary/frekuence-symbol-white.png';
+import { t } from '../data/i18n';
+import { alternateLocale, routeFor, type Locale, type PageKey } from '../data/routes';
+import navigationScript from '../scripts/navigation.js?url';
+
+interface Props {
+  locale: Locale;
+  page: PageKey;
+}
+
+const { locale, page } = Astro.props;
+const copy = t(locale);
+const alternate = alternateLocale(locale);
+const navPages = ['events', 'policy', 'visit'] as const;
+---
+
+<header class="site-header" data-site-header>
+  <div class="header-frame">
+    <a
+      class="brand-mark"
+      href={routeFor('home', locale)}
+      aria-label="Frekuence Club"
+      aria-current={page === 'home' ? 'page' : undefined}
+    >
+      <Image src={symbol} width={80} height={80} alt="" loading="eager" />
+    </a>
+
+    <button
+      class="nav-toggle"
+      type="button"
+      hidden
+      aria-controls="primary-navigation"
+      aria-expanded="false"
+      aria-label={copy.global.openMenu}
+      data-open-label={copy.global.openMenu}
+      data-close-label={copy.global.closeMenu}
+    >
+      <Menu class="nav-toggle__icon nav-toggle__menu" size={28} stroke-width={1.75} />
+      <X class="nav-toggle__icon nav-toggle__close" size={28} stroke-width={1.75} />
+    </button>
+
+    <nav id="primary-navigation" class="primary-navigation" aria-label={copy.global.navigation}>
+      <ul>
+        {
+          navPages.map((navPage) => (
+            <li>
+              <a
+                href={routeFor(navPage, locale)}
+                aria-current={page === navPage ? 'page' : undefined}
+              >
+                {copy.global.nav[navPage]}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <a
+        class="language-switch"
+        href={routeFor(page, alternate)}
+        lang={t(alternate).documentLang}
+        hreflang={t(alternate).documentLang}
+        aria-label={`${alternate.toUpperCase()} — ${copy.global.languageSwitch}`}
+      >
+        {alternate.toUpperCase()}
+      </a>
+    </nav>
+  </div>
+</header>
+
+<script src={navigationScript} is:inline></script>
+
+<style>
+  .site-header {
+    position: relative;
+    z-index: 20;
+    border-bottom: 1px solid var(--color-gray-dark);
+    background: var(--color-black);
+  }
+
+  .header-frame {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: stretch;
+    min-height: var(--header-height);
+    margin-inline: auto;
+    border-inline: 1px solid var(--color-gray-dark);
+  }
+
+  .brand-mark {
+    display: grid;
+    place-items: center;
+    width: var(--header-height);
+    border-right: 1px solid var(--color-gray-dark);
+  }
+
+  .brand-mark img {
+    width: 2.8rem;
+    height: 2.8rem;
+  }
+
+  .primary-navigation {
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-end;
+  }
+
+  .primary-navigation ul {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .primary-navigation a {
+    display: flex;
+    align-items: center;
+    min-height: var(--header-height);
+    padding-inline: clamp(1.1rem, 2.2vw, 2.4rem);
+    border-left: 1px solid var(--color-gray-dark);
+    color: var(--color-white);
+    font-size: var(--step--1);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .primary-navigation a:hover,
+  .primary-navigation a[aria-current='page'] {
+    color: var(--color-signal-red);
+  }
+
+  .language-switch {
+    min-width: var(--header-height);
+    justify-content: center;
+  }
+
+  .nav-toggle {
+    position: relative;
+    justify-self: end;
+    width: var(--header-height);
+    min-height: var(--header-height);
+    padding: 0;
+    border: 0;
+    border-left: 1px solid var(--color-gray-dark);
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-white);
+  }
+
+  .nav-toggle :global(.nav-toggle__icon) {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition:
+      opacity 180ms ease,
+      transform 180ms ease;
+  }
+
+  .nav-toggle :global(.nav-toggle__close) {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-90deg) scale(0.8);
+  }
+
+  .nav-toggle[aria-expanded='true'] :global(.nav-toggle__menu) {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(90deg) scale(0.8);
+  }
+
+  .nav-toggle[aria-expanded='true'] :global(.nav-toggle__close) {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0) scale(1);
+  }
+
+  @media (max-width: 47.99rem) {
+    .header-frame {
+      grid-template-columns: auto 1fr auto;
+    }
+
+    .site-header[data-enhanced] .nav-toggle {
+      display: block;
+    }
+
+    .primary-navigation {
+      grid-column: 1 / -1;
+      flex-direction: column;
+      align-items: stretch;
+      border-top: 1px solid var(--color-gray-dark);
+    }
+
+    .primary-navigation ul {
+      flex-direction: column;
+    }
+
+    .primary-navigation a {
+      min-height: 4rem;
+      border-bottom: 1px solid var(--color-gray-dark);
+      border-left: 0;
+    }
+
+    .language-switch {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-toggle :global(.nav-toggle__icon) {
+      transition: none;
+    }
+  }
+</style>

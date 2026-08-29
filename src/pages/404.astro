@@ -1,0 +1,116 @@
+---
+import { ArrowUpRight } from '@lucide/astro';
+import { Image } from 'astro:assets';
+import montserratUrl from '../assets/fonts/Montserrat-Variable-latin.woff2?url';
+import symbol from '../assets/brand/temporary/frekuence-symbol-white.png';
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import { t } from '../data/i18n';
+import '../styles/global.css';
+
+const sq = t('sq');
+const en = t('en');
+---
+
+<!doctype html>
+<html lang="sq-AL">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="robots" content="noindex, follow" />
+    <title>404 — Frekuence Club</title>
+    <meta name="description" content="Faqja nuk u gjet. Page not found — Frekuence Club." />
+    <link rel="icon" type="image/png" href="/favicons/favicon-32.png" sizes="32x32" />
+    <link rel="preload" href={montserratUrl} as="font" type="font/woff2" crossorigin="anonymous" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">{sq.global.skip}</a>
+    <SiteHeader locale="sq" page="home" />
+    <main id="main-content" class="not-found section-shell" tabindex="-1">
+      <Image class="not-found__mark" src={symbol} width={180} height={180} alt="" />
+      <div class="not-found__language">
+        <p class="kicker">{sq.notFound.code}</p>
+        <h1>{sq.notFound.title}</h1>
+        <p>{sq.notFound.body}</p>
+        <a href="/">
+          <span>{sq.notFound.home}</span>
+          <ArrowUpRight class="not-found__link-icon" size={18} stroke-width={1.8} />
+        </a>
+      </div>
+      <div class="not-found__language" lang="en">
+        <p class="kicker">{en.notFound.code}</p>
+        <h2>{en.notFound.title}</h2>
+        <p>{en.notFound.body}</p>
+        <a href="/en/">
+          <span>{en.notFound.home}</span>
+          <ArrowUpRight class="not-found__link-icon" size={18} stroke-width={1.8} />
+        </a>
+      </div>
+    </main>
+    <SiteFooter locale="sq" page="home" />
+  </body>
+</html>
+
+<style>
+  .not-found {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-content: end;
+    gap: var(--space-6);
+    min-height: calc(100svh - var(--header-height));
+    padding-block: var(--space-7);
+    overflow: hidden;
+    border-bottom: 1px solid var(--color-gray-dark);
+  }
+
+  .not-found__mark {
+    position: absolute;
+    top: var(--space-5);
+    right: var(--page-gutter);
+    width: clamp(7rem, 18vw, 14rem);
+    height: auto;
+    opacity: 0.28;
+  }
+
+  .not-found__language {
+    position: relative;
+  }
+
+  h1,
+  h2 {
+    max-width: 12ch;
+    margin-block: var(--space-4) 0;
+    font-size: var(--step-4);
+    line-height: 0.9;
+    letter-spacing: -0.06em;
+    text-transform: uppercase;
+  }
+
+  .not-found__language > p:not(.kicker) {
+    max-width: 34rem;
+    color: var(--color-pale-slate);
+  }
+
+  .not-found__language > a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: var(--space-3);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .not-found__language > a :global(.not-found__link-icon) {
+    flex: 0 0 auto;
+  }
+
+  @media (max-width: 47.99rem) {
+    .not-found {
+      grid-template-columns: 1fr;
+      align-content: center;
+      min-height: 52rem;
+    }
+  }
+</style>

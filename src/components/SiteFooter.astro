@@ -1,0 +1,189 @@
+---
+import { ArrowUpRight, ExternalLink } from '@lucide/astro';
+import { Image } from 'astro:assets';
+import symbol from '../assets/brand/temporary/frekuence-symbol-white.png';
+import { t } from '../data/i18n';
+import { alternateLocale, routeFor, type Locale, type PageKey } from '../data/routes';
+import { SITE } from '../data/site';
+
+interface Props {
+  locale: Locale;
+  page: PageKey;
+}
+
+const { locale, page } = Astro.props;
+const copy = t(locale);
+const alternate = alternateLocale(locale);
+const footerPages = ['events', 'policy', 'visit', 'privacy'] as const;
+---
+
+<footer class="site-footer">
+  <div class="footer-head section-shell">
+    <a class="footer-brand" href={routeFor('home', locale)} aria-label="Frekuence Club">
+      <Image src={symbol} width={96} height={96} alt="" loading="lazy" />
+      <span>Frekuence Club</span>
+    </a>
+    <p>{SITE.calibration}</p>
+  </div>
+
+  <div class="footer-links section-shell">
+    <nav aria-label={copy.global.footerNavigation}>
+      <ul>
+        {
+          footerPages.map((footerPage) => (
+            <li>
+              <a
+                href={routeFor(footerPage, locale)}
+                aria-current={page === footerPage ? 'page' : undefined}
+              >
+                {footerPage === 'privacy' ? copy.global.privacy : copy.global.nav[footerPage]}
+              </a>
+            </li>
+          ))
+        }
+        <li>
+          <a href={SITE.instagram} target="_blank" rel="external noopener noreferrer">
+            <span>Instagram</span>
+            <ExternalLink class="footer-link__icon" size={16} stroke-width={1.8} />
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <a
+      class="footer-language"
+      href={routeFor(page, alternate)}
+      lang={t(alternate).documentLang}
+      hreflang={t(alternate).documentLang}
+      aria-label={`${copy.alternateLocaleName} — ${copy.global.languageSwitch}`}
+    >
+      <span>{copy.alternateLocaleName}</span>
+      <ArrowUpRight class="footer-link__icon" size={16} stroke-width={1.8} />
+    </a>
+  </div>
+
+  <div class="footer-meta section-shell">
+    <p>{copy.global.age} / {copy.common.physicalId}</p>
+    <p>© {new Date().getFullYear()} {SITE.name}. {copy.global.copyright}</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--color-gray-dark);
+    background: var(--color-black);
+  }
+
+  .footer-head,
+  .footer-links,
+  .footer-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    border-bottom: 1px solid var(--color-gray-dark);
+  }
+
+  .footer-head {
+    min-height: 15rem;
+    padding-block: var(--space-6);
+  }
+
+  .footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--color-white);
+    font-size: var(--step-2);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .footer-brand img {
+    width: 5rem;
+    height: 5rem;
+  }
+
+  .footer-head p {
+    margin: 0;
+    color: var(--color-pale-slate);
+    font-size: var(--step--1);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .footer-links {
+    align-items: flex-start;
+    padding-block: var(--space-5);
+  }
+
+  .footer-links ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem 2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .footer-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--color-white);
+    font-weight: 700;
+    text-underline-offset: 0.25em;
+  }
+
+  .footer-links :global(.footer-link__icon) {
+    flex: 0 0 auto;
+  }
+
+  .footer-links a:hover,
+  .footer-links a[aria-current='page'] {
+    color: var(--color-signal-red);
+  }
+
+  .footer-language {
+    white-space: nowrap;
+  }
+
+  .footer-meta {
+    align-items: flex-end;
+    padding-block: var(--space-4);
+    border-bottom: 0;
+    color: var(--color-pale-slate);
+    font-size: var(--step--2);
+  }
+
+  .footer-meta p {
+    max-width: 45rem;
+    margin: 0;
+  }
+
+  .footer-meta p:last-child {
+    text-align: right;
+  }
+
+  @media (max-width: 47.99rem) {
+    .footer-head,
+    .footer-links,
+    .footer-meta {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .footer-head {
+      min-height: 12rem;
+    }
+
+    .footer-links ul {
+      flex-direction: column;
+    }
+
+    .footer-meta p:last-child {
+      text-align: left;
+    }
+  }
+</style>

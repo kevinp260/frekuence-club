@@ -1,0 +1,54 @@
+---
+import EventCollection from '../components/EventCollection.astro';
+import PageIntro from '../components/PageIntro.astro';
+import SignalLink from '../components/SignalLink.astro';
+import { t } from '../data/i18n';
+import type { Locale } from '../data/routes';
+import { SITE } from '../data/site';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const copy = t(locale);
+---
+
+<BaseLayout locale={locale} page="events">
+  <PageIntro kicker={copy.events.kicker} title={copy.events.title} intro={copy.events.intro} />
+  <div class="events-content section-shell">
+    <EventCollection locale={locale} />
+    <div class="events-channel">
+      <p>{copy.events.instagramNote}</p>
+      <SignalLink href={SITE.instagram} external>{copy.common.instagram}</SignalLink>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .events-content {
+    padding-block: var(--space-7);
+  }
+
+  .events-channel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-top: var(--space-5);
+  }
+
+  .events-channel p {
+    max-width: 42rem;
+    margin: 0;
+    color: var(--color-pale-slate);
+  }
+
+  @media (max-width: 47.99rem) {
+    .events-channel {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+</style>

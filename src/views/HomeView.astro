@@ -1,0 +1,470 @@
+---
+import { ArrowRight } from '@lucide/astro';
+import { Image } from 'astro:assets';
+import cymaticRings from '../assets/brand/temporary/cymatic-rings-white-on-black.png';
+import EventCollection from '../components/EventCollection.astro';
+import SignalLink from '../components/SignalLink.astro';
+import { t } from '../data/i18n';
+import { routeFor, type Locale } from '../data/routes';
+import { SITE, venueStructuredData } from '../data/site';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const copy = t(locale);
+---
+
+<BaseLayout locale={locale} page="home" structuredData={venueStructuredData}>
+  <section class="hero section-shell" aria-labelledby="hero-title">
+    <Image
+      class="hero__pattern"
+      src={cymaticRings}
+      alt=""
+      width={760}
+      height={560}
+      loading="eager"
+      fetchpriority="high"
+    />
+    <p class="hero__identity">Frekuence Club</p>
+    <p class="hero__kicker">{copy.home.heroKicker}</p>
+    <h1 id="hero-title">{copy.home.heroTitle}</h1>
+    <div class="hero__bottom">
+      <div>
+        <p class="hero__location">{copy.home.heroLocation}</p>
+        <p class="hero__calibration">{copy.home.heroCalibration}</p>
+      </div>
+      <p class="hero__age">{copy.home.heroAge}</p>
+    </div>
+    <div class="hero__actions">
+      <SignalLink href={routeFor('events', locale)} variant="red">
+        {copy.common.events}
+      </SignalLink>
+      <SignalLink href={routeFor('visit', locale)}>{copy.common.visit}</SignalLink>
+    </div>
+  </section>
+
+  <section class="home-section section-shell" aria-labelledby="events-title">
+    <div class="section-heading">
+      <p class="kicker">{copy.home.eventsKicker}</p>
+      <h2 id="events-title">{copy.home.eventsTitle}</h2>
+    </div>
+    <EventCollection locale={locale} context="preview" />
+    <div class="section-tail">
+      <SignalLink href={routeFor('events', locale)}>{copy.common.events}</SignalLink>
+      <SignalLink href={SITE.instagram} external>{copy.common.instagram}</SignalLink>
+    </div>
+  </section>
+
+  <section class="manifesto section-shell" aria-labelledby="manifesto-title">
+    <p class="kicker">{copy.home.manifestoKicker}</p>
+    <div class="manifesto__title">
+      <h2 id="manifesto-title">{copy.home.manifestoTitle}</h2>
+      <p aria-hidden="true">7.83</p>
+    </div>
+    <div class="manifesto__copy">
+      <p>{copy.home.manifestoLead}</p>
+      <p>{copy.home.manifestoBody}</p>
+    </div>
+    <p class="manifesto__signal">
+      <span>{copy.home.manifestoSignal.from}</span>
+      <ArrowRight
+        class="manifesto__signal-icon"
+        size={20}
+        stroke-width={1.8}
+        role="img"
+        aria-label={copy.home.manifestoSignal.connectorLabel}
+      />
+      <span>{copy.home.manifestoSignal.to}</span>
+    </p>
+  </section>
+
+  <section class="policy-preview section-shell" aria-labelledby="policy-title">
+    <div class="section-heading section-heading--light">
+      <p class="kicker">{copy.home.policyKicker}</p>
+      <h2 id="policy-title">{copy.home.policyTitle}</h2>
+    </div>
+    <ol class="policy-signals">
+      {
+        copy.home.policySignals.map((signal, index) => (
+          <li>
+            <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+            <h3>{signal.title}</h3>
+            <p>{signal.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+    <div class="section-tail section-tail--light">
+      <SignalLink href={routeFor('policy', locale)}>{copy.common.policy}</SignalLink>
+    </div>
+  </section>
+
+  <section class="visit-preview section-shell" aria-labelledby="visit-title">
+    <div>
+      <p class="kicker">{copy.home.visitKicker}</p>
+      <h2 id="visit-title">{copy.home.visitTitle}</h2>
+    </div>
+    <div class="visit-preview__details">
+      <p>{copy.home.openingNotice}</p>
+      <p>{copy.global.age} / {copy.common.physicalId}</p>
+      <p class="availability-status">{copy.common.reservationsStatus}</p>
+      <div class="visit-preview__actions">
+        <SignalLink href={SITE.maps} external>{copy.common.directions}</SignalLink>
+        <SignalLink href={SITE.instagram} external>{copy.common.instagram}</SignalLink>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto 1fr auto auto;
+    min-height: calc(100svh - var(--header-height));
+    padding-block: var(--space-4);
+    overflow: hidden;
+    border-bottom: 1px solid var(--color-gray-dark);
+    isolation: isolate;
+  }
+
+  .hero__pattern {
+    position: absolute;
+    z-index: -1;
+    top: 8%;
+    right: -8%;
+    width: min(65vw, 55rem);
+    height: auto;
+    opacity: 0.32;
+  }
+
+  .hero__identity,
+  .hero__kicker,
+  .hero__calibration,
+  .hero__age {
+    font-size: var(--step--2);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .hero__identity {
+    margin: 0;
+    color: var(--color-white);
+  }
+
+  .hero__kicker {
+    justify-self: end;
+    margin: 0;
+    color: var(--color-pale-slate);
+  }
+
+  .hero h1 {
+    grid-column: 1 / -1;
+    align-self: end;
+    margin: var(--space-7) 0 0;
+    font-size: clamp(5rem, 16vw, 15rem);
+    line-height: 0.72;
+    letter-spacing: -0.09em;
+    text-transform: uppercase;
+  }
+
+  .hero__bottom {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-top: var(--space-5);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-gray-dark);
+  }
+
+  .hero__location {
+    max-width: 20ch;
+    margin: 0;
+    font-size: var(--step-2);
+    font-weight: 700;
+    line-height: 1.05;
+  }
+
+  .hero__calibration {
+    margin-block: 0.8rem 0;
+    color: var(--color-pale-slate);
+  }
+
+  .hero__age {
+    margin: 0;
+    color: var(--color-signal-red);
+  }
+
+  .hero__actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: var(--space-5);
+  }
+
+  .home-section {
+    padding-block: var(--space-7);
+    border-bottom: 1px solid var(--color-gray-dark);
+  }
+
+  .section-heading {
+    display: grid;
+    grid-template-columns: 0.55fr 1.45fr;
+    align-items: end;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+  }
+
+  .section-heading h2 {
+    margin: 0;
+    font-size: var(--step-5);
+    line-height: 0.82;
+    letter-spacing: -0.07em;
+    text-transform: uppercase;
+  }
+
+  .section-tail {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: var(--space-4);
+  }
+
+  .manifesto {
+    padding-block: var(--space-7);
+    border-bottom: 1px solid var(--color-gray-dark);
+  }
+
+  .manifesto__title {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: var(--space-4);
+    margin-top: var(--space-5);
+  }
+
+  .manifesto h2 {
+    max-width: 13ch;
+    margin: 0;
+    font-size: var(--step-5);
+    line-height: 0.88;
+    letter-spacing: -0.07em;
+    text-transform: uppercase;
+  }
+
+  .manifesto__title > p {
+    margin: 0;
+    color: var(--color-signal-red);
+    font-size: var(--step-4);
+    font-weight: 800;
+    line-height: 0.8;
+  }
+
+  .manifesto__copy {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5);
+    max-width: 70rem;
+    margin-top: var(--space-6);
+    margin-left: auto;
+  }
+
+  .manifesto__copy p {
+    margin: 0;
+    font-size: var(--step-1);
+  }
+
+  .manifesto__copy p:last-child {
+    color: var(--color-pale-slate);
+  }
+
+  .manifesto__signal {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin: var(--space-7) 0 0;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-gray-dark);
+    color: var(--color-signal-red);
+    font-size: var(--step--1);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .manifesto__signal :global(.manifesto__signal-icon) {
+    flex: 0 0 auto;
+  }
+
+  .policy-preview {
+    padding-block: var(--space-7);
+    background: var(--color-soft-linen);
+    color: var(--color-black);
+  }
+
+  .section-heading--light .kicker {
+    color: var(--color-gray-dark);
+  }
+
+  .policy-signals {
+    margin: var(--space-6) 0 0;
+    padding: 0;
+    border-top: 1px solid var(--color-black);
+    list-style: none;
+  }
+
+  .policy-signals li {
+    display: grid;
+    grid-template-columns: 5rem minmax(12rem, 0.75fr) minmax(0, 1.25fr);
+    gap: var(--space-4);
+    align-items: baseline;
+    padding-block: var(--space-4);
+    border-bottom: 1px solid var(--color-black);
+  }
+
+  .policy-signals span {
+    color: var(--color-gray-dark);
+    font-weight: 800;
+  }
+
+  .policy-signals h3,
+  .policy-signals p {
+    margin: 0;
+  }
+
+  .policy-signals h3 {
+    font-size: var(--step-0);
+    text-transform: uppercase;
+  }
+
+  .policy-signals p {
+    max-width: 48rem;
+    color: var(--color-gray-dark);
+  }
+
+  .section-tail--light :global(.signal-link) {
+    color: var(--color-black);
+  }
+
+  .section-tail--light :global(.signal-link:hover) {
+    background: var(--color-black);
+    color: var(--color-white);
+  }
+
+  .visit-preview {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(20rem, 0.75fr);
+    gap: var(--space-6);
+    padding-block: var(--space-7);
+  }
+
+  .visit-preview h2 {
+    max-width: 12ch;
+    margin-block: var(--space-5) 0;
+    font-size: var(--step-5);
+    line-height: 0.88;
+    letter-spacing: -0.07em;
+    text-transform: uppercase;
+  }
+
+  .visit-preview__details {
+    align-self: end;
+    min-width: 0;
+  }
+
+  .visit-preview__details > p {
+    margin: 0;
+    padding-block: 1rem;
+    border-top: 1px solid var(--color-gray-dark);
+  }
+
+  .visit-preview__details > p:not(.availability-status) {
+    color: var(--color-pale-slate);
+  }
+
+  .visit-preview__actions {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: var(--space-4);
+  }
+
+  @media (max-width: 64rem) {
+    .visit-preview {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-7);
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .hero {
+      grid-template-columns: 1fr;
+      min-height: calc(100svh - var(--header-height));
+    }
+
+    .hero__kicker {
+      justify-self: start;
+      margin-top: 0.75rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(3.9rem, 20vw, 7rem);
+      line-height: 0.77;
+    }
+
+    .hero__pattern {
+      top: 23%;
+      right: -35%;
+      width: 110vw;
+    }
+
+    .hero__bottom,
+    .section-heading,
+    .manifesto__title,
+    .manifesto__copy,
+    .visit-preview {
+      grid-template-columns: 1fr;
+    }
+
+    .hero__bottom {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .hero__actions :global(.signal-link) {
+      width: 100%;
+    }
+
+    .section-heading {
+      align-items: start;
+    }
+
+    .manifesto__title > p {
+      justify-self: end;
+    }
+
+    .policy-signals li {
+      grid-template-columns: 3rem 1fr;
+    }
+
+    .policy-signals p {
+      grid-column: 2;
+    }
+
+    .visit-preview {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-7);
+    }
+  }
+</style>
