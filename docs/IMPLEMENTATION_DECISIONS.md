@@ -1,7 +1,8 @@
 # Phase 1 implementation decisions
 
 - The repository began as a clean slate containing only the implementation brief and brand
-  book; there was no Git repository or existing application to adapt.
+  book; there was no Git repository or existing application to adapt. The original brief is
+  preserved in `docs/PHASE_1_IMPLEMENTATION_BRIEF.md` as historical context.
 - Astro 7.2.4 is pinned with static directory-format output and trailing-slash canonicals.
 - Albanian and English content share typed views and centralized data instead of duplicated
   markup.

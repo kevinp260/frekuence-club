@@ -7,5 +7,5 @@ src/assets/fonts/*.woff2
 src/assets/brand/temporary/*.png
 public/favicons/*
 public/og/*
-FREKUENCE_WEBSITE_IMPLEMENTATION_INSTRUCTIONS.md
+docs/PHASE_1_IMPLEMENTATION_BRIEF.md
 lighthouse-report.json

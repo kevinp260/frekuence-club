@@ -33,3 +33,10 @@ listed in [docs/BRAND_ASSET_TODOS.md](docs/BRAND_ASSET_TODOS.md).
 
 The latest local release evidence is recorded in
 [docs/VALIDATION_REPORT.md](docs/VALIDATION_REPORT.md).
+
+## Project documentation
+
+Repository working rules are in [AGENTS.md](AGENTS.md). The original Phase 1 specification is
+preserved as a historical brief in
+[docs/PHASE_1_IMPLEMENTATION_BRIEF.md](docs/PHASE_1_IMPLEMENTATION_BRIEF.md); current decisions,
+TODOs, deployment procedures, and validation evidence live in the other files under `docs/`.

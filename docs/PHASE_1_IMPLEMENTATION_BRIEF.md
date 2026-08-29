@@ -1,10 +1,16 @@
-# Frekuence Club Website - Implementation Instructions
+# Frekuence Club Website — Phase 1 Implementation Brief
 
 ## 1. Purpose of this document
 
-This file is the authoritative implementation brief for the first public website of Frekuence Club. It is written for an autonomous coding agent such as Codex or Claude.
+This document preserves the original implementation brief for the first public website of
+Frekuence Club. Phase 1 has been implemented, so this is a historical product and design
+specification rather than the active repository instruction file. Current agent instructions
+are in `../AGENTS.md`; current decisions, unresolved inputs, validation evidence, and deployment
+procedures are documented alongside this file.
 
-Implement the Phase 1 website described here. Do not implement the future backend, database, reservations, ticket sales, worker processes, or custom administration interface during Phase 1. The architecture must leave a clean path for those capabilities without creating unused infrastructure now.
+The original Phase 1 scope excluded the future backend, database, reservations, ticket sales,
+worker processes, and custom administration interface. The architecture was required to leave
+a clean path for those capabilities without creating unused infrastructure.
 
 If this file is added to an existing repository:
 

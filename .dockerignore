@@ -1,5 +1,6 @@
 .git
 .astro
+AGENTS.md
 .env
 .env.*
 !.env.example
@@ -10,6 +11,5 @@ test-results
 screenshots
 *.log
 *.pdf
-FREKUENCE_WEBSITE_IMPLEMENTATION_INSTRUCTIONS.md
 docs
 deploy/nginx/frekuence.club.conf.example
