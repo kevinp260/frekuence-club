@@ -3,11 +3,12 @@
 This repository contains the bilingual Astro frontend for Frekuence Club in Tirana. Albanian is
 served at the root and English under `/en/`.
 
-Phase 2 checkpoints 1–4 establish the approved signal-interference design system, event-led public
-pages, and the private Django/PostgreSQL event-management foundation. The public Astro site remains
-a static build and continues to use its transitional content collection; checkpoint 6 will connect
-it to Django without redesigning the public routes or components. The checkpoint 5 public API,
-checkpoint 6 Astro SSR integration, and checkpoint 7 production gateway are not implemented.
+Phase 2 checkpoints 1–5 establish the approved signal-interference design system, event-led public
+pages, the private Django/PostgreSQL event-management foundation, and its published-only events API.
+The public Astro site remains a static build and continues to use its transitional content
+collection; checkpoint 6 will connect it to Django without redesigning the public routes or
+components. Checkpoint 6 Astro SSR integration and the checkpoint 7 production gateway are not
+implemented, so the API remains private to the Compose network.
 Reservations, payments, public accounts, analytics, tracking, and third-party embeds remain out of
 scope.
 
@@ -56,6 +57,15 @@ The Django service and PostgreSQL have no host port. Development fixtures requir
 opt-in profile and runtime-only credentials; normal startup and the production backend image do not
 contain the fixture command. Staff account provisioning, TOTP enrollment, screenshots, backup, and
 restore procedures are documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+The checkpoint 5 API is JSON-only and read-only:
+
+- `GET /api/v1/events/?locale=sq&when=upcoming&limit=6&offset=0`
+- `GET /api/v1/events/?locale=en&when=recent&limit=5&offset=0`
+- `GET /api/v1/events/{slug}/?locale=sq|en`
+
+Albanian is the default locale. Lists use a `count`/`next`/`previous`/`results` envelope, accept a
+maximum `limit` of 20, and expose published localized content and managed poster derivatives only.
 
 ## Production signoff
 

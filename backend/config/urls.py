@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.db import connection
 from django.http import JsonResponse
-from django.urls import path
+from django.urls import include, path
 from django.views.decorators.http import require_GET
 
 from events.admin import staff_admin_site
@@ -18,6 +18,10 @@ def health(request):
 
 urlpatterns = [
     path("healthz/", health, name="health"),
+    path(
+        "api/v1/",
+        include(("events.api.urls", "events-api-v1"), namespace="events-api-v1"),
+    ),
     path("staff/", staff_admin_site.urls),
 ]
 
