@@ -1,39 +1,21 @@
-# Example only. Review certificate paths, the loopback port, and the host's
-# existing default-server policy before installing this configuration.
+# HTTP bootstrap configuration for Certbot. Review the loopback port and the
+# host's existing default-server policy before installing it. After this site
+# is reachable over HTTP, run:
+#
+#   sudo certbot --nginx -d frekuence.club --redirect
+#
+# Certbot will add the certificate paths, HTTPS listener, and HTTP redirect.
 
 server {
     listen 80;
     listen [::]:80;
-    server_name frekuence.club www.frekuence.club;
-    return 301 https://frekuence.club$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name www.frekuence.club;
-
-    ssl_certificate /path/to/fullchain.pem;
-    ssl_certificate_key /path/to/privkey.pem;
-
-    return 301 https://frekuence.club$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
     server_name frekuence.club;
 
-    ssl_certificate /path/to/fullchain.pem;
-    ssl_certificate_key /path/to/privkey.pem;
-
-    # Enable HSTS only after HTTPS and all relevant subdomains are verified.
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Permissions-Policy "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()" always;
     add_header Cross-Origin-Opener-Policy "same-origin" always;
-    add_header Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self'; script-src 'self' 'sha256-7TZcLqGw8yu6nC0OHpu5d6ZriZg8nEZ5ehONjNAfMHU='; connect-src 'self'; frame-src 'none'; upgrade-insecure-requests" always;
+    add_header Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self'; script-src 'self' 'sha256-7TZcLqGw8yu6nC0OHpu5d6ZriZg8nEZ5ehONjNAfMHU='; connect-src 'self'; frame-src 'none'" always;
 
     location / {
         proxy_pass http://127.0.0.1:3010;

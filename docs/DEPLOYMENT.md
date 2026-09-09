@@ -15,10 +15,11 @@ filesystem with an explicit `/tmp` tmpfs, and contains only Nginx plus generated
 ## Before launch
 
 1. Resolve the launch blockers in `CONTENT_TODOS.md` and `BRAND_ASSET_TODOS.md`.
-2. Point the apex DNS record to the host. Configure `www` only if its redirect is required.
-3. Obtain and verify TLS certificates outside this repository.
+2. Point the apex DNS record to the host and allow inbound HTTP and HTTPS on ports 80 and 443.
+3. Install Certbot and its Nginx plugin using the instructions for the host operating system.
 4. Review `deploy/nginx/frekuence.club.conf.example` against the host's existing default-host,
-   logging, certificate, and include conventions. Do not copy it blindly.
+   logging, and include conventions. The example is an HTTP bootstrap configuration; do not
+   copy it blindly.
 5. Confirm the application port. The default is `3010`; set `FREKUENCE_WEB_PORT` to another
    loopback port if needed.
 6. Recompute the JSON-LD CSP hash whenever structured data changes, then update and review the
@@ -41,9 +42,33 @@ curl --silent --output /dev/null --write-out '%{http_code}\n' http://127.0.0.1:3
 The final command must print `404`. Also verify that the published socket is
 `127.0.0.1:<port>`, never `0.0.0.0:<port>`.
 
-After host Nginx is reviewed and reloaded through the host's normal operational process,
-verify HTTP-to-HTTPS and `www` redirects, response headers, canonicals, both languages, the
-sitemap, and a real unknown URL from outside the host.
+## Configure host Nginx and TLS
+
+Install the reviewed HTTP bootstrap configuration through the host's normal Nginx process,
+then validate and reload Nginx:
+
+```sh
+sudo nginx -t
+sudo systemctl reload nginx
+curl --fail --show-error http://frekuence.club/healthz
+```
+
+The HTTP site must be reachable publicly on port 80 before using Certbot's Nginx HTTP-01
+workflow. Obtain and install the apex certificate, and have Certbot enable the HTTPS redirect:
+
+```sh
+sudo certbot --nginx -d frekuence.club --redirect
+sudo nginx -t
+sudo certbot renew --dry-run
+```
+
+The supplied template intentionally covers only the canonical apex domain. If
+`www.frekuence.club` is required, point its DNS record to the host, add a dedicated canonical
+redirect virtual host, and include `-d www.frekuence.club` when requesting the certificate.
+Do not request that name until its public DNS record resolves to this host.
+
+After Certbot succeeds, verify HTTPS, the HTTP-to-HTTPS redirect, response headers,
+canonicals, both languages, the sitemap, and a real unknown URL from outside the host.
 
 Do not enable HSTS until the HTTPS deployment and included subdomains are known to work.
 
