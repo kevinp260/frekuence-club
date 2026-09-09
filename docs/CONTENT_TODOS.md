@@ -19,6 +19,7 @@ The following owner inputs remain unresolved and block a final production-ready 
 - final cyan, magenta, and green decorative signal token values
 - staff account recipients, TOTP enrollment/recovery procedure, and emergency-account ownership
 - database and poster-media backup destination, retention, restore owner, and alert destination
+- final operator-supplied production hosts/origins, Django secret key, and PostgreSQL credentials
 
 The rendered policy and privacy pages are clearly labeled drafts. No unconfirmed legal entity,
 contact detail, schedule, event, price, or operational claim is published. Supplied posters remain

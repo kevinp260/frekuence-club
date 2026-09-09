@@ -1,0 +1,11 @@
+{% extends "admin/base_site.html" %} {% load static %} {% block extrastyle %} {{ block.super }}
+<link rel="stylesheet" href="{% static 'events/admin.css' %}" />
+{% endblock %} {% block branding %}
+<div class="frekuence-branding">
+  <span class="frekuence-branding__signal" aria-hidden="true"></span>
+  <div>
+    <p class="frekuence-branding__eyebrow">Club calibrated at 7.83 Hz</p>
+    <h1 id="site-name"><a href="{% url 'frekuence_staff:index' %}">Frekuence staff</a></h1>
+  </div>
+</div>
+{% endblock %}

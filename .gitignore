@@ -12,3 +12,9 @@ screenshots/
 *.tsbuildinfo
 lighthouse-report.json
 lighthouse-fixtures-report.json
+backend/.ruff_cache/
+backend/**/__pycache__/
+backend/**/*.py[cod]
+backend/media/
+backend/staticfiles/
+backend/.coverage
