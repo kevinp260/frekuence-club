@@ -91,3 +91,39 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
 - The homepage no longer duplicates its former manifesto, policy summary, or visit summary.
 - Human Hz and 7.83 editorial content now lives on localized About routes. The 7.83 explanation is
   explicitly symbolic and makes no medical or unsupported scientific claim.
+
+## Phase 2 checkpoint 4 — backend foundation
+
+- Django lives in `backend/`, with project configuration in `backend/config/` and the bounded event
+  domain in `backend/events/`. Direct production dependencies are exactly pinned with hashes:
+  Django 5.2.17, PostgreSQL driver psycopg 3.3.5, Pillow 12.3.0, django-otp 1.7.3,
+  django-axes 8.3.1, Argon2, Gunicorn, and QR provisioning support. PostgreSQL 17.11 and Python
+  3.13.14 images use immutable digests.
+- PostgreSQL is authoritative for the backend Event domain. The existing Astro content collection
+  remains the public site's transitional source until checkpoint 6; no partially connected data
+  path was introduced.
+- Event publication and feature replacement use a transaction-bound service. The service derives
+  audit actors only from the authenticated request user, locks competing featured records, and
+  emits structured transition logs. Model validation and database constraints independently guard
+  timing, publishability, lifecycle consistency, and the single-feature rule where a database
+  constraint is practical.
+- Events use stable UUID primary keys and unique lowercase slugs; paired Albanian/English content;
+  timezone-aware start, end, and optional doors instants; an ordered JSON lineup; separate
+  publication and lifecycle states; server-managed publication/audit fields; and managed poster
+  metadata. `past` is derived from `ends_at`, never stored.
+- Staff use an event-only OTP-protected Django Admin at `/staff/`. Session authentication, CSRF,
+  Argon2-first password hashing, a 14-character minimum password validator, least-privilege Event
+  editor permissions, and username-plus-IP login throttling are enabled. TOTP QR provisioning
+  refuses public media/static paths and never prints the device secret or enrollment URI.
+- Poster ingestion accepts only verified JPEG, PNG, and WebP content. It applies 15 MiB and
+  40-megapixel limits before full decode, rejects malformed/spoofed/SVG input, normalizes EXIF
+  orientation, re-encodes the managed original without metadata, and generates randomized
+  metadata-free WebP derivatives near 480, 960, and 1440 pixels plus a social derivative. Media
+  replacement/deletion occurs only after database commit.
+- The draft-only development fixture command requires an exact opt-in and runtime credentials,
+  creates visibly synthetic content without using supplied posters, and is removed—along with tests
+  and development dependencies—from the production backend image.
+- Migrations are explicit deploy jobs rather than application-startup side effects. Backend,
+  database, check, migration, fixture, static collection, and browser-review processes all run in
+  Docker. Only the existing Astro container remains loopback-published at this checkpoint; final
+  gateway routing belongs to checkpoint 7.

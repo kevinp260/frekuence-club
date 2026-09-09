@@ -1,16 +1,130 @@
 # Deployment and rollback
 
-## Topology
+## Current checkpoint topology
 
 Public traffic terminates at the host's existing Nginx installation, which proxies to the
-single static web container through a loopback-only port:
+static web container through a loopback-only port. Checkpoint 4 also provides a private Django
+runtime and PostgreSQL database, but deliberately does not route them into the public stack yet:
 
 ```text
 Internet → host Nginx/TLS → 127.0.0.1:3010 → container Nginx:8080 → Astro dist
+
+private Compose network: Django:8000 → PostgreSQL:5432
 ```
 
-The container runs as an unprivileged user, drops all Linux capabilities, uses a read-only
-filesystem with an explicit `/tmp` tmpfs, and contains only Nginx plus generated output.
+The Astro and Django containers run as unprivileged users, drop all Linux capabilities, and use
+read-only filesystems with explicit tmpfs/volumes. Django and PostgreSQL publish no host ports.
+The final single-gateway routing, media serving, and host Nginx integration remain checkpoint 7;
+do not expose Django directly as an interim shortcut.
+
+PostgreSQL data, processed poster media, and collected staff static files use the named
+`postgres_data`, `backend_media`, and `backend_static` volumes. The application never migrates or
+creates accounts as a startup side effect.
+
+## Environment and secrets
+
+Copy `.env.example` to ignored `.env` for local development and replace every relevant placeholder.
+Production values must be injected at runtime from the deployment environment or secret manager,
+not committed, passed as Docker build arguments, or stored in frontend `PUBLIC_*` variables.
+
+Production requires:
+
+- `DJANGO_ENVIRONMENT=production` and `DJANGO_DEBUG=false`;
+- a unique high-entropy `DJANGO_SECRET_KEY` of at least 32 characters;
+- exact `DJANGO_ALLOWED_HOSTS` and HTTPS `DJANGO_CSRF_TRUSTED_ORIGINS` values;
+- `DJANGO_SECURE_SSL_REDIRECT=true` and `DJANGO_SECURE_COOKIES=true`;
+- unique PostgreSQL credentials.
+
+Django refuses to start in production with debug, insecure cookies, or the HTTPS redirect enabled
+incorrectly. The Compose defaults are visibly development-only and must never be used for a public
+deployment.
+
+## Backend build, migration, and checks
+
+All backend application processes and maintenance commands run in containers:
+
+```sh
+docker compose --profile tools run --rm --build backend-check
+docker compose --profile tools run --rm --build backend-migrate
+docker compose --profile tools run --rm --build backend-static
+docker compose up -d --build backend
+docker compose ps
+```
+
+`backend-check` runs Ruff formatting/lint, pending-migration detection, Django system and deployment
+checks, all migrations against PostgreSQL, the backend test suite, and the installed-environment
+dependency audit. `backend-migrate` is the explicit migration job. Review the migration plan and
+take a matched database/media backup before applying a new production migration. The long-running
+backend process never runs `migrate` itself.
+
+At checkpoint 4, backend health can be checked from its private network without adding a host port:
+
+```sh
+docker compose exec backend python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/healthz/').status)"
+```
+
+The command must print `200`. `docker compose ps` must show only the Astro `web` service with a
+loopback host binding; Django and PostgreSQL must show only their private container ports.
+
+## Staff accounts and TOTP
+
+There is no public signup. Create a named staff account interactively, assign it to the migrated
+`Event editors` group, then provision a TOTP device. Use a private absolute directory outside this
+repository and outside Django media/static roots for the QR output:
+
+```sh
+docker compose --profile tools run --rm backend-migrate python manage.py createsuperuser
+docker compose --profile tools run --rm --volume /absolute/private-directory:/private \
+  backend-migrate python manage.py provision_totp STAFF_USERNAME --output /private/staff-totp.png
+```
+
+The QR file is created mode `0600`; its secret and enrollment URI are never printed. Transfer it
+securely, enroll it immediately, confirm an authenticated staff session, and delete the file. Do not
+share staff accounts. Day-to-day staff should use the `Event editors` group rather than a
+superuser. Production account recipients, TOTP recovery, and emergency-account ownership remain a
+launch TODO.
+
+## Development fixture and staff visual review
+
+The fixture command is absent from the production backend image. In an ignored local `.env`, set a
+development-only username, a unique password, a random 40-character hexadecimal TOTP key, and the
+host UID/GID used to own screenshots. Then run:
+
+```sh
+docker compose --profile fixtures run --rm --build backend-fixtures
+docker compose --profile tools run --rm --build backend-static
+docker compose up -d --build backend
+docker compose --profile tools run --rm --build staff-visual
+```
+
+This creates only an unmistakably labelled draft and writes the desktop/laptop evidence under
+`docs/review/phase-2-backend-foundation/`. It never reads candidate posters and refuses to proceed
+without the explicit fixture profile/opt-in.
+
+## Backend backup and restoration
+
+Back up PostgreSQL and media as one release operation. The final destination, retention, owner, and
+automation remain production launch TODOs. A manual checkpoint backup can use:
+
+```sh
+docker compose exec -T db pg_dump --username=frekuence --dbname=frekuence \
+  --format=custom --file=/tmp/frekuence.dump
+docker cp frekuence-website-db-1:/tmp/frekuence.dump /absolute/backup-directory/frekuence.dump
+docker compose --profile tools run --rm --no-deps \
+  --volume /absolute/backup-directory:/backup backend-migrate \
+  tar -C /vol/media -czf /backup/frekuence-media.tar.gz .
+```
+
+Use the configured database/user names rather than the development defaults. Store the two files
+together, encrypted and access-controlled. Test restoration into an isolated Compose project—never
+over live data—by restoring the database with the pinned PostgreSQL image and expanding the media
+archive into that isolated project's media volume. Then run `migrate --check`, Django system checks,
+count draft/published records, verify processed-image files, and sign in with a designated test
+account. A database-only or media-only restore is incomplete.
+
+For checkpoint 4 rollback, stop the unused private backend services and return to the prior Astro
+image while retaining the named data/media volumes. Do not reverse the initial Event migration in
+place: that would drop data. Restore the matched backup when schema/data rollback is required.
 
 ## Before launch
 
@@ -20,7 +134,7 @@ filesystem with an explicit `/tmp` tmpfs, and contains only Nginx plus generated
 4. Review `deploy/nginx/frekuence.club.conf.example` against the host's existing default-host,
    logging, and include conventions. The example is an HTTP bootstrap configuration; do not
    copy it blindly.
-5. Confirm the application port. The default is `3010`; set `FREKUENCE_WEB_PORT` to another
+5. Confirm the public Astro application port. The default is `3010`; set `FREKUENCE_WEB_PORT` to another
    loopback port if needed.
 6. Recompute the JSON-LD CSP hash whenever structured data changes, then update and review the
    host example.
@@ -101,11 +215,14 @@ npm run build
 npm run test:e2e
 npm run test:visual
 npm run audit:lighthouse
-docker compose build web
-docker compose up -d web
+docker compose --profile tools run --rm --build frontend-check
+docker compose --profile tools run --rm --build backend-check
+docker compose build web backend
+docker compose up -d web backend
 ```
 
 The asset-generation step is needed only after temporary source exports change and requires a
 local Chromium-compatible browser. All first-party browser assets are committed, so ordinary
 production builds do not fetch fonts or imagery. The browser and Lighthouse commands each
-manage their own loopback preview server.
+manage their own loopback preview server. `frontend-check` is the Docker equivalent of the frontend
+build plus e2e suite; `backend-check` is the complete Docker-only backend gate.

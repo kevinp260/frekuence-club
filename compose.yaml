@@ -22,3 +22,205 @@ services:
       start_period: 5s
       retries: 3
     stop_grace_period: 10s
+
+  db:
+    image: postgres:17.11-alpine3.23@sha256:9ae4e8f8d0284836a505f0b2e825144e32e20499856e7dc5f7b99e19d10eedd6
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-frekuence}
+      POSTGRES_USER: ${POSTGRES_USER:-frekuence}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-development-only-not-a-secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    stop_grace_period: 30s
+
+  backend:
+    image: frekuence-backend:${FREKUENCE_BACKEND_TAG:-local}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: runtime
+    environment: &backend-environment
+      DJANGO_ENVIRONMENT: ${DJANGO_ENVIRONMENT:-development}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-development-only-not-a-secret-key}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-true}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-backend,localhost,127.0.0.1}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost:8000}
+      DJANGO_SECURE_SSL_REDIRECT: ${DJANGO_SECURE_SSL_REDIRECT:-false}
+      DJANGO_SECURE_COOKIES: ${DJANGO_SECURE_COOKIES:-false}
+      POSTGRES_DB: ${POSTGRES_DB:-frekuence}
+      POSTGRES_USER: ${POSTGRES_USER:-frekuence}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-development-only-not-a-secret}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: '5432'
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - backend_media:/vol/media
+      - backend_static:/vol/static
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz/', timeout=2)",
+        ]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    stop_grace_period: 15s
+
+  backend-check:
+    image: frekuence-backend-check:${FREKUENCE_BACKEND_TAG:-local}
+    profiles: ['tools']
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: test
+    environment:
+      <<: *backend-environment
+      DJANGO_ENVIRONMENT: test
+      DJANGO_SECRET_KEY: test-only-not-secret-9Jz7pQ4vN8xR2mK6wC3sH5dL1aB0tY
+      DJANGO_DEBUG: 'false'
+      DJANGO_ALLOWED_HOSTS: testserver,localhost,backend-check
+      DJANGO_CSRF_TRUSTED_ORIGINS: https://testserver
+      DJANGO_SECURE_SSL_REDIRECT: 'false'
+      DJANGO_SECURE_COOKIES: 'true'
+    depends_on:
+      db:
+        condition: service_healthy
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+      - /vol/media:size=128m,mode=1777
+      - /vol/static:size=32m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  backend-migrate:
+    image: frekuence-backend:${FREKUENCE_BACKEND_TAG:-local}
+    profiles: ['tools']
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: runtime
+    command: ['python', 'manage.py', 'migrate', '--noinput']
+    environment: *backend-environment
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - backend_media:/vol/media
+      - backend_static:/vol/static
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  backend-static:
+    image: frekuence-backend:${FREKUENCE_BACKEND_TAG:-local}
+    profiles: ['tools']
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: runtime
+    command: ['python', 'manage.py', 'collectstatic', '--noinput']
+    environment: *backend-environment
+    volumes:
+      - backend_static:/vol/static
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  backend-fixtures:
+    image: frekuence-backend-check:${FREKUENCE_BACKEND_TAG:-local}
+    profiles: ['fixtures']
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: test
+    command: ['python', 'manage.py', 'seed_dev_data']
+    environment:
+      <<: *backend-environment
+      DJANGO_ALLOW_DEV_FIXTURES: 'true'
+      FREKUENCE_DEV_ADMIN_USERNAME: ${FREKUENCE_DEV_ADMIN_USERNAME:-}
+      FREKUENCE_DEV_ADMIN_PASSWORD: ${FREKUENCE_DEV_ADMIN_PASSWORD:-}
+      FREKUENCE_DEV_TOTP_KEY: ${FREKUENCE_DEV_TOTP_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - backend_media:/vol/media
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  staff-visual:
+    image: frekuence-staff-visual:${FREKUENCE_BACKEND_TAG:-local}
+    profiles: ['tools']
+    build:
+      context: .
+      dockerfile: Dockerfile.staff-visual
+      target: staff-visual
+    environment:
+      STAFF_BASE_URL: http://backend:8000
+      FREKUENCE_DEV_ADMIN_USERNAME: ${FREKUENCE_DEV_ADMIN_USERNAME:-}
+      FREKUENCE_DEV_ADMIN_PASSWORD: ${FREKUENCE_DEV_ADMIN_PASSWORD:-}
+      FREKUENCE_DEV_TOTP_KEY: ${FREKUENCE_DEV_TOTP_KEY:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    user: '${FREKUENCE_HOST_UID:-1000}:${FREKUENCE_HOST_GID:-1000}'
+    volumes:
+      - ./docs/review/phase-2-backend-foundation:/output
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  frontend-check:
+    image: frekuence-frontend-check:${FREKUENCE_WEB_TAG:-local}
+    profiles: ['tools']
+    build:
+      context: .
+      dockerfile: Dockerfile.staff-visual
+      target: frontend-check
+    init: true
+    tmpfs:
+      - /tmp:size=512m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  postgres_data:
+  backend_media:
+  backend_static:

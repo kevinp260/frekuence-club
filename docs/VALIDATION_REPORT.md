@@ -1,4 +1,67 @@
-# Phase 2 checkpoint 3 validation
+# Phase 2 checkpoint 4 validation
+
+Validated on 2026-09-09 against `feat/phase-2-backend-foundation`. This checkpoint adds only the
+Django/PostgreSQL backend foundation. The public Astro source and design are unchanged and remain
+disconnected from Django until checkpoint 6.
+
+## Automated gates
+
+| Gate                                                              | Result                                                                                                                                                                                           |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `docker compose --profile tools run --rm --build backend-check`   | Passed: Ruff format and lint; no pending migrations; Django system check; Django deployment check; migrations; 45 tests in 4.572 s; installed-environment audit with no known vulnerabilities    |
+| `docker compose --profile tools run --rm --build backend-migrate` | Passed: explicit migration job; all migrations applied and no pending migration                                                                                                                  |
+| `docker compose --profile tools run --rm --build backend-static`  | Passed: 131 Django/staff static files collected; final refresh copied 1 changed file and retained 130 unchanged files                                                                            |
+| `docker compose --profile tools run --rm --build frontend-check`  | Passed: Prettier, ESLint, 0 Astro diagnostics across 58 files, 11 unit tests, 13-page production build, 12-route/40-file production validation, 37 browser tests; 26 opt-in visual tests skipped |
+| `docker compose build web backend`                                | Passed: final pinned Astro/Nginx and Django/Gunicorn production images built                                                                                                                     |
+| Backend and database health                                       | Passed: Django and PostgreSQL healthy on private container ports; no backend/database host bindings                                                                                              |
+| Staff visual workflow                                             | Passed: TOTP login and draft-only event list/editor captured in the pinned Playwright container at 1440 × 1000 and 1024 × 768; no page-level horizontal overflow                                 |
+
+The Django deployment check reports two deliberately silenced HSTS subdomain/preload warnings.
+Host Nginx owns final HSTS, and those flags remain disabled until checkpoint 7 verifies every
+applicable hostname over HTTPS. All other deployment warnings are treated as failures.
+
+## Backend coverage
+
+- Domain validation: timezone-aware ordering, optional doors boundary, localized publication
+  completeness, lifecycle/publication separation, stable slug shape, ordered bounded lineup,
+  server-managed publication time, derived past state, and featured-event replacement/selection.
+- Database enforcement: start/end and doors constraints, complete published rows, consistent
+  featured state, and at most one published scheduled/postponed feature.
+- Authorization: anonymous, non-staff, and password-only/non-TOTP staff denial; least-privilege
+  Event editor permissions; no signup; CSRF enforcement; request-user attribution; and payload
+  actor-field exclusion.
+- Authentication/security: actual TOTP login, five-attempt username-plus-IP rate limiting,
+  Argon2-first strong password configuration, secure production cookie requirements, health check,
+  and private QR provisioning.
+- Upload attacks/processing: JPEG/PNG/WebP decode acceptance; SVG, malformed, truncated, spoofed
+  extension/MIME, encoded-byte, and decoded-pixel rejection; traversal-resistant randomized names;
+  orientation normalization; metadata stripping from managed original and derivatives; responsive
+  WebP generation; and transaction-safe media replacement/deletion.
+- Operations: migration leaf consistency, explicit migrations/static collection, fixture opt-in,
+  production-image fixture exclusion, system/deployment checks, and dependency audit.
+
+## Visual evidence
+
+The final staff captures and reproduction notes are committed under
+[`docs/review/phase-2-backend-foundation/`](review/phase-2-backend-foundation/README.md). The images
+use a generated poster and visibly synthetic draft only; no candidate or real event is published.
+Manual review found clear grouping, readable operational fields and poster metadata, practical
+controls, and no clipping or horizontal overflow at either width.
+
+## Checkpoint boundary and known limitations
+
+- Checkpoint 5's published-only public API is not implemented.
+- Checkpoint 6's Astro Node/SSR migration and Django integration are not implemented.
+- Checkpoint 7's final gateway, media routing, proxy limits, and production topology are not
+  implemented. Django and PostgreSQL remain private and are not available through the public site.
+- The production staff roster, MFA recovery/emergency procedure, backup destination/retention/owner,
+  final hosts/origins, and real event content remain owner/operator TODOs.
+- No real event data is included or published. The development fixture is opt-in, draft-only,
+  unmistakably labelled, and its command is absent from the production backend image.
+
+---
+
+# Previous Phase 2 checkpoint 3 validation
 
 Validated on 2026-09-09 against `feat/phase-2-foundation` after the P1 event-homepage review
 follow-up. This remains frontend-only checkpoint 3 work; Django/backend checkpoint 4 has not

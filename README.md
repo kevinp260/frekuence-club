@@ -3,13 +3,13 @@
 This repository contains the bilingual Astro frontend for Frekuence Club in Tirana. Albanian is
 served at the root and English under `/en/`.
 
-Phase 2 checkpoints 1–3 establish the approved signal-interference design system, an event-led
-homepage, localized event detail routes, and localized About / Who we are pages. The site remains
-a static build at this checkpoint. Published entries in the transitional Astro event collection
-drive the homepage, event index, and detail routes; Django/PostgreSQL will replace that source in
-checkpoint 6 without redesigning the public routes or components. Django, event administration,
-poster uploads, and the dynamic event API are not implemented yet. Reservations, payments, public
-accounts, analytics, tracking, and third-party embeds remain out of scope.
+Phase 2 checkpoints 1–4 establish the approved signal-interference design system, event-led public
+pages, and the private Django/PostgreSQL event-management foundation. The public Astro site remains
+a static build and continues to use its transitional content collection; checkpoint 6 will connect
+it to Django without redesigning the public routes or components. The checkpoint 5 public API,
+checkpoint 6 Astro SSR integration, and checkpoint 7 production gateway are not implemented.
+Reservations, payments, public accounts, analytics, tracking, and third-party embeds remain out of
+scope.
 
 ## Local commands
 
@@ -38,6 +38,24 @@ its production validator fails if fixture names or routes leak into `dist/`.
 
 The checked-in favicons and social image are derivatives of the temporary, approved brand
 exports. Regenerate them with `npm run assets:generate` after changing those source exports.
+
+## Backend commands
+
+All Django, PostgreSQL, migration, check, test, fixture, and staff visual-review processes run in
+Docker. Copy `.env.example` to an ignored `.env`, replace every relevant placeholder, and use:
+
+```sh
+docker compose --profile tools run --rm --build backend-check
+docker compose --profile tools run --rm --build backend-migrate
+docker compose --profile tools run --rm --build backend-static
+docker compose up -d --build backend
+docker compose ps
+```
+
+The Django service and PostgreSQL have no host port. Development fixtures require an explicit
+opt-in profile and runtime-only credentials; normal startup and the production backend image do not
+contain the fixture command. Staff account provisioning, TOTP enrollment, screenshots, backup, and
+restore procedures are documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Production signoff
 
