@@ -24,22 +24,22 @@ guidance against current official documentation.
 
 ## 2. Confirmed product decisions
 
-| Decision | Approved direction |
-| --- | --- |
-| Venue | Frekuence Club, Kompleksi Fari, Tiranë, Albania |
-| Public domain | `https://frekuence.club` |
-| Languages | Albanian (`sq-AL`) at root; English under `/en/` |
-| Age restriction | Strictly 18+; physical ID required |
-| Brand phrase | `Club calibrated at 7.83 Hz` |
-| Entry model | Admission is approved at the door before payment |
-| Reservations | Not available in this phase; non-interactive “coming soon” text is allowed |
-| Online payments | None in this phase |
-| Public homepage | Events first; no longer a general venue summary |
-| Editorial content | Existing manifesto and 7.83 material move to a Who we are / About page |
-| Event ownership | Club staff maintain events and posters through Django |
-| Hosting | Entire application stack in Docker behind existing host Nginx |
-| Frontend | Preserve Astro; use server rendering only where dynamic event data requires it |
-| Administration | Customized Django Admin first; custom CRUD UI only after demonstrated need |
+| Decision          | Approved direction                                                             |
+| ----------------- | ------------------------------------------------------------------------------ |
+| Venue             | Frekuence Club, Kompleksi Fari, Tiranë, Albania                                |
+| Public domain     | `https://frekuence.club`                                                       |
+| Languages         | Albanian (`sq-AL`) at root; English under `/en/`                               |
+| Age restriction   | Strictly 18+; physical ID required                                             |
+| Brand phrase      | `Club calibrated at 7.83 Hz`                                                   |
+| Entry model       | Admission is approved at the door before payment                               |
+| Reservations      | Not available in this phase; non-interactive “coming soon” text is allowed     |
+| Online payments   | None in this phase                                                             |
+| Public homepage   | Events first; no longer a general venue summary                                |
+| Editorial content | Existing manifesto and 7.83 material move to a Who we are / About page         |
+| Event ownership   | Club staff maintain events and posters through Django                          |
+| Hosting           | Entire application stack in Docker behind existing host Nginx                  |
+| Frontend          | Preserve Astro; use server rendering only where dynamic event data requires it |
+| Administration    | Customized Django Admin first; custom CRUD UI only after demonstrated need     |
 
 ## 3. Scope
 
@@ -178,19 +178,19 @@ depth and continuity around it, not reduce legibility or compete for attention.
 
 Preserve trailing-slash canonical URLs.
 
-| Albanian | English | Rendering | Purpose |
-| --- | --- | --- | --- |
-| `/` | `/en/` | On demand | Next event and secondary event deck |
-| `/events/` | `/en/events/` | On demand | Published upcoming events and recent/archive access |
-| `/events/{slug}/` | `/en/events/{slug}/` | On demand | Localized event detail |
-| `/about/` | `/en/about/` | Prerendered | Who we are, Human Hz, manifesto, and 7.83 story |
-| `/policy/` | `/en/policy/` | Prerendered | Entry policy and code of conduct |
-| `/visit/` | `/en/visit/` | Prerendered | Address, access, practical details, Maps/Instagram links |
-| `/privacy/` | `/en/privacy/` | Prerendered | Public-site privacy information |
-| `/404.html` | Same design | Static/fallback | Branded real not-found response |
-| `/staff/` | Not localized | Django | Authenticated staff administration |
-| `/api/v1/events/` | Locale parameter | Django | Published event list data |
-| `/api/v1/events/{slug}/` | Locale parameter | Django | Published event detail data |
+| Albanian                 | English              | Rendering       | Purpose                                                  |
+| ------------------------ | -------------------- | --------------- | -------------------------------------------------------- |
+| `/`                      | `/en/`               | On demand       | Next event and secondary event deck                      |
+| `/events/`               | `/en/events/`        | On demand       | Published upcoming events and recent/archive access      |
+| `/events/{slug}/`        | `/en/events/{slug}/` | On demand       | Localized event detail                                   |
+| `/about/`                | `/en/about/`         | Prerendered     | Who we are, Human Hz, manifesto, and 7.83 story          |
+| `/policy/`               | `/en/policy/`        | Prerendered     | Entry policy and code of conduct                         |
+| `/visit/`                | `/en/visit/`         | Prerendered     | Address, access, practical details, Maps/Instagram links |
+| `/privacy/`              | `/en/privacy/`       | Prerendered     | Public-site privacy information                          |
+| `/404.html`              | Same design          | Static/fallback | Branded real not-found response                          |
+| `/staff/`                | Not localized        | Django          | Authenticated staff administration                       |
+| `/api/v1/events/`        | Locale parameter     | Django          | Published event list data                                |
+| `/api/v1/events/{slug}/` | Locale parameter     | Django          | Published event detail data                              |
 
 Add About to the primary navigation. Prefer the clear navigation labels `Rreth nesh` and
 `Who we are`; the display heading may remain the more distinctive `Human Hz`.
@@ -258,7 +258,7 @@ The secondary dataset should not mix past and future events under an ambiguous h
 - When no additional upcoming events exist, show up to five recent published past events under
   `Frekuencat e kaluara` / `Past frequencies`.
 - If no published events exist at all, omit fake cards and show a designed `Sinjali i radhës po
-  vjen` / `Next signal incoming` state with a normal Instagram link.
+vjen` / `Next signal incoming` state with a normal Instagram link.
 
 ### 7.3 Homepage exclusions
 
@@ -320,26 +320,26 @@ practical.
 Implement a deliberately small initial model. Exact Python names may follow established project
 conventions, but the behavior must remain equivalent.
 
-| Field | Requirement |
-| --- | --- |
-| `id` | Server-generated UUID primary key |
-| `slug` | Stable, unique, lowercase URL slug shared across locales |
-| `title_sq`, `title_en` | Required to publish bilingually; bounded length |
-| `summary_sq`, `summary_en` | Plain text, approximately 240 characters maximum |
-| `description_sq`, `description_en` | Plain text or a strictly sanitized limited format; never raw arbitrary HTML |
-| `starts_at` | Required timezone-aware instant |
-| `ends_at` | Required and later than `starts_at` |
-| `doors_at` | Optional and no later than `starts_at` |
-| `lineup` | Ordered list of display names; provide a simple multi-line admin editor rather than an Artist model |
-| `poster` | Required approved raster upload for publication |
-| `poster_alt_sq`, `poster_alt_en` | Optional concise visual description; operational text still lives in HTML |
-| `publication_status` | `draft` or `published` |
-| `event_status` | `scheduled`, `postponed`, or `cancelled` |
-| `is_featured` | Optional homepage override; only one valid published upcoming event at a time |
-| `entry_note_sq`, `entry_note_en` | Optional concise door/entry note |
-| `published_at` | Server-managed when publication first occurs |
-| `created_at`, `updated_at` | Server-managed timestamps |
-| `created_by`, `updated_by` | Server-managed staff references derived from `request.user` |
+| Field                              | Requirement                                                                                         |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `id`                               | Server-generated UUID primary key                                                                   |
+| `slug`                             | Stable, unique, lowercase URL slug shared across locales                                            |
+| `title_sq`, `title_en`             | Required to publish bilingually; bounded length                                                     |
+| `summary_sq`, `summary_en`         | Plain text, approximately 240 characters maximum                                                    |
+| `description_sq`, `description_en` | Plain text or a strictly sanitized limited format; never raw arbitrary HTML                         |
+| `starts_at`                        | Required timezone-aware instant                                                                     |
+| `ends_at`                          | Required and later than `starts_at`                                                                 |
+| `doors_at`                         | Optional and no later than `starts_at`                                                              |
+| `lineup`                           | Ordered list of display names; provide a simple multi-line admin editor rather than an Artist model |
+| `poster`                           | Required approved raster upload for publication                                                     |
+| `poster_alt_sq`, `poster_alt_en`   | Optional concise visual description; operational text still lives in HTML                           |
+| `publication_status`               | `draft` or `published`                                                                              |
+| `event_status`                     | `scheduled`, `postponed`, or `cancelled`                                                            |
+| `is_featured`                      | Optional homepage override; only one valid published upcoming event at a time                       |
+| `entry_note_sq`, `entry_note_en`   | Optional concise door/entry note                                                                    |
+| `published_at`                     | Server-managed when publication first occurs                                                        |
+| `created_at`, `updated_at`         | Server-managed timestamps                                                                           |
+| `created_by`, `updated_by`         | Server-managed staff references derived from `request.user`                                         |
 
 Store instants in UTC and format them for `Europe/Tirane` at the domain/presentation boundary.
 Do not store a manually selectable `past` status. Do not add ticket, reservation, table, customer,

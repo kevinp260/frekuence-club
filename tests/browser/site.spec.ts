@@ -1,14 +1,18 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
+const fixtureOrigin = 'http://127.0.0.1:4322';
+
 const localizedRoutes = [
   '/',
   '/events/',
+  '/about/',
   '/policy/',
   '/visit/',
   '/privacy/',
   '/en/',
   '/en/events/',
+  '/en/about/',
   '/en/policy/',
   '/en/visit/',
   '/en/privacy/',
@@ -42,14 +46,165 @@ test('unknown paths return the branded document with HTTP 404', async ({ page })
 });
 
 test('language switches preserve equivalent routes', async ({ page }) => {
-  await page.goto('/policy/');
+  await page.goto('/about/');
   const toEnglish = page.getByRole('link', { name: 'EN — Shiko këtë faqe në anglisht' }).first();
-  await expect(toEnglish).toHaveAttribute('href', '/en/policy/');
+  await expect(toEnglish).toHaveAttribute('href', '/en/about/');
   await toEnglish.click();
-  await expect(page).toHaveURL(/\/en\/policy\/$/);
+  await expect(page).toHaveURL(/\/en\/about\/$/);
 
   const toAlbanian = page.getByRole('link', { name: 'SQ — View this page in Albanian' }).first();
-  await expect(toAlbanian).toHaveAttribute('href', '/policy/');
+  await expect(toAlbanian).toHaveAttribute('href', '/about/');
+});
+
+test('homepage leads with the truthful event state and omits migrated summaries', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('main > section').first()).toHaveClass(/next-signal/);
+  await expect(page.getByRole('heading', { name: 'Sinjali i radhës po vjen' })).toBeVisible();
+  await expect(page.getByText('00 / Asnjë event i publikuar')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Nuk hyjmë si një turmë.' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Rregulla të qarta. Prani e lirë.' })).toHaveCount(
+    0,
+  );
+});
+
+test('fixture homepage selects the valid featured event and limits the upcoming deck', async ({
+  page,
+}) => {
+  await page.goto(`${fixtureOrigin}/`);
+  const nextSignal = page.locator('[data-next-signal-state="event"]');
+  await expect(nextSignal).toBeVisible();
+  await expect(
+    nextSignal.getByRole('heading', { name: 'Fiksim vizual — Fusha e zgjedhur' }),
+  ).toBeVisible();
+  await expect(nextSignal.getByText('Fiksim vizual — Drita e parë')).toHaveCount(0);
+  await expect(page.locator('[data-event-card]')).toHaveCount(5);
+  await expect(page.getByRole('heading', { name: 'Në radar' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Frekuencat e kaluara' })).toHaveCount(0);
+
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test('event index separates upcoming events from past frequencies', async ({ page }) => {
+  await page.goto(`${fixtureOrigin}/events/`);
+  const upcoming = page.getByRole('region', { name: 'Eventet e ardhshme' });
+  const past = page.getByRole('region', { name: 'Frekuencat e kaluara' });
+  await expect(upcoming).toBeVisible();
+  await expect(past).toBeVisible();
+  await expect(upcoming.getByText('Fiksim vizual — Frekuencë e kaluar')).toHaveCount(0);
+  await expect(past.getByText('Fiksim vizual — Frekuencë e kaluar')).toBeVisible();
+});
+
+test('event card hover and keyboard focus expose an equivalent detail action', async ({ page }) => {
+  await page.goto(`${fixtureOrigin}/`);
+  const firstCard = page.locator('[data-event-card]').first();
+  const action = firstCard.locator('.event-deck__action');
+  await expect(action).toHaveCSS('opacity', '0');
+
+  await firstCard.hover();
+  await expect(action).toHaveCSS('opacity', '1');
+
+  await page.mouse.move(0, 0);
+  await firstCard.getByRole('link', { name: 'Shiko eventin' }).focus();
+  await expect(action).toHaveCSS('opacity', '1');
+  await expect(firstCard.getByRole('link', { name: 'Shiko eventin' })).toBeFocused();
+});
+
+test('mobile card selection uses an explicit control and a separate detail link', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${fixtureOrigin}/`);
+  const firstCard = page.locator('[data-event-card]').first();
+  const toggle = firstCard.locator('[data-card-toggle]');
+  const detail = firstCard.getByRole('link', { name: 'Shiko eventin' });
+  const action = firstCard.locator('.event-deck__action');
+
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(toggle).toHaveAccessibleName('Mbyll');
+  await expect(action).toHaveCSS('opacity', '1');
+  await expect(detail).toHaveAttribute('href', '/events/visual-fixture-first-light/');
+
+  await page.keyboard.press('Escape');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('event deck remains a readable linked list without JavaScript', async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto(`${fixtureOrigin}/`);
+
+  await expect(page.locator('[data-event-deck]')).not.toHaveClass(/event-deck--enhanced/);
+  await expect(page.locator('[data-card-toggle]:visible')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Shiko eventin' })).toHaveCount(6);
+
+  await context.close();
+});
+
+test('localized fixture detail routes are real destinations with reciprocal language links', async ({
+  page,
+}) => {
+  const response = await page.goto(`${fixtureOrigin}/events/visual-fixture-featured-field/`);
+  expect(response?.status()).toBe(200);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Fiksim vizual — Fusha e zgjedhur' }),
+  ).toBeVisible();
+  await expect(page.getByText('Fixture Gamma', { exact: true })).toBeVisible();
+  const structuredData = await page
+    .locator('script[type="application/ld+json"]')
+    .evaluate((element) => JSON.parse(element.textContent ?? '{}'));
+  expect(structuredData['@type']).toBe('MusicEvent');
+  expect(structuredData.name).toBe('Fiksim vizual — Fusha e zgjedhur');
+  expect(structuredData).not.toHaveProperty('offers');
+  await expect(
+    page.getByRole('link', { name: 'EN — Shiko këtë faqe në anglisht' }),
+  ).toHaveAttribute('href', '/en/events/visual-fixture-featured-field/');
+
+  const detailResults = await new AxeBuilder({ page }).analyze();
+  expect(detailResults.violations).toEqual([]);
+
+  const englishResponse = await page.goto(
+    `${fixtureOrigin}/en/events/visual-fixture-featured-field/`,
+  );
+  expect(englishResponse?.status()).toBe(200);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Visual Fixture — Featured Field' }),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'SQ — View this page in Albanian' })).toHaveAttribute(
+    'href',
+    '/events/visual-fixture-featured-field/',
+  );
+});
+
+test('normal production output excludes visual fixtures and their detail routes', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.getByText(/Fiksim vizual|Visual Fixture/i)).toHaveCount(0);
+  const response = await page.goto('/events/visual-fixture-featured-field/');
+  expect(response?.status()).toBe(404);
+});
+
+test('repeated FrequencyField variants use unique SVG resource IDs', async ({ page }) => {
+  await page.goto(`${fixtureOrigin}/`);
+  const ids = await page
+    .locator('.frequency-field [id]')
+    .evaluateAll((elements) => elements.map((element) => element.id));
+  expect(ids.length).toBeGreaterThan(2);
+  expect(new Set(ids).size).toBe(ids.length);
+});
+
+test('About carries the Human Hz manifesto and symbolic 7.83 explanation', async ({ page }) => {
+  await page.goto('/about/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Human Hz' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Nuk hyjmë si një turmë.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Club calibrated at 7.83 Hz' })).toBeVisible();
+  await expect(page.getByText(/Nuk është pretendim mjekësor ose shkencor/)).toBeVisible();
 });
 
 test('skip link and primary navigation work from the keyboard', async ({ page }) => {
@@ -64,10 +219,13 @@ test('mobile navigation exposes state, moves focus, and closes with Escape', asy
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   const menu = page.locator('.nav-toggle');
+  const navigation = page.locator('#primary-navigation');
   await expect(menu).toBeVisible();
+  await expect(navigation).toBeHidden();
   await menu.focus();
   await page.keyboard.press('Enter');
   await expect(menu).toHaveAttribute('aria-expanded', 'true');
+  await expect(navigation).toBeVisible();
   await expect(page.getByRole('link', { name: 'Evente', exact: true }).first()).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(menu).toHaveAttribute('aria-expanded', 'false');
@@ -97,11 +255,25 @@ for (const width of [320, 390, 768, 1440]) {
   });
 }
 
+for (const width of [320, 390, 1024, 1440]) {
+  test(`fixture event homepage has no page-level horizontal overflow at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(`${fixtureOrigin}/`);
+    const dimensions = await page.evaluate(() => ({
+      client: document.documentElement.clientWidth,
+      scroll: document.documentElement.scrollWidth,
+    }));
+    expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.client);
+  });
+}
+
 test('reduced-motion mode keeps content available without animation', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Human Hz' })).toBeVisible();
-  const motion = await page.locator('.hero__pattern').evaluate((element) => {
+  await expect(page.getByRole('heading', { name: 'Sinjali i radhës po vjen' })).toBeVisible();
+  const motion = await page.locator('.frequency-field__layer').evaluate((element) => {
     const styles = getComputedStyle(element);
     return {
       animationName: styles.animationName,
@@ -110,6 +282,20 @@ test('reduced-motion mode keeps content available without animation', async ({ p
   });
   expect(motion.animationName).toBe('none');
   expect(motion.transitionDuration).toBeLessThanOrEqual(0.01);
+});
+
+test('reduced-motion event deck retains state changes without transitions', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${fixtureOrigin}/`);
+  const firstCard = page.locator('[data-event-card]').first();
+  const toggle = firstCard.locator('[data-card-toggle]');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  const transitionDuration = await firstCard.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).transitionDuration),
+  );
+  expect(transitionDuration).toBeLessThanOrEqual(0.01);
 });
 
 test('external links that open a tab include safe rel values', async ({ page }) => {

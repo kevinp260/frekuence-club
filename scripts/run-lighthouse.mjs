@@ -8,6 +8,8 @@ const host = '127.0.0.1';
 const port = Number(process.env.LIGHTHOUSE_PORT || 4322);
 const origin = `http://${host}:${port}`;
 const chromePath = process.env.CHROME_PATH || '/usr/bin/google-chrome';
+const previewRoot = process.env.LIGHTHOUSE_ROOT || 'dist';
+const reportPath = process.env.LIGHTHOUSE_REPORT_PATH || './lighthouse-report.json';
 
 function run(command, argumentsList, options = {}) {
   return new Promise((resolve, reject) => {
@@ -49,7 +51,15 @@ async function waitForPreview(server) {
 
 const server = spawn(
   process.execPath,
-  [join(root, 'scripts/serve-dist.mjs'), '--host', host, '--port', String(port)],
+  [
+    join(root, 'scripts/serve-dist.mjs'),
+    '--host',
+    host,
+    '--port',
+    String(port),
+    '--root',
+    previewRoot,
+  ],
   { stdio: 'inherit' },
 );
 
@@ -60,11 +70,13 @@ try {
     `${origin}/`,
     `--chrome-path=${chromePath}`,
     '--output=json',
-    '--output-path=./lighthouse-report.json',
+    `--output-path=${reportPath}`,
     '--only-categories=performance,accessibility,best-practices,seo',
     '--quiet',
   ]);
-  await run(process.execPath, [join(root, 'scripts/validate-lighthouse.mjs')]);
+  await run(process.execPath, [join(root, 'scripts/validate-lighthouse.mjs')], {
+    env: { ...process.env, LIGHTHOUSE_REPORT_PATH: reportPath },
+  });
 } finally {
   if (server.exitCode === null) server.kill('SIGTERM');
 }

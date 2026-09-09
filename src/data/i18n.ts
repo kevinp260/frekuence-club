@@ -17,7 +17,7 @@ type Dictionary = {
     navigation: string;
     openMenu: string;
     closeMenu: string;
-    nav: Record<'events' | 'policy' | 'visit', string>;
+    nav: Record<'events' | 'about' | 'policy' | 'visit', string>;
     footerNavigation: string;
     privacy: string;
     instagram: string;
@@ -38,17 +38,33 @@ type Dictionary = {
     reservationsStatus: string;
     physicalId: string;
     noMedia: string;
+    viewEvent: string;
+    backToEvents: string;
   };
   home: {
-    heroKicker: string;
-    heroTitle: string;
-    heroLocation: string;
-    heroCalibration: string;
-    heroAge: string;
-    eventsKicker: string;
-    eventsTitle: string;
-    eventsEmpty: string;
-    eventsNote: string;
+    nextKicker: string;
+    nextTitle: string;
+    emptyStatus: string;
+    emptyBody: string;
+    noUpcomingStatus: string;
+    noUpcomingBody: string;
+    channelNote: string;
+    awaitingArtwork: string;
+    timezone: string;
+    ageContext: string;
+    doorContext: string;
+    dividerMarker: string;
+    upcomingDeckLabel: string;
+    pastDeckLabel: string;
+    deckRegionLabel: string;
+    selectEvent: string;
+    closeEvent: string;
+    fixtureNotice: string;
+  };
+  about: {
+    kicker: string;
+    title: string;
+    intro: string;
     manifestoKicker: string;
     manifestoTitle: string;
     manifestoLead: string;
@@ -58,12 +74,13 @@ type Dictionary = {
       connectorLabel: string;
       to: string;
     };
-    policyKicker: string;
-    policyTitle: string;
-    policySignals: Signal[];
-    visitKicker: string;
-    visitTitle: string;
-    openingNotice: string;
+    calibrationKicker: string;
+    calibrationTitle: string;
+    calibrationBody: string;
+    onwardKicker: string;
+    onwardTitle: string;
+    onwardBody: string;
+    dividerMarker: string;
   };
   events: {
     kicker: string;
@@ -73,6 +90,14 @@ type Dictionary = {
     emptyBody: string;
     instagramNote: string;
     collectionLabel: string;
+    upcomingLabel: string;
+    pastLabel: string;
+    detailsKicker: string;
+    startsLabel: string;
+    endsLabel: string;
+    doorsLabel: string;
+    lineupLabel: string;
+    statusLabels: Record<'scheduled' | 'postponed' | 'cancelled', string>;
   };
   policy: {
     kicker: string;
@@ -130,6 +155,11 @@ export const translations: Record<Locale, Dictionary> = {
         description:
           'Shiko eventet e ardhshme të Frekuence Club në Tiranë. Frekuenca e radhës do të shpallet së shpejti.',
       },
+      about: {
+        title: 'Rreth nesh — Human Hz në Frekuence Club',
+        description:
+          'Zbulo Human Hz, manifestin dhe kuptimin e 7.83 si simbol i kalibrimit, rezonancës dhe pranisë kolektive në Frekuence Club.',
+      },
       policy: {
         title: 'Politika e hyrjes — Frekuence Club',
         description:
@@ -151,7 +181,7 @@ export const translations: Record<Locale, Dictionary> = {
       navigation: 'Navigimi kryesor',
       openMenu: 'Hap menunë',
       closeMenu: 'Mbyll menunë',
-      nav: { events: 'Evente', policy: 'Politika', visit: 'Na vizito' },
+      nav: { events: 'Evente', about: 'Rreth nesh', policy: 'Politika', visit: 'Na vizito' },
       footerNavigation: 'Navigimi në fund të faqes',
       privacy: 'Privatësia',
       instagram: 'Frekuence Club në Instagram',
@@ -172,17 +202,36 @@ export const translations: Record<Locale, Dictionary> = {
       reservationsStatus: 'Rezervimet — së shpejti',
       physicalId: 'Kërkohet dokument fizik identifikimi.',
       noMedia: 'Pa foto. Pa video.',
+      viewEvent: 'Shiko eventin',
+      backToEvents: 'Kthehu te eventet',
     },
     home: {
-      heroKicker: 'Kompleksi Fari / Tiranë / 41.3084° N',
-      heroTitle: 'Human Hz',
-      heroLocation: 'Nën një far, në një bodrum.',
-      heroCalibration: 'Club calibrated at 7.83 Hz',
-      heroAge: '18+ / ID fizike',
-      eventsKicker: 'Sinjali i ardhshëm',
-      eventsTitle: 'Evente',
-      eventsEmpty: 'Frekuenca e radhës do të shpallet së shpejti.',
-      eventsNote: 'Njoftimet publikohen këtu dhe në kanalin tonë zyrtar në Instagram.',
+      nextKicker: 'Sinjali i radhës',
+      nextTitle: 'Sinjali i radhës po vjen',
+      emptyStatus: '00 / Asnjë event i publikuar',
+      emptyBody:
+        'Nuk ka evente të publikuara aktualisht. Kur programi të konfirmohet, eventi i ardhshëm do të shfaqet i pari këtu.',
+      noUpcomingStatus: '00 / Asnjë event i ardhshëm',
+      noUpcomingBody:
+        'Nuk ka një event të ardhshëm të vlefshëm aktualisht. Frekuencat e publikuara më herët mbeten më poshtë.',
+      channelNote: 'Njoftimet publikohen këtu dhe në kanalin tonë zyrtar në Instagram.',
+      awaitingArtwork: 'Në pritje të sinjalit',
+      timezone: 'Europe / Tiranë',
+      ageContext: 'Vetëm 18+ / Kërkohet dokument fizik identifikimi',
+      doorContext: 'Hyrja miratohet në derë para pagesës.',
+      dividerMarker: 'Sinjali i radhës / 00',
+      upcomingDeckLabel: 'Në radar',
+      pastDeckLabel: 'Frekuencat e kaluara',
+      deckRegionLabel: 'Dora e eventeve',
+      selectEvent: 'Zgjidh',
+      closeEvent: 'Mbyll',
+      fixtureNotice: 'Fiksim vizual / Nuk është event real',
+    },
+    about: {
+      kicker: 'Rreth nesh / Human Hz',
+      title: 'Human Hz',
+      intro:
+        'Frekuence është ndërtuar mbi idenë se sinjale të veçanta takohen, ndërhyjnë dhe bëhen një fushë e përbashkët.',
       manifestoKicker: 'Human Hz / Manifest',
       manifestoTitle: 'Nuk hyjmë si një turmë.',
       manifestoLead:
@@ -194,29 +243,14 @@ export const translations: Record<Locale, Dictionary> = {
         connectorLabel: 'drejt',
         to: 'shared field',
       },
-      policyKicker: 'Hapësirë e përbashkët',
-      policyTitle: 'Rregulla të qarta. Prani e lirë.',
-      policySignals: [
-        {
-          title: '18+ / ID fizike',
-          body: 'Hyrja lejohet vetëm për persona mbi 18 vjeç me dokument fizik identifikimi.',
-        },
-        {
-          title: 'Respekt dhe pëlqim',
-          body: 'Respekto kufijtë, hapësirën dhe pëlqimin e çdo personi.',
-        },
-        {
-          title: 'Zero tolerancë',
-          body: 'Nuk tolerohen diskriminimi, ngacmimi, dhuna, kërcënimi ose sjellja agresive.',
-        },
-        {
-          title: 'Pa foto. Pa video.',
-          body: 'Nata përjetohet këtu. Telefonat dhe kamerat nuk janë pjesë e pistës.',
-        },
-      ],
-      visitKicker: 'Vendndodhja',
-      visitTitle: 'Kompleksi Fari, Tiranë',
-      openingNotice: 'Orari publikohet për çdo event.',
+      calibrationKicker: 'Kalibrimi / 7.83',
+      calibrationTitle: 'Club calibrated at 7.83 Hz',
+      calibrationBody:
+        '7.83 është simboli që kemi zgjedhur për kalibrimin, rezonancën dhe praninë kolektive. Nuk është pretendim mjekësor ose shkencor; është një pikë orientimi për mënyrën si frekuencat individuale gjejnë një ritëm të përbashkët.',
+      onwardKicker: 'Më tej',
+      onwardTitle: 'Hapësira mbahet nga të gjithë.',
+      onwardBody: 'Lexo politikën e hyrjes dhe informacionin praktik përpara se të vish në klub.',
+      dividerMarker: 'Njeri / sinjal / fushë e përbashkët',
     },
     events: {
       kicker: 'Programi / Europe–Tirane',
@@ -227,6 +261,18 @@ export const translations: Record<Locale, Dictionary> = {
         'Nuk ka evente të publikuara aktualisht. Ndiq kanalin zyrtar për sinjalin e ardhshëm.',
       instagramNote: 'Instagrami është kanal njoftimi, jo kanal rezervimi.',
       collectionLabel: 'Eventet e publikuara',
+      upcomingLabel: 'Eventet e ardhshme',
+      pastLabel: 'Frekuencat e kaluara',
+      detailsKicker: 'Detajet e eventit / Europe–Tirane',
+      startsLabel: 'Fillon',
+      endsLabel: 'Përfundon',
+      doorsLabel: 'Dyert',
+      lineupLabel: 'Formacioni',
+      statusLabels: {
+        scheduled: 'Planifikuar',
+        postponed: 'Shtyrë',
+        cancelled: 'Anuluar',
+      },
     },
     policy: {
       kicker: 'Hyrja / Kodi i sjelljes',
@@ -340,6 +386,11 @@ export const translations: Record<Locale, Dictionary> = {
         description:
           'See upcoming events at Frekuence Club in Tirana. The next frequency will be announced soon.',
       },
+      about: {
+        title: 'Who we are — Human Hz at Frekuence Club',
+        description:
+          'Discover Human Hz, the manifesto, and 7.83 as a symbol of calibration, resonance, and collective presence at Frekuence Club.',
+      },
       policy: {
         title: 'Entry policy — Frekuence Club',
         description:
@@ -361,7 +412,7 @@ export const translations: Record<Locale, Dictionary> = {
       navigation: 'Primary navigation',
       openMenu: 'Open menu',
       closeMenu: 'Close menu',
-      nav: { events: 'Events', policy: 'Policy', visit: 'Visit' },
+      nav: { events: 'Events', about: 'Who we are', policy: 'Policy', visit: 'Visit' },
       footerNavigation: 'Footer navigation',
       privacy: 'Privacy',
       instagram: 'Frekuence Club on Instagram',
@@ -382,17 +433,36 @@ export const translations: Record<Locale, Dictionary> = {
       reservationsStatus: 'Reservations — coming soon',
       physicalId: 'A physical identity document is required.',
       noMedia: 'No photos. No videos.',
+      viewEvent: 'View event',
+      backToEvents: 'Back to events',
     },
     home: {
-      heroKicker: 'Kompleksi Fari / Tirana / 41.3084° N',
-      heroTitle: 'Human Hz',
-      heroLocation: 'Under a lighthouse, in a basement.',
-      heroCalibration: 'Club calibrated at 7.83 Hz',
-      heroAge: '18+ / Physical ID',
-      eventsKicker: 'Next signal',
-      eventsTitle: 'Events',
-      eventsEmpty: 'The next frequency will be announced soon.',
-      eventsNote: 'Announcements are published here and on our official Instagram channel.',
+      nextKicker: 'Next signal',
+      nextTitle: 'Next signal incoming',
+      emptyStatus: '00 / No published event',
+      emptyBody:
+        'There are no published events right now. Once the programme is confirmed, the next event will appear first here.',
+      noUpcomingStatus: '00 / No upcoming event',
+      noUpcomingBody:
+        'There is no valid upcoming event right now. Earlier published frequencies remain available below.',
+      channelNote: 'Announcements are published here and on our official Instagram channel.',
+      awaitingArtwork: 'Awaiting signal',
+      timezone: 'Europe / Tirana',
+      ageContext: 'Strictly 18+ / A physical identity document is required',
+      doorContext: 'Admission is approved at the door before payment.',
+      dividerMarker: 'Next signal / 00',
+      upcomingDeckLabel: 'On the radar',
+      pastDeckLabel: 'Past frequencies',
+      deckRegionLabel: 'Event card hand',
+      selectEvent: 'Select',
+      closeEvent: 'Close',
+      fixtureNotice: 'Visual fixture / Not a real event',
+    },
+    about: {
+      kicker: 'Who we are / Human Hz',
+      title: 'Human Hz',
+      intro:
+        'Frekuence is built on the idea that separate signals meet, interfere, and become a shared field.',
       manifestoKicker: 'Human Hz / Manifesto',
       manifestoTitle: 'We do not enter as a crowd.',
       manifestoLead:
@@ -404,29 +474,15 @@ export const translations: Record<Locale, Dictionary> = {
         connectorLabel: 'to',
         to: 'shared field',
       },
-      policyKicker: 'Shared space',
-      policyTitle: 'Clear rules. Free presence.',
-      policySignals: [
-        {
-          title: '18+ / Physical ID',
-          body: 'Admission is strictly for guests aged 18 or over with a physical identity document.',
-        },
-        {
-          title: 'Respect and consent',
-          body: 'Respect every person’s boundaries, space, and consent.',
-        },
-        {
-          title: 'Zero tolerance',
-          body: 'Discrimination, harassment, violence, intimidation, and aggressive conduct are not tolerated.',
-        },
-        {
-          title: 'No photos. No videos.',
-          body: 'The night is experienced here. Phones and cameras are not part of the dance floor.',
-        },
-      ],
-      visitKicker: 'Location',
-      visitTitle: 'Kompleksi Fari, Tirana',
-      openingNotice: 'Opening times are published for each event.',
+      calibrationKicker: 'Calibration / 7.83',
+      calibrationTitle: 'Club calibrated at 7.83 Hz',
+      calibrationBody:
+        '7.83 is our chosen symbol for calibration, resonance, and collective presence. It is not a medical or scientific claim; it is a reference point for how individual frequencies find a shared rhythm.',
+      onwardKicker: 'Go further',
+      onwardTitle: 'Everyone holds the space.',
+      onwardBody:
+        'Read the entry policy and practical information before making your way to the club.',
+      dividerMarker: 'Human / signal / shared field',
     },
     events: {
       kicker: 'Programme / Europe–Tirane',
@@ -437,6 +493,18 @@ export const translations: Record<Locale, Dictionary> = {
         'There are no published events right now. Follow the official channel for the next signal.',
       instagramNote: 'Instagram is an announcement channel, not a reservation channel.',
       collectionLabel: 'Published events',
+      upcomingLabel: 'Upcoming events',
+      pastLabel: 'Past frequencies',
+      detailsKicker: 'Event details / Europe–Tirane',
+      startsLabel: 'Starts',
+      endsLabel: 'Ends',
+      doorsLabel: 'Doors',
+      lineupLabel: 'Lineup',
+      statusLabels: {
+        scheduled: 'Scheduled',
+        postponed: 'Postponed',
+        cancelled: 'Cancelled',
+      },
     },
     policy: {
       kicker: 'Entry / Code of conduct',

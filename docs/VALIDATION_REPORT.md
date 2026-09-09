@@ -1,62 +1,69 @@
-# Local release validation
+# Phase 2 checkpoint 3 validation
 
-Validated on 2026-08-29 against the Phase 1 implementation in this workspace.
+Validated on 2026-09-09 against `feat/phase-2-foundation` after the P1 event-homepage review
+follow-up. This remains frontend-only checkpoint 3 work; Django/backend checkpoint 4 has not
+started.
 
-## Automated gates
+## Baseline context
 
-| Gate                                              | Result                                                                                                                                                           |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run build`                                   | Passed: formatting, ESLint, Astro diagnostics, unit checks, 11-page static build, and production-output validation                                               |
-| Astro diagnostics                                 | Passed: 0 errors, 0 warnings, 0 hints across 41 files                                                                                                            |
-| Production-output validator                       | Passed: 10 localized canonical routes and 36 generated files                                                                                                     |
-| `PUBLIC_NOINDEX=true` staging build and validator | Passed: staging routes emitted indexing protection without weakening production validation                                                                       |
-| `npm run test:e2e`                                | Passed: 20 functional, accessibility, navigation, 404, security-link, reduced-motion, and responsive-overflow checks; 15 opt-in visual tests skipped as designed |
-| `npm run test:visual`                             | Passed: 15 screenshots captured                                                                                                                                  |
-| `npm run audit:lighthouse`                        | Passed: Performance 100, Accessibility 100, Best Practices 100, SEO 100, LCP 1,744 ms, CLS 0                                                                     |
-| `npm audit --omit=dev`                            | Passed: 0 vulnerabilities                                                                                                                                        |
-| `npm audit`                                       | Passed: 0 vulnerabilities                                                                                                                                        |
+- The original checkpoint 3 baseline and final gates passed before this follow-up.
+- The Astro event collection was genuinely empty, but the homepage did not consume it and would
+  therefore have continued to show the empty state after a real published entry was added.
+- The three newly tracked poster files had generic numeric names and no explicit non-production
+  inclusion boundary.
 
-The event collection is intentionally empty in Phase 1. Astro's message that no event Markdown
-files were found is expected; the rendered site shows the localized empty state and emits no
-invented Event structured data.
+## Current automated gates
 
-## Responsive and visual review
+| Gate                                | Result                                                                                                                                                |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run build`                     | Passed: formatting, ESLint, Astro diagnostics, 11 unit tests, 13-page production build, sitemap, and production-output validation                     |
+| Astro diagnostics                   | Passed: 0 errors, 0 warnings, 0 hints across 59 files                                                                                                 |
+| Production validator                | Passed: 12 localized canonical routes and 43 generated files; fixture names/routes absent; internal links, metadata, hreflang, sitemap, and 404 valid |
+| `npm run test:e2e`                  | Passed: 37 functional/browser tests; 26 opt-in visual tests skipped                                                                                   |
+| `npm run test:visual`               | Passed: 26 screenshots, including the five committed PR review captures                                                                               |
+| `npm run audit:lighthouse`          | Passed: Performance 100, Accessibility 100, Best Practices 100, SEO 100; LCP 1,658 ms; CLS 0                                                          |
+| `npm run audit:lighthouse:fixtures` | Passed: Performance 98, Accessibility 100, Best Practices 100, SEO 100; LCP 2,342 ms; CLS 0.00013                                                     |
+| `npm audit`                         | Passed: 0 known vulnerabilities                                                                                                                       |
 
-Homepages were captured in Albanian and English at 390×844, 768×1024, and 1440×1000. Every
-inner page and the bilingual 404 were captured at 1440×1000. The final review found no clipped
-copy, overlapping controls, broken hierarchy, or unintended horizontal overflow. Automated
-overflow checks also pass at 320, 390, 768, and 1440 px.
+## Event behavior covered
 
-The local evidence is in `screenshots/` and is regenerated with `npm run test:visual`:
+- Valid featured-event priority and earliest-upcoming fallback.
+- In-progress scheduled events remain eligible until their `endsAt` boundary.
+- Rejection of draft, cancelled, and past featured candidates.
+- Chronological secondary selection with a hard five-card cap.
+- Separately typed and visibly labelled upcoming and recent-past groups.
+- Genuine zero-published-event fallback and no-upcoming-with-history behavior.
+- Pointer hover, keyboard focus, explicit mobile tap selection, Escape reset, reduced motion,
+  and a readable linked list when JavaScript is disabled.
+- Real localized detail destinations, reciprocal language links, localized metadata, and truthful
+  `MusicEvent` data without fabricated offers.
+- Unique SVG resource IDs when multiple event frequency fields render together.
+- No page-level horizontal overflow in the empty and fixture event homepages from 320 to 1440 px.
+- Exact opt-in fixture loading and both build-time and browser-level proof that a normal production
+  build excludes fixture content and routes.
 
-- `home-{sq,en}-{390x844,768x1024,1440x1000}.png`
-- `{events,policy,visit,privacy}-{sq,en}-1440x1000.png`
-- `404-bilingual-1440x1000.png`
+## Visual evidence
 
-## Container verification
+The five requested captures are committed and linked from
+[`docs/review/phase-2-foundation/README.md`](review/phase-2-foundation/README.md):
 
-The final local image is
-`sha256:6e7f8c378321c521947ef3d4a7c077eac56bf38a3e19275808bc1ef10d19ec65`.
-The recreated container reported healthy and published only
-`127.0.0.1:3010 → 8080`.
+- Homepage with events at 1440 × 1000.
+- Homepage with events at 390 × 844.
+- Homepage empty state at 1440 × 1000.
+- About page at 1440 × 1000.
+- About page at 390 × 844.
 
-- Runtime identity: `uid=101(nginx) gid=101(nginx)` / image user `101:101`
-- Read-only root filesystem: enabled
-- Linux capabilities: all dropped
-- Privilege escalation: disabled with `no-new-privileges:true`
-- Writable runtime storage: explicit 16 MB `/tmp` tmpfs only
-- `/`, `/events/`, `/en/`, and `/healthz`: HTTP 200
-- Unknown route: branded document with HTTP 404
-- HTML and 404 caching: `no-cache`
-- Fingerprinted asset caching: `public, max-age=31536000, immutable`
-- Server header: `nginx` without a version token
-- Runtime file inventory: generated HTML, sitemap/robots, web manifest, icons/social image,
-  fonts, styles, JavaScript, and optimized WebP assets only; no source Markdown, source maps,
-  environment files, brand PDF, or stock Nginx pages
+The event captures use only visibly marked visual fixtures. Manual inspection found no page-level
+overflow, clipped primary content, overlapping CTA controls, or illegible card metadata. The mobile
+deck is an explicitly labelled horizontal region with visible selection controls and separate links.
 
-## Remaining launch blockers
+## Fixture and checkpoint boundary
 
-The implementation is locally deployable, but final public-launch signoff still requires the
-owner-approved content and legal inputs in `CONTENT_TODOS.md` and original production brand
-assets in `BRAND_ASSET_TODOS.md`. The policy and privacy pages remain visibly labeled drafts
-until those inputs are supplied.
+Normal builds load only `src/content/events/`. The opt-in fixture build loads the clearly named
+records and poster assets under `src/content/event-fixtures/`, writes to ignored `dist-fixtures/`,
+and never runs in the production Dockerfile. The production validator fails if fixture markers
+appear in `dist/`.
+
+No Django, PostgreSQL, Node adapter, event API, staff administration, upload processing, or
+container-topology change is included. Checkpoint 6 is still responsible for replacing the
+transitional collection source with Django/SSR without redesigning the routes or event components.

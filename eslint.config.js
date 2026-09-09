@@ -5,7 +5,14 @@ import tseslint from 'typescript-eslint';
 
 export default defineConfig(
   {
-    ignores: ['.astro/**', 'dist/**', 'node_modules/**', 'playwright-report/**', 'test-results/**'],
+    ignores: [
+      '.astro/**',
+      'dist/**',
+      'dist-fixtures/**',
+      'node_modules/**',
+      'playwright-report/**',
+      'test-results/**',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
@@ -38,6 +45,7 @@ export default defineConfig(
         HTMLElement: 'readonly',
         HTMLButtonElement: 'readonly',
         HTMLAnchorElement: 'readonly',
+        Node: 'readonly',
       },
     },
   },

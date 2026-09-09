@@ -14,7 +14,7 @@ interface Props {
 const { locale, page } = Astro.props;
 const copy = t(locale);
 const alternate = alternateLocale(locale);
-const footerPages = ['events', 'policy', 'visit', 'privacy'] as const;
+const footerPages = ['events', 'about', 'policy', 'visit', 'privacy'] as const;
 ---
 
 <footer class="site-footer">

@@ -23,6 +23,14 @@
   --color-gray-dark: #404040;
   --color-gray: #808080;
 
+  /* Provisional Phase 2 decorative signal colors sampled from supplied club artwork. */
+  --color-signal-cyan: #31c8ef;
+  --color-signal-magenta: #f02f87;
+  --color-signal-green: #43b879;
+  --color-signal-cyan-muted: rgb(49 200 239 / 36%);
+  --color-signal-magenta-muted: rgb(240 47 135 / 36%);
+  --color-signal-green-muted: rgb(67 184 121 / 32%);
+
   --font-sans: 'Montserrat', 'Avenir Next', Avenir, 'Segoe UI', Helvetica, Arial, sans-serif;
   --step--2: clamp(0.72rem, 0.69rem + 0.12vw, 0.82rem);
   --step--1: clamp(0.84rem, 0.79rem + 0.18vw, 0.98rem);
@@ -44,6 +52,7 @@
   --site-max: 120rem;
   --page-gutter: clamp(1rem, 3vw, 3.5rem);
   --header-height: clamp(4.5rem, 7vw, 5.5rem);
+  --line-hairline: 1px solid var(--color-gray-dark);
 }
 
 *,

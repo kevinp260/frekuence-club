@@ -12,6 +12,14 @@ The following owner inputs remain unresolved and block a final production-ready 
 - opening schedule, or confirmation that all hours remain event-specific
 - approved venue photography with usage rights
 - future reservation rules and the minimum personal information required
+- confirmation of which supplied posters are approved real events, layout samples, or duplicates
+- complete event facts and confirmed years supplied independently of poster artwork
+- approved Albanian and English event copy and poster alternative text
+- poster publication rights and any required photographer, designer, or artist credits
+- final cyan, magenta, and green decorative signal token values
+- staff account recipients, TOTP enrollment/recovery procedure, and emergency-account ownership
+- database and poster-media backup destination, retention, restore owner, and alert destination
 
 The rendered policy and privacy pages are clearly labeled drafts. No unconfirmed legal entity,
-contact detail, schedule, event, price, or operational claim is published.
+contact detail, schedule, event, price, or operational claim is published. Supplied posters remain
+development/layout references and are not evidence of an approved event listing.

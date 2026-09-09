@@ -1,0 +1,152 @@
+---
+interface Props {
+  variant?: 'events' | 'about' | 'policy' | 'visit';
+  instanceId: string;
+}
+
+const { variant = 'events', instanceId } = Astro.props;
+const idBase = `frequency-field-${variant}-${instanceId}`;
+const halftoneId = `${idBase}-halftone`;
+const clipId = `${idBase}-clip`;
+---
+
+<svg
+  class:list={['frequency-field', `frequency-field--${variant}`]}
+  viewBox="0 0 960 640"
+  fill="none"
+  preserveAspectRatio="xMidYMid slice"
+  aria-hidden="true"
+  focusable="false"
+>
+  <defs>
+    <pattern id={halftoneId} width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.25" fill="currentColor"></circle>
+    </pattern>
+    <clipPath id={clipId}>
+      <rect width="960" height="640" rx="2"></rect>
+    </clipPath>
+  </defs>
+
+  <g clip-path={`url(#${clipId})`}>
+    <rect class="frequency-field__halftone" width="960" height="640" fill={`url(#${halftoneId})`}
+    ></rect>
+
+    {
+      variant === 'about' ? (
+        <g class="frequency-field__layer frequency-field__layer--rings">
+          <ellipse cx="480" cy="320" rx="110" ry="74" />
+          <ellipse cx="480" cy="320" rx="180" ry="121" />
+          <ellipse cx="480" cy="320" rx="250" ry="168" />
+          <ellipse cx="480" cy="320" rx="320" ry="215" />
+          <ellipse cx="480" cy="320" rx="390" ry="262" />
+        </g>
+      ) : variant === 'policy' ? (
+        <g class="frequency-field__layer frequency-field__layer--gate">
+          <path d="M80 88H880M80 168H880M80 248H880M80 328H880M80 408H880M80 488H880M80 568H880" />
+          <path d="M160 56V584M320 56V584M480 56V584M640 56V584M800 56V584" />
+        </g>
+      ) : variant === 'visit' ? (
+        <g class="frequency-field__layer frequency-field__layer--radar">
+          <circle cx="480" cy="320" r="92" />
+          <circle cx="480" cy="320" r="176" />
+          <circle cx="480" cy="320" r="260" />
+          <path d="M480 20V620M180 320H780M480 320L754 160" />
+        </g>
+      ) : (
+        <g class="frequency-field__layer frequency-field__layer--amplitude">
+          <path d="M-40 122C65 24 146 218 252 122S440 24 548 122 736 218 1000 122" />
+          <path d="M-40 202C92 94 170 310 304 202S518 94 652 202 866 310 1000 202" />
+          <path d="M-40 282C118 154 198 410 358 282S602 154 762 282 920 410 1000 282" />
+          <path d="M-40 362C118 234 198 490 358 362S602 234 762 362 920 490 1000 362" />
+          <path d="M-40 442C92 334 170 550 304 442S518 334 652 442 866 550 1000 442" />
+          <path d="M-40 522C65 424 146 618 252 522S440 424 548 522 736 618 1000 522" />
+        </g>
+      )
+    }
+
+    <g class="frequency-field__phase" aria-hidden="true">
+      <path d="M120 0V640M360 0V640M600 0V640M840 0V640"></path>
+    </g>
+  </g>
+</svg>
+
+<style>
+  .frequency-field {
+    color: var(--color-signal-cyan);
+    pointer-events: none;
+  }
+
+  .frequency-field__halftone {
+    opacity: 0.12;
+  }
+
+  .frequency-field__layer,
+  .frequency-field__phase {
+    vector-effect: non-scaling-stroke;
+  }
+
+  .frequency-field__layer {
+    stroke: currentcolor;
+    stroke-width: 1.4;
+    opacity: 0.72;
+    animation: phase-drift 18s ease-in-out infinite alternate;
+  }
+
+  .frequency-field__phase {
+    stroke: var(--color-signal-magenta);
+    stroke-dasharray: 3 18;
+    stroke-width: 1;
+    opacity: 0.36;
+  }
+
+  .frequency-field--about {
+    color: var(--color-signal-green);
+  }
+
+  .frequency-field--about .frequency-field__layer {
+    transform-origin: center;
+    animation-name: field-breathe;
+    animation-duration: 22s;
+  }
+
+  .frequency-field--policy,
+  .frequency-field--visit {
+    color: var(--color-pale-slate);
+  }
+
+  .frequency-field__layer--gate {
+    stroke-dasharray: 2 9;
+  }
+
+  @keyframes phase-drift {
+    from {
+      transform: translate3d(-1.2%, 0, 0);
+      opacity: 0.56;
+    }
+
+    to {
+      transform: translate3d(1.2%, 0, 0);
+      opacity: 0.78;
+    }
+  }
+
+  @keyframes field-breathe {
+    from {
+      transform: scale(0.985);
+      opacity: 0.56;
+    }
+
+    to {
+      transform: scale(1.015);
+      opacity: 0.76;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .frequency-field__layer {
+      animation: none;
+      opacity: 0.68;
+      transform: none;
+    }
+  }
+</style>

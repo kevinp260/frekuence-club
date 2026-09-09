@@ -14,12 +14,20 @@ export default defineConfig({
       executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome',
     },
   },
-  webServer: {
-    command: 'npm run preview -- --host 127.0.0.1 --port 4321',
-    url: 'http://127.0.0.1:4321/',
-    reuseExistingServer: true,
-    timeout: 30_000,
-  },
+  webServer: [
+    {
+      command: 'npm run preview -- --host 127.0.0.1 --port 4321',
+      url: 'http://127.0.0.1:4321/',
+      reuseExistingServer: true,
+      timeout: 30_000,
+    },
+    {
+      command: 'npm run preview:fixtures -- --host 127.0.0.1 --port 4322',
+      url: 'http://127.0.0.1:4322/',
+      reuseExistingServer: true,
+      timeout: 30_000,
+    },
+  ],
   projects: [
     {
       name: 'chromium',

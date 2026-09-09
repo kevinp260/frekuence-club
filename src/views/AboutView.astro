@@ -1,0 +1,314 @@
+---
+import { ArrowRight } from '@lucide/astro';
+import ChromaticRegistrationFrame from '../components/ChromaticRegistrationFrame.astro';
+import FrequencyField from '../components/FrequencyField.astro';
+import SignalDivider from '../components/SignalDivider.astro';
+import SignalLink from '../components/SignalLink.astro';
+import { t } from '../data/i18n';
+import { routeFor, type Locale } from '../data/routes';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const copy = t(locale);
+---
+
+<BaseLayout locale={locale} page="about">
+  <section class="about-hero section-shell" aria-labelledby="about-title">
+    <div class="about-hero__field" aria-hidden="true">
+      <FrequencyField variant="about" instanceId="about-hero" />
+    </div>
+    <p class="kicker">{copy.about.kicker}</p>
+    <div class="about-hero__title">
+      <ChromaticRegistrationFrame>
+        <h1 id="about-title">{copy.about.title}</h1>
+      </ChromaticRegistrationFrame>
+    </div>
+    <p class="about-hero__intro">{copy.about.intro}</p>
+  </section>
+
+  <SignalDivider marker={copy.about.dividerMarker} />
+
+  <section class="manifesto section-shell" aria-labelledby="manifesto-title">
+    <div class="manifesto__heading">
+      <p class="kicker">{copy.about.manifestoKicker}</p>
+      <h2 id="manifesto-title">{copy.about.manifestoTitle}</h2>
+    </div>
+    <div class="manifesto__copy">
+      <p>{copy.about.manifestoLead}</p>
+      <p>{copy.about.manifestoBody}</p>
+    </div>
+    <p class="manifesto__signal">
+      <span>{copy.about.manifestoSignal.from}</span>
+      <ArrowRight
+        class="manifesto__signal-icon"
+        size={22}
+        stroke-width={1.8}
+        role="img"
+        aria-label={copy.about.manifestoSignal.connectorLabel}
+      />
+      <span>{copy.about.manifestoSignal.to}</span>
+    </p>
+  </section>
+
+  <section class="calibration section-shell" aria-labelledby="calibration-title">
+    <div class="calibration__number" aria-hidden="true">7.83</div>
+    <div class="calibration__copy">
+      <p class="kicker">{copy.about.calibrationKicker}</p>
+      <h2 id="calibration-title">{copy.about.calibrationTitle}</h2>
+      <p>{copy.about.calibrationBody}</p>
+    </div>
+  </section>
+
+  <section class="about-onward section-shell" aria-labelledby="onward-title">
+    <div>
+      <p class="kicker">{copy.about.onwardKicker}</p>
+      <h2 id="onward-title">{copy.about.onwardTitle}</h2>
+    </div>
+    <div class="about-onward__copy">
+      <p>{copy.about.onwardBody}</p>
+      <div class="about-onward__actions">
+        <SignalLink href={routeFor('policy', locale)}>{copy.common.policy}</SignalLink>
+        <SignalLink href={routeFor('visit', locale)}>{copy.common.visit}</SignalLink>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .about-hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
+    align-content: space-between;
+    min-height: clamp(40rem, 82svh, 62rem);
+    padding-block: var(--space-5) var(--space-6);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .about-hero__field {
+    position: absolute;
+    z-index: -1;
+    inset: 4% -8% -8% 30%;
+    opacity: 0.62;
+  }
+
+  .about-hero__field::after {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 12%, var(--color-black) 74%);
+    content: '';
+  }
+
+  .about-hero__field :global(.frequency-field) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .about-hero > .kicker {
+    grid-column: 1 / -1;
+    align-self: start;
+  }
+
+  .about-hero__title {
+    grid-column: 1 / -1;
+    align-self: center;
+    width: min(100%, 76rem);
+    margin-block: var(--space-6);
+  }
+
+  .about-hero h1 {
+    margin: 0;
+    font-size: clamp(4.5rem, 14vw, 13rem);
+    line-height: 0.74;
+    letter-spacing: -0.09em;
+    text-transform: uppercase;
+  }
+
+  .about-hero__intro {
+    grid-column: 2;
+    max-width: 38rem;
+    margin: 0;
+    color: var(--color-soft-linen);
+    font-size: var(--step-1);
+    font-weight: 600;
+  }
+
+  .manifesto {
+    padding-block: var(--space-7);
+    border-bottom: var(--line-hairline);
+  }
+
+  .manifesto__heading {
+    display: grid;
+    grid-template-columns: minmax(10rem, 0.5fr) minmax(0, 1.5fr);
+    align-items: end;
+    gap: var(--space-5);
+  }
+
+  .manifesto h2 {
+    max-width: 12ch;
+    margin: 0;
+    font-size: var(--step-5);
+    line-height: 0.86;
+    letter-spacing: -0.07em;
+    text-transform: uppercase;
+  }
+
+  .manifesto__copy {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5);
+    max-width: 76rem;
+    margin-top: var(--space-6);
+    margin-left: auto;
+  }
+
+  .manifesto__copy p {
+    margin: 0;
+    font-size: var(--step-1);
+  }
+
+  .manifesto__copy p:last-child {
+    color: var(--color-pale-slate);
+  }
+
+  .manifesto__signal {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin: var(--space-7) 0 0;
+    padding-top: var(--space-3);
+    border-top: var(--line-hairline);
+    color: var(--color-signal-red);
+    font-size: var(--step--1);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .manifesto__signal :global(.manifesto__signal-icon) {
+    flex: 0 0 auto;
+  }
+
+  .calibration {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 0.8fr);
+    align-items: end;
+    gap: var(--space-6);
+    min-height: clamp(38rem, 72svh, 56rem);
+    padding-block: var(--space-7);
+    background: var(--color-soft-linen);
+    color: var(--color-black);
+  }
+
+  .calibration__number {
+    color: var(--color-signal-red);
+    font-size: clamp(7rem, 19vw, 20rem);
+    font-weight: 850;
+    line-height: 0.64;
+    letter-spacing: -0.12em;
+  }
+
+  .calibration__copy .kicker {
+    color: var(--color-gray-dark);
+  }
+
+  .calibration h2 {
+    max-width: 14ch;
+    margin-block: var(--space-4) 0;
+    font-size: var(--step-3);
+    line-height: 0.92;
+    letter-spacing: -0.055em;
+    text-transform: uppercase;
+  }
+
+  .calibration__copy > p:last-child {
+    max-width: 38rem;
+    margin-block: var(--space-4) 0;
+    color: var(--color-gray-dark);
+  }
+
+  .about-onward {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(20rem, 0.9fr);
+    gap: var(--space-6);
+    padding-block: var(--space-7);
+  }
+
+  .about-onward h2 {
+    max-width: 12ch;
+    margin-block: var(--space-4) 0;
+    font-size: var(--step-4);
+    line-height: 0.88;
+    letter-spacing: -0.065em;
+    text-transform: uppercase;
+  }
+
+  .about-onward__copy {
+    align-self: end;
+  }
+
+  .about-onward__copy > p {
+    max-width: 38rem;
+    margin: 0;
+    color: var(--color-pale-slate);
+  }
+
+  .about-onward__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: var(--space-5);
+  }
+
+  @media (max-width: 47.99rem) {
+    .about-hero,
+    .manifesto__heading,
+    .manifesto__copy,
+    .calibration,
+    .about-onward {
+      grid-template-columns: 1fr;
+    }
+
+    .about-hero {
+      min-height: calc(100svh - var(--header-height));
+    }
+
+    .about-hero__field {
+      inset: 15% -45% 8% 2%;
+    }
+
+    .about-hero h1 {
+      font-size: clamp(4rem, 20vw, 7.5rem);
+      line-height: 0.78;
+    }
+
+    .about-hero__intro {
+      grid-column: 1;
+    }
+
+    .manifesto__heading,
+    .manifesto__copy {
+      align-items: start;
+    }
+
+    .calibration {
+      align-items: start;
+      min-height: auto;
+    }
+
+    .calibration__number {
+      font-size: clamp(7rem, 35vw, 11rem);
+    }
+
+    .about-onward__actions :global(.signal-link) {
+      width: 100%;
+    }
+  }
+</style>

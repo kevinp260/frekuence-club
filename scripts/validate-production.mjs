@@ -9,11 +9,13 @@ const expectedNoIndex = process.env.PUBLIC_NOINDEX === 'true';
 const expectedRoutes = {
   '/': 'index.html',
   '/events/': 'events/index.html',
+  '/about/': 'about/index.html',
   '/policy/': 'policy/index.html',
   '/visit/': 'visit/index.html',
   '/privacy/': 'privacy/index.html',
   '/en/': 'en/index.html',
   '/en/events/': 'en/events/index.html',
+  '/en/about/': 'en/about/index.html',
   '/en/policy/': 'en/policy/index.html',
   '/en/visit/': 'en/visit/index.html',
   '/en/privacy/': 'en/privacy/index.html',
@@ -57,6 +59,19 @@ const forbiddenFiles = relativeFiles.filter((file) =>
   /(?:\.pdf$|\.map$|(^|\/)\.env(?:\.|$)|BrandBook|FREKUENCE_WEBSITE_IMPLEMENTATION)/i.test(file),
 );
 assert.deepEqual(forbiddenFiles, [], `Forbidden production files: ${forbiddenFiles.join(', ')}`);
+
+const productionText = (
+  await Promise.all(
+    files
+      .filter((file) => ['.html', '.js', '.json', '.xml'].includes(extname(file)))
+      .map((file) => readFile(file, 'utf8')),
+  )
+).join('\n');
+assert.doesNotMatch(
+  productionText,
+  /visual-fixture|Visual Fixture|Fiksim vizual/i,
+  'Development event fixtures leaked into production output.',
+);
 
 const pageRecords = new Map();
 const titles = new Set();
