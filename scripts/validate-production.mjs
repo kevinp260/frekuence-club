@@ -9,11 +9,13 @@ const expectedNoIndex = process.env.PUBLIC_NOINDEX === 'true';
 const expectedRoutes = {
   '/': 'index.html',
   '/events/': 'events/index.html',
+  '/about/': 'about/index.html',
   '/policy/': 'policy/index.html',
   '/visit/': 'visit/index.html',
   '/privacy/': 'privacy/index.html',
   '/en/': 'en/index.html',
   '/en/events/': 'en/events/index.html',
+  '/en/about/': 'en/about/index.html',
   '/en/policy/': 'en/policy/index.html',
   '/en/visit/': 'en/visit/index.html',
   '/en/privacy/': 'en/privacy/index.html',

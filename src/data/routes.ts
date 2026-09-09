@@ -1,12 +1,13 @@
 export const locales = ['sq', 'en'] as const;
 export type Locale = (typeof locales)[number];
 
-export const pageKeys = ['home', 'events', 'policy', 'visit', 'privacy'] as const;
+export const pageKeys = ['home', 'events', 'about', 'policy', 'visit', 'privacy'] as const;
 export type PageKey = (typeof pageKeys)[number];
 
 export const routes = {
   home: { sq: '/', en: '/en/' },
   events: { sq: '/events/', en: '/en/events/' },
+  about: { sq: '/about/', en: '/en/about/' },
   policy: { sq: '/policy/', en: '/en/policy/' },
   visit: { sq: '/visit/', en: '/en/visit/' },
   privacy: { sq: '/privacy/', en: '/en/privacy/' },

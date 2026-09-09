@@ -1,8 +1,13 @@
 # Frekuence Club website
 
-Phase 1 is a bilingual, fully static Astro site for Frekuence Club in Tirana. Albanian is
-served at the root and English under `/en/`. There is no backend, form, account, payment,
-reservation flow, analytics, or third-party embed.
+This repository contains the bilingual Astro frontend for Frekuence Club in Tirana. Albanian is
+served at the root and English under `/en/`.
+
+Phase 2 checkpoints 1–3 establish the approved signal-interference design system, an event-led
+homepage with a truthful empty state, and localized About / Who we are pages. The site remains a
+static build at this checkpoint. Django, PostgreSQL, event administration, poster uploads, and the
+dynamic event API are approved for later checkpoints but are not implemented yet. Reservations,
+payments, public accounts, analytics, tracking, and third-party embeds remain out of scope.
 
 ## Local commands
 
@@ -36,7 +41,7 @@ The latest local release evidence is recorded in
 
 ## Project documentation
 
-Repository working rules are in [AGENTS.md](AGENTS.md). The original Phase 1 specification is
-preserved as a historical brief in
-[docs/PHASE_1_IMPLEMENTATION_BRIEF.md](docs/PHASE_1_IMPLEMENTATION_BRIEF.md); current decisions,
-TODOs, deployment procedures, and validation evidence live in the other files under `docs/`.
+Repository working rules are in [AGENTS.md](AGENTS.md). The active specification is
+[docs/PHASE_2_IMPLEMENTATION_BRIEF.md](docs/PHASE_2_IMPLEMENTATION_BRIEF.md); the original Phase 1
+brief remains historical context. Current decisions, TODOs, deployment procedures, and validation
+evidence live in the other files under `docs/`.

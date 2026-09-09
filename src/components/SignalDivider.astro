@@ -1,0 +1,70 @@
+---
+interface Props {
+  marker?: string;
+}
+
+const { marker = '7.83 / phase' } = Astro.props;
+---
+
+<div class="signal-divider" aria-hidden="true">
+  <span class="signal-divider__marker">{marker}</span>
+  <svg viewBox="0 0 720 32" preserveAspectRatio="none" focusable="false">
+    <path class="signal-divider__base" d="M0 16H720"></path>
+    <path
+      class="signal-divider__wave"
+      d="M0 16H105C120 16 120 5 135 5S150 27 165 27 180 10 195 10 210 22 225 22 240 16 255 16H465C480 16 480 8 495 8S510 24 525 24 540 12 555 12 570 20 585 20 600 16 615 16H720"
+    ></path>
+  </svg>
+  <span class="signal-divider__index">02 / 03</span>
+</div>
+
+<style>
+  .signal-divider {
+    display: grid;
+    grid-template-columns: auto minmax(3rem, 1fr) auto;
+    align-items: center;
+    gap: 1rem;
+    width: min(100%, var(--site-max));
+    margin-inline: auto;
+    padding: 1rem var(--page-gutter);
+    border-block: var(--line-hairline);
+    color: var(--color-pale-slate);
+    font-size: var(--step--2);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .signal-divider svg {
+    width: 100%;
+    height: 2rem;
+    overflow: visible;
+  }
+
+  .signal-divider__base,
+  .signal-divider__wave {
+    fill: none;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .signal-divider__base {
+    stroke: var(--color-gray-dark);
+    stroke-width: 1;
+  }
+
+  .signal-divider__wave {
+    stroke: var(--color-signal-red);
+    stroke-width: 1.5;
+  }
+
+  @media (max-width: 30rem) {
+    .signal-divider {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .signal-divider svg {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+  }
+</style>

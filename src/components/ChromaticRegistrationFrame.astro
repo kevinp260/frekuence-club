@@ -1,0 +1,68 @@
+---
+interface Props {
+  tone?: 'dark' | 'light';
+}
+
+const { tone = 'dark' } = Astro.props;
+---
+
+<div class:list={['registration-frame', `registration-frame--${tone}`]}>
+  <span class="registration-frame__plane registration-frame__plane--cyan" aria-hidden="true"></span>
+  <span class="registration-frame__plane registration-frame__plane--magenta" aria-hidden="true"
+  ></span>
+  <div class="registration-frame__content">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .registration-frame {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .registration-frame__content {
+    position: relative;
+    z-index: 2;
+    padding: clamp(1.25rem, 3vw, 3rem);
+    border: 1px solid currentcolor;
+  }
+
+  .registration-frame--dark .registration-frame__content {
+    background: var(--color-black);
+    color: var(--color-white);
+  }
+
+  .registration-frame--light .registration-frame__content {
+    background: var(--color-soft-linen);
+    color: var(--color-black);
+  }
+
+  .registration-frame__plane {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    border: 1px solid;
+    pointer-events: none;
+  }
+
+  .registration-frame__plane--cyan {
+    border-color: var(--color-signal-cyan);
+    transform: translate(-0.45rem, 0.45rem);
+  }
+
+  .registration-frame__plane--magenta {
+    border-color: var(--color-signal-magenta);
+    transform: translate(0.45rem, -0.45rem);
+  }
+
+  @media (max-width: 30rem) {
+    .registration-frame__plane--cyan {
+      transform: translate(-0.25rem, 0.25rem);
+    }
+
+    .registration-frame__plane--magenta {
+      transform: translate(0.25rem, -0.25rem);
+    }
+  }
+</style>

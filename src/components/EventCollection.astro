@@ -65,9 +65,9 @@ const EventHeading = context === 'preview' ? 'h3' : 'h2';
         <div class="event-empty__copy">
           <p class="event-empty__label">No signal / Europe–Tirane</p>
           <EventHeading>
-            {context === 'preview' ? copy.home.eventsEmpty : copy.events.emptyTitle}
+            {context === 'preview' ? copy.home.nextTitle : copy.events.emptyTitle}
           </EventHeading>
-          <p>{context === 'preview' ? copy.home.eventsNote : copy.events.emptyBody}</p>
+          <p>{context === 'preview' ? copy.home.channelNote : copy.events.emptyBody}</p>
           <p class="availability-status">{copy.common.reservationsStatus}</p>
         </div>
       </div>

@@ -1,8 +1,6 @@
 ---
-import { ArrowRight } from '@lucide/astro';
-import { Image } from 'astro:assets';
-import cymaticRings from '../assets/brand/temporary/cymatic-rings-white-on-black.png';
-import EventCollection from '../components/EventCollection.astro';
+import FrequencyField from '../components/FrequencyField.astro';
+import SignalDivider from '../components/SignalDivider.astro';
 import SignalLink from '../components/SignalLink.astro';
 import { t } from '../data/i18n';
 import { routeFor, type Locale } from '../data/routes';
@@ -18,453 +16,280 @@ const copy = t(locale);
 ---
 
 <BaseLayout locale={locale} page="home" structuredData={venueStructuredData}>
-  <section class="hero section-shell" aria-labelledby="hero-title">
-    <Image
-      class="hero__pattern"
-      src={cymaticRings}
-      alt=""
-      width={760}
-      height={560}
-      loading="eager"
-      fetchpriority="high"
-    />
-    <p class="hero__identity">Frekuence Club</p>
-    <p class="hero__kicker">{copy.home.heroKicker}</p>
-    <h1 id="hero-title">{copy.home.heroTitle}</h1>
-    <div class="hero__bottom">
-      <div>
-        <p class="hero__location">{copy.home.heroLocation}</p>
-        <p class="hero__calibration">{copy.home.heroCalibration}</p>
+  <section class="next-signal" aria-labelledby="next-signal-title">
+    <div class="next-signal__field" aria-hidden="true">
+      <FrequencyField variant="events" />
+    </div>
+
+    <div class="next-signal__rail section-shell">
+      <p class="kicker">{copy.home.nextKicker}</p>
+      <p>{copy.home.timezone}</p>
+    </div>
+
+    <div class="next-signal__stage section-shell">
+      <div class="next-signal__poster" aria-hidden="true">
+        <span>00</span>
+        <span>{copy.home.awaitingArtwork}</span>
       </div>
-      <p class="hero__age">{copy.home.heroAge}</p>
-    </div>
-    <div class="hero__actions">
-      <SignalLink href={routeFor('events', locale)} variant="red">
-        {copy.common.events}
-      </SignalLink>
-      <SignalLink href={routeFor('visit', locale)}>{copy.common.visit}</SignalLink>
-    </div>
-  </section>
 
-  <section class="home-section section-shell" aria-labelledby="events-title">
-    <div class="section-heading">
-      <p class="kicker">{copy.home.eventsKicker}</p>
-      <h2 id="events-title">{copy.home.eventsTitle}</h2>
-    </div>
-    <EventCollection locale={locale} context="preview" />
-    <div class="section-tail">
-      <SignalLink href={routeFor('events', locale)}>{copy.common.events}</SignalLink>
-      <SignalLink href={SITE.instagram} external>{copy.common.instagram}</SignalLink>
-    </div>
-  </section>
-
-  <section class="manifesto section-shell" aria-labelledby="manifesto-title">
-    <p class="kicker">{copy.home.manifestoKicker}</p>
-    <div class="manifesto__title">
-      <h2 id="manifesto-title">{copy.home.manifestoTitle}</h2>
-      <p aria-hidden="true">7.83</p>
-    </div>
-    <div class="manifesto__copy">
-      <p>{copy.home.manifestoLead}</p>
-      <p>{copy.home.manifestoBody}</p>
-    </div>
-    <p class="manifesto__signal">
-      <span>{copy.home.manifestoSignal.from}</span>
-      <ArrowRight
-        class="manifesto__signal-icon"
-        size={20}
-        stroke-width={1.8}
-        role="img"
-        aria-label={copy.home.manifestoSignal.connectorLabel}
-      />
-      <span>{copy.home.manifestoSignal.to}</span>
-    </p>
-  </section>
-
-  <section class="policy-preview section-shell" aria-labelledby="policy-title">
-    <div class="section-heading section-heading--light">
-      <p class="kicker">{copy.home.policyKicker}</p>
-      <h2 id="policy-title">{copy.home.policyTitle}</h2>
-    </div>
-    <ol class="policy-signals">
-      {
-        copy.home.policySignals.map((signal, index) => (
-          <li>
-            <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-            <h3>{signal.title}</h3>
-            <p>{signal.body}</p>
-          </li>
-        ))
-      }
-    </ol>
-    <div class="section-tail section-tail--light">
-      <SignalLink href={routeFor('policy', locale)}>{copy.common.policy}</SignalLink>
-    </div>
-  </section>
-
-  <section class="visit-preview section-shell" aria-labelledby="visit-title">
-    <div>
-      <p class="kicker">{copy.home.visitKicker}</p>
-      <h2 id="visit-title">{copy.home.visitTitle}</h2>
-    </div>
-    <div class="visit-preview__details">
-      <p>{copy.home.openingNotice}</p>
-      <p>{copy.global.age} / {copy.common.physicalId}</p>
-      <p class="availability-status">{copy.common.reservationsStatus}</p>
-      <div class="visit-preview__actions">
-        <SignalLink href={SITE.maps} external>{copy.common.directions}</SignalLink>
-        <SignalLink href={SITE.instagram} external>{copy.common.instagram}</SignalLink>
+      <div class="next-signal__copy">
+        <p class="next-signal__status">{copy.home.emptyStatus}</p>
+        <h1 id="next-signal-title">{copy.home.nextTitle}</h1>
+        <p class="next-signal__body">{copy.home.emptyBody}</p>
+        <p class="next-signal__channel">{copy.home.channelNote}</p>
+        <div class="next-signal__actions">
+          <SignalLink href={SITE.instagram} variant="red" external>
+            {copy.common.instagram}
+          </SignalLink>
+          <SignalLink href={routeFor('events', locale)}>{copy.common.events}</SignalLink>
+        </div>
       </div>
     </div>
+
+    <div class="next-signal__context section-shell">
+      <p>{copy.home.ageContext}</p>
+      <p>{copy.home.doorContext}</p>
+    </div>
   </section>
+
+  <SignalDivider marker="Next signal / 00" />
 </BaseLayout>
 
 <style>
-  .hero {
+  .next-signal {
     position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto auto 1fr auto auto;
     min-height: calc(100svh - var(--header-height));
-    padding-block: var(--space-4);
     overflow: hidden;
-    border-bottom: 1px solid var(--color-gray-dark);
     isolation: isolate;
   }
 
-  .hero__pattern {
+  .next-signal__field {
     position: absolute;
-    z-index: -1;
-    top: 8%;
-    right: -8%;
-    width: min(65vw, 55rem);
-    height: auto;
-    opacity: 0.32;
+    z-index: -2;
+    inset: 0;
+    opacity: 0.62;
   }
 
-  .hero__identity,
-  .hero__kicker,
-  .hero__calibration,
-  .hero__age {
-    font-size: var(--step--2);
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+  .next-signal__field::after {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, var(--color-black) 0%, transparent 42%, var(--color-black) 100%),
+      linear-gradient(180deg, transparent 45%, var(--color-black) 96%);
+    content: '';
   }
 
-  .hero__identity {
-    margin: 0;
-    color: var(--color-white);
+  .next-signal__field :global(.frequency-field) {
+    width: 100%;
+    height: 100%;
   }
 
-  .hero__kicker {
-    justify-self: end;
-    margin: 0;
-    color: var(--color-pale-slate);
-  }
-
-  .hero h1 {
-    grid-column: 1 / -1;
-    align-self: end;
-    margin: var(--space-7) 0 0;
-    font-size: clamp(5rem, 16vw, 15rem);
-    line-height: 0.72;
-    letter-spacing: -0.09em;
-    text-transform: uppercase;
-  }
-
-  .hero__bottom {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 2rem;
-    margin-top: var(--space-5);
-    padding-top: var(--space-4);
-    border-top: 1px solid var(--color-gray-dark);
-  }
-
-  .hero__location {
-    max-width: 20ch;
-    margin: 0;
-    font-size: var(--step-2);
-    font-weight: 700;
-    line-height: 1.05;
-  }
-
-  .hero__calibration {
-    margin-block: 0.8rem 0;
-    color: var(--color-pale-slate);
-  }
-
-  .hero__age {
-    margin: 0;
-    color: var(--color-signal-red);
-  }
-
-  .hero__actions {
-    grid-column: 1 / -1;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: var(--space-5);
-  }
-
-  .home-section {
-    padding-block: var(--space-7);
-    border-bottom: 1px solid var(--color-gray-dark);
-  }
-
-  .section-heading {
-    display: grid;
-    grid-template-columns: 0.55fr 1.45fr;
-    align-items: end;
-    gap: var(--space-4);
-    margin-bottom: var(--space-5);
-  }
-
-  .section-heading h2 {
-    margin: 0;
-    font-size: var(--step-5);
-    line-height: 0.82;
-    letter-spacing: -0.07em;
-    text-transform: uppercase;
-  }
-
-  .section-tail {
-    display: flex;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: var(--space-4);
-  }
-
-  .manifesto {
-    padding-block: var(--space-7);
-    border-bottom: 1px solid var(--color-gray-dark);
-  }
-
-  .manifesto__title {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-    gap: var(--space-4);
-    margin-top: var(--space-5);
-  }
-
-  .manifesto h2 {
-    max-width: 13ch;
-    margin: 0;
-    font-size: var(--step-5);
-    line-height: 0.88;
-    letter-spacing: -0.07em;
-    text-transform: uppercase;
-  }
-
-  .manifesto__title > p {
-    margin: 0;
-    color: var(--color-signal-red);
-    font-size: var(--step-4);
-    font-weight: 800;
-    line-height: 0.8;
-  }
-
-  .manifesto__copy {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-5);
-    max-width: 70rem;
-    margin-top: var(--space-6);
-    margin-left: auto;
-  }
-
-  .manifesto__copy p {
-    margin: 0;
-    font-size: var(--step-1);
-  }
-
-  .manifesto__copy p:last-child {
-    color: var(--color-pale-slate);
-  }
-
-  .manifesto__signal {
+  .next-signal__rail,
+  .next-signal__context {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 0.55rem;
-    margin: var(--space-7) 0 0;
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--color-gray-dark);
-    color: var(--color-signal-red);
-    font-size: var(--step--1);
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .next-signal__rail {
+    min-height: 4.25rem;
+    border-bottom: var(--line-hairline);
+  }
+
+  .next-signal__rail p {
+    margin: 0;
+  }
+
+  .next-signal__rail > p:last-child,
+  .next-signal__context {
+    color: var(--color-pale-slate);
+    font-size: var(--step--2);
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
-  .manifesto__signal :global(.manifesto__signal-icon) {
-    flex: 0 0 auto;
-  }
-
-  .policy-preview {
-    padding-block: var(--space-7);
-    background: var(--color-soft-linen);
-    color: var(--color-black);
-  }
-
-  .section-heading--light .kicker {
-    color: var(--color-gray-dark);
-  }
-
-  .policy-signals {
-    margin: var(--space-6) 0 0;
-    padding: 0;
-    border-top: 1px solid var(--color-black);
-    list-style: none;
-  }
-
-  .policy-signals li {
+  .next-signal__stage {
     display: grid;
-    grid-template-columns: 5rem minmax(12rem, 0.75fr) minmax(0, 1.25fr);
-    gap: var(--space-4);
-    align-items: baseline;
-    padding-block: var(--space-4);
-    border-bottom: 1px solid var(--color-black);
+    grid-template-columns: minmax(15rem, 0.72fr) minmax(0, 1.28fr);
+    align-items: stretch;
+    gap: clamp(2rem, 6vw, 7rem);
+    min-height: clamp(34rem, 72svh, 58rem);
+    padding-block: var(--space-5);
   }
 
-  .policy-signals span {
-    color: var(--color-gray-dark);
-    font-weight: 800;
-  }
-
-  .policy-signals h3,
-  .policy-signals p {
-    margin: 0;
-  }
-
-  .policy-signals h3 {
-    font-size: var(--step-0);
-    text-transform: uppercase;
-  }
-
-  .policy-signals p {
-    max-width: 48rem;
-    color: var(--color-gray-dark);
-  }
-
-  .section-tail--light :global(.signal-link) {
-    color: var(--color-black);
-  }
-
-  .section-tail--light :global(.signal-link:hover) {
-    background: var(--color-black);
+  .next-signal__poster {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    aspect-ratio: 4 / 5;
+    max-height: 64svh;
+    padding: clamp(1rem, 2.4vw, 2rem);
+    overflow: hidden;
+    border: 1px solid var(--color-signal-cyan);
+    background:
+      linear-gradient(var(--color-signal-magenta-muted), transparent 42%),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0 1.8rem,
+        var(--color-signal-cyan-muted) 1.8rem calc(1.8rem + 1px)
+      ),
+      var(--color-black);
+    box-shadow:
+      -0.7rem 0.7rem 0 -1px var(--color-black),
+      -0.7rem 0.7rem 0 var(--color-signal-magenta);
     color: var(--color-white);
-  }
-
-  .visit-preview {
-    display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(20rem, 0.75fr);
-    gap: var(--space-6);
-    padding-block: var(--space-7);
-  }
-
-  .visit-preview h2 {
-    max-width: 12ch;
-    margin-block: var(--space-5) 0;
-    font-size: var(--step-5);
-    line-height: 0.88;
-    letter-spacing: -0.07em;
     text-transform: uppercase;
   }
 
-  .visit-preview__details {
+  .next-signal__poster::before,
+  .next-signal__poster::after {
+    position: absolute;
+    inset-inline: -12%;
+    height: 34%;
+    border-block: 1px solid var(--color-signal-green);
+    background: repeating-radial-gradient(
+      ellipse at center,
+      transparent 0 0.45rem,
+      var(--color-signal-green-muted) 0.5rem 0.56rem
+    );
+    content: '';
+    transform: rotate(-7deg);
+  }
+
+  .next-signal__poster::before {
+    top: 18%;
+  }
+
+  .next-signal__poster::after {
+    top: 43%;
+    border-color: var(--color-signal-magenta);
+    background: none;
+    transform: rotate(9deg);
+  }
+
+  .next-signal__poster span {
+    position: relative;
+    z-index: 1;
+    font-size: var(--step--2);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+  }
+
+  .next-signal__poster span:first-child {
+    font-size: clamp(5rem, 11vw, 10rem);
+    line-height: 0.7;
+    letter-spacing: -0.1em;
+  }
+
+  .next-signal__poster span:last-child {
+    writing-mode: vertical-rl;
+  }
+
+  .next-signal__copy {
     align-self: end;
-    min-width: 0;
+    padding-bottom: var(--space-3);
   }
 
-  .visit-preview__details > p {
+  .next-signal__status {
+    margin: 0 0 var(--space-3);
+    color: var(--color-signal-red);
+    font-size: var(--step--2);
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .next-signal h1 {
+    max-width: 11ch;
     margin: 0;
-    padding-block: 1rem;
-    border-top: 1px solid var(--color-gray-dark);
+    font-size: clamp(3.75rem, 8.5vw, 9rem);
+    line-height: 0.82;
+    letter-spacing: -0.075em;
+    text-transform: uppercase;
   }
 
-  .visit-preview__details > p:not(.availability-status) {
+  .next-signal__body,
+  .next-signal__channel {
+    max-width: 44rem;
+    margin-block: var(--space-4) 0;
+  }
+
+  .next-signal__body {
+    font-size: var(--step-1);
+    font-weight: 600;
+  }
+
+  .next-signal__channel {
     color: var(--color-pale-slate);
   }
 
-  .visit-preview__actions {
+  .next-signal__actions {
     display: flex;
-    align-items: stretch;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 1rem;
-    margin-top: var(--space-4);
+    margin-top: var(--space-5);
   }
 
-  @media (max-width: 64rem) {
-    .visit-preview {
-      grid-template-columns: minmax(0, 1fr);
-      gap: var(--space-7);
+  .next-signal__context {
+    min-height: 5rem;
+    padding-block: 1rem;
+    border-top: var(--line-hairline);
+  }
+
+  .next-signal__context p {
+    margin: 0;
+  }
+
+  @media (max-width: 58rem) {
+    .next-signal__stage {
+      grid-template-columns: minmax(12rem, 0.65fr) minmax(0, 1.35fr);
+      gap: var(--space-5);
     }
   }
 
   @media (max-width: 47.99rem) {
-    .hero {
+    .next-signal__stage {
       grid-template-columns: 1fr;
-      min-height: calc(100svh - var(--header-height));
+      min-height: auto;
+      padding-block: var(--space-4) var(--space-6);
     }
 
-    .hero__kicker {
-      justify-self: start;
-      margin-top: 0.75rem;
+    .next-signal__poster {
+      width: min(72vw, 19rem);
+      max-height: none;
+      justify-self: center;
+      box-shadow:
+        -0.45rem 0.45rem 0 -1px var(--color-black),
+        -0.45rem 0.45rem 0 var(--color-signal-magenta);
     }
 
-    .hero h1 {
-      font-size: clamp(3.9rem, 20vw, 7rem);
-      line-height: 0.77;
+    .next-signal h1 {
+      font-size: clamp(3.25rem, 16vw, 6.5rem);
     }
 
-    .hero__pattern {
-      top: 23%;
-      right: -35%;
-      width: 110vw;
-    }
-
-    .hero__bottom,
-    .section-heading,
-    .manifesto__title,
-    .manifesto__copy,
-    .visit-preview {
-      grid-template-columns: 1fr;
-    }
-
-    .hero__bottom {
-      align-items: flex-start;
-      flex-direction: column;
-    }
-
-    .hero__actions :global(.signal-link) {
+    .next-signal__actions :global(.signal-link) {
       width: 100%;
     }
 
-    .section-heading {
-      align-items: start;
+    .next-signal__context {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width: 23rem) {
+    .next-signal__rail {
+      align-items: flex-start;
+      flex-direction: column;
+      justify-content: center;
+      padding-block: 0.75rem;
     }
 
-    .manifesto__title > p {
-      justify-self: end;
-    }
-
-    .policy-signals li {
-      grid-template-columns: 3rem 1fr;
-    }
-
-    .policy-signals p {
-      grid-column: 2;
-    }
-
-    .visit-preview {
-      grid-template-columns: minmax(0, 1fr);
-      gap: var(--space-7);
+    .next-signal__poster {
+      width: min(78vw, 16rem);
     }
   }
 </style>

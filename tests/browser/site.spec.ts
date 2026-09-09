@@ -4,11 +4,13 @@ import { expect, test } from '@playwright/test';
 const localizedRoutes = [
   '/',
   '/events/',
+  '/about/',
   '/policy/',
   '/visit/',
   '/privacy/',
   '/en/',
   '/en/events/',
+  '/en/about/',
   '/en/policy/',
   '/en/visit/',
   '/en/privacy/',
@@ -42,14 +44,35 @@ test('unknown paths return the branded document with HTTP 404', async ({ page })
 });
 
 test('language switches preserve equivalent routes', async ({ page }) => {
-  await page.goto('/policy/');
+  await page.goto('/about/');
   const toEnglish = page.getByRole('link', { name: 'EN — Shiko këtë faqe në anglisht' }).first();
-  await expect(toEnglish).toHaveAttribute('href', '/en/policy/');
+  await expect(toEnglish).toHaveAttribute('href', '/en/about/');
   await toEnglish.click();
-  await expect(page).toHaveURL(/\/en\/policy\/$/);
+  await expect(page).toHaveURL(/\/en\/about\/$/);
 
   const toAlbanian = page.getByRole('link', { name: 'SQ — View this page in Albanian' }).first();
-  await expect(toAlbanian).toHaveAttribute('href', '/policy/');
+  await expect(toAlbanian).toHaveAttribute('href', '/about/');
+});
+
+test('homepage leads with the truthful event state and omits migrated summaries', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('main > section').first()).toHaveClass(/next-signal/);
+  await expect(page.getByRole('heading', { name: 'Sinjali i radhës po vjen' })).toBeVisible();
+  await expect(page.getByText('00 / Asnjë event i publikuar')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Nuk hyjmë si një turmë.' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Rregulla të qarta. Prani e lirë.' })).toHaveCount(
+    0,
+  );
+});
+
+test('About carries the Human Hz manifesto and symbolic 7.83 explanation', async ({ page }) => {
+  await page.goto('/about/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Human Hz' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Nuk hyjmë si një turmë.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Club calibrated at 7.83 Hz' })).toBeVisible();
+  await expect(page.getByText(/Nuk është pretendim mjekësor ose shkencor/)).toBeVisible();
 });
 
 test('skip link and primary navigation work from the keyboard', async ({ page }) => {
@@ -64,10 +87,13 @@ test('mobile navigation exposes state, moves focus, and closes with Escape', asy
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   const menu = page.locator('.nav-toggle');
+  const navigation = page.locator('#primary-navigation');
   await expect(menu).toBeVisible();
+  await expect(navigation).toBeHidden();
   await menu.focus();
   await page.keyboard.press('Enter');
   await expect(menu).toHaveAttribute('aria-expanded', 'true');
+  await expect(navigation).toBeVisible();
   await expect(page.getByRole('link', { name: 'Evente', exact: true }).first()).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(menu).toHaveAttribute('aria-expanded', 'false');
@@ -100,8 +126,8 @@ for (const width of [320, 390, 768, 1440]) {
 test('reduced-motion mode keeps content available without animation', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Human Hz' })).toBeVisible();
-  const motion = await page.locator('.hero__pattern').evaluate((element) => {
+  await expect(page.getByRole('heading', { name: 'Sinjali i radhës po vjen' })).toBeVisible();
+  const motion = await page.locator('.frequency-field__layer').evaluate((element) => {
     const styles = getComputedStyle(element);
     return {
       animationName: styles.animationName,
