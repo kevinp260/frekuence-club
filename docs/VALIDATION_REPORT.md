@@ -16,7 +16,7 @@ started.
 
 | Gate                                | Result                                                                                                                                                |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run build`                     | Passed: formatting, ESLint, Astro diagnostics, 10 unit assertions, 13-page production build, sitemap, and production-output validation                |
+| `npm run build`                     | Passed: formatting, ESLint, Astro diagnostics, 11 unit tests, 13-page production build, sitemap, and production-output validation                     |
 | Astro diagnostics                   | Passed: 0 errors, 0 warnings, 0 hints across 59 files                                                                                                 |
 | Production validator                | Passed: 12 localized canonical routes and 43 generated files; fixture names/routes absent; internal links, metadata, hreflang, sitemap, and 404 valid |
 | `npm run test:e2e`                  | Passed: 37 functional/browser tests; 26 opt-in visual tests skipped                                                                                   |
@@ -28,6 +28,7 @@ started.
 ## Event behavior covered
 
 - Valid featured-event priority and earliest-upcoming fallback.
+- In-progress scheduled events remain eligible until their `endsAt` boundary.
 - Rejection of draft, cancelled, and past featured candidates.
 - Chronological secondary selection with a hard five-card cap.
 - Separately typed and visibly labelled upcoming and recent-past groups.

@@ -35,7 +35,7 @@ export function isPublishedEvent<T extends SelectableEvent>(
 
 export function isValidUpcomingEvent<T extends SelectableEvent>(event: T, now: Date): boolean {
   return (
-    event.data.startsAt.getTime() >= now.getTime() &&
+    event.data.endsAt.getTime() > now.getTime() &&
     (event.data.status === 'scheduled' || event.data.status === 'postponed')
   );
 }

@@ -49,6 +49,20 @@ test('featured valid upcoming event overrides the earliest upcoming event', () =
   assert.equal(result.deckKind, 'upcoming');
 });
 
+test('an in-progress event remains eligible as the homepage primary event', () => {
+  const inProgress = event('in-progress', {
+    startsAt: '2029-12-31T22:00:00Z',
+    endsAt: '2030-01-01T02:00:00Z',
+  });
+
+  const result = selectHomepageEvents([inProgress], now, false);
+
+  assert.equal(result.primary, inProgress);
+  assert.equal(result.hasPublishedEvents, true);
+  assert.equal(result.deckKind, null);
+  assert.deepEqual(result.deck, []);
+});
+
 test('invalid featured events are ignored and the earliest valid upcoming event wins', () => {
   const cancelledFeatured = event('cancelled-featured', {
     startsAt: '2030-01-05T22:00:00Z',
