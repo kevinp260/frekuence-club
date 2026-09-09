@@ -1,0 +1,403 @@
+---
+import { ChevronUp } from '@lucide/astro';
+import { Image } from 'astro:assets';
+
+import type { EventEntry } from '../data/events';
+import { eventRoute, formatEventDate, localizedEvent } from '../data/events';
+import { t } from '../data/i18n';
+import type { Locale } from '../data/routes';
+import eventDeckScript from '../scripts/event-deck.js?url';
+import FrequencyField from './FrequencyField.astro';
+
+interface Props {
+  locale: Locale;
+  events: EventEntry[];
+  kind: 'upcoming' | 'past' | null;
+}
+
+const { locale, events, kind } = Astro.props;
+const copy = t(locale);
+const heading = kind === 'past' ? copy.home.pastDeckLabel : copy.home.upcomingDeckLabel;
+---
+
+{
+  events.length > 0 && kind && (
+    <section class="event-deck section-shell" aria-labelledby="event-deck-title" data-event-deck>
+      <div class="event-deck__field" aria-hidden="true">
+        <FrequencyField variant="events" instanceId="home-deck" />
+      </div>
+      <header class="event-deck__header">
+        <p class="kicker">02 / 03</p>
+        <h2 id="event-deck-title">{heading}</h2>
+      </header>
+      <div
+        class="event-deck__viewport"
+        role="region"
+        aria-label={`${heading} — ${copy.home.deckRegionLabel}`}
+        tabindex="0"
+      >
+        <ol class="event-deck__list">
+          {events.map((event, index) => {
+            const content = localizedEvent(event, locale);
+            const actionId = `event-card-action-${locale}-${index + 1}`;
+
+            return (
+              <li
+                class:list={['event-deck__item', `event-deck__item--${index + 1}`]}
+                data-event-card
+              >
+                <article class="event-deck__card">
+                  <Image
+                    src={event.data.poster}
+                    alt={content.posterAlt}
+                    widths={[360, 540, 720]}
+                    sizes="(max-width: 48rem) 70vw, 23vw"
+                    quality={60}
+                    loading="lazy"
+                  />
+                  <div class="event-deck__wash" aria-hidden="true" />
+                  {event.data.visualFixture && (
+                    <p class="event-deck__fixture">{copy.home.fixtureNotice}</p>
+                  )}
+                  <button
+                    class="event-deck__toggle"
+                    type="button"
+                    hidden
+                    aria-expanded="false"
+                    aria-controls={actionId}
+                    data-card-toggle
+                    data-select-label={copy.home.selectEvent}
+                    data-close-label={copy.home.closeEvent}
+                  >
+                    <span>{copy.home.selectEvent}</span>
+                    <ChevronUp size={18} stroke-width={1.8} aria-hidden="true" />
+                  </button>
+                  <div class="event-deck__content">
+                    <p class="event-deck__status">{copy.events.statusLabels[event.data.status]}</p>
+                    <h3>{content.title}</h3>
+                    <time datetime={event.data.startsAt.toISOString()}>
+                      {formatEventDate(event.data.startsAt, locale)}
+                    </time>
+                    <div class="event-deck__action" id={actionId}>
+                      <a href={eventRoute(event.data.slug, locale)}>{copy.common.viewEvent}</a>
+                    </div>
+                  </div>
+                </article>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    </section>
+  )
+}
+
+<script src={eventDeckScript} is:inline></script>
+
+<style>
+  .event-deck {
+    position: relative;
+    padding-block: var(--space-7);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .event-deck__field {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    opacity: 0.22;
+  }
+
+  .event-deck__field::after {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, var(--color-black), transparent 38%, var(--color-black));
+    content: '';
+  }
+
+  .event-deck__field :global(.frequency-field) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .event-deck__header {
+    display: grid;
+    grid-template-columns: minmax(7rem, 0.35fr) minmax(0, 1.65fr);
+    align-items: end;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+  }
+
+  .event-deck h2 {
+    margin: 0;
+    font-size: var(--step-5);
+    line-height: 0.84;
+    letter-spacing: -0.07em;
+    text-transform: uppercase;
+  }
+
+  .event-deck__viewport:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .event-deck__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .event-deck__item {
+    min-width: 0;
+  }
+
+  .event-deck__card {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border: 1px solid var(--color-pale-slate);
+    background: var(--color-black);
+    box-shadow: 0 1.2rem 3rem rgb(0 0 0 / 52%);
+  }
+
+  .event-deck__card > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .event-deck__wash {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 30%, rgb(0 0 0 / 22%) 50%, var(--color-black));
+  }
+
+  .event-deck__fixture {
+    position: absolute;
+    top: 0.8rem;
+    left: 0.8rem;
+    max-width: calc(100% - 5rem);
+    margin: 0;
+    padding: 0.4rem 0.5rem;
+    background: var(--color-black);
+    color: var(--color-white);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .event-deck__toggle {
+    position: absolute;
+    z-index: 2;
+    top: 0.65rem;
+    right: 0.65rem;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 2.75rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--color-white);
+    background: var(--color-black);
+    color: var(--color-white);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .event-deck__toggle[aria-expanded='true'] :global(svg) {
+    transform: rotate(180deg);
+  }
+
+  .event-deck__content {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: clamp(1rem, 2vw, 1.5rem);
+  }
+
+  .event-deck__status {
+    margin: 0;
+    color: var(--color-signal-red);
+    font-size: var(--step--2);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .event-deck h3 {
+    margin-block: 0.45rem 0.65rem;
+    color: var(--color-white);
+    font-size: clamp(1.35rem, 2.2vw, 2.25rem);
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+    text-transform: uppercase;
+  }
+
+  .event-deck time {
+    color: var(--color-soft-linen);
+    font-size: var(--step--2);
+    font-weight: 700;
+  }
+
+  .event-deck__action {
+    margin-top: 1rem;
+  }
+
+  .event-deck__action a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3rem;
+    padding: 0.6rem;
+    border: 1px solid var(--color-white);
+    background: var(--color-black);
+    color: var(--color-white);
+    font-size: var(--step--2);
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .event-deck--enhanced .event-deck__list {
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: clamp(27rem, 43vw, 39rem);
+    place-items: center;
+  }
+
+  .event-deck--enhanced .event-deck__item {
+    --card-x: 0;
+    --card-y: 0;
+    --card-angle: 0deg;
+    grid-area: 1 / 1;
+    width: clamp(14rem, 23vw, 21rem);
+    transform: translate(var(--card-x), var(--card-y)) rotate(var(--card-angle));
+    transform-origin: 50% 115%;
+    transition: transform 220ms ease;
+  }
+
+  .event-deck--enhanced .event-deck__item--1 {
+    --card-x: -24vw;
+    --card-y: 2.3rem;
+    --card-angle: -8deg;
+    z-index: 1;
+  }
+
+  .event-deck--enhanced .event-deck__item--2 {
+    --card-x: -12vw;
+    --card-y: 0.8rem;
+    --card-angle: -4deg;
+    z-index: 2;
+  }
+
+  .event-deck--enhanced .event-deck__item--3 {
+    z-index: 3;
+  }
+
+  .event-deck--enhanced .event-deck__item--4 {
+    --card-x: 12vw;
+    --card-y: 0.8rem;
+    --card-angle: 4deg;
+    z-index: 4;
+  }
+
+  .event-deck--enhanced .event-deck__item--5 {
+    --card-x: 24vw;
+    --card-y: 2.3rem;
+    --card-angle: 8deg;
+    z-index: 5;
+  }
+
+  .event-deck--enhanced .event-deck__action {
+    opacity: 0;
+    transform: translateY(0.75rem);
+    transition:
+      opacity 160ms ease,
+      transform 160ms ease;
+  }
+
+  .event-deck--enhanced .event-deck__item:focus-within,
+  .event-deck--enhanced .event-deck__item[data-card-selected] {
+    z-index: 20;
+    transform: translate(var(--card-x), calc(var(--card-y) - 1.1rem)) rotate(0);
+  }
+
+  .event-deck--enhanced .event-deck__item:focus-within .event-deck__action,
+  .event-deck--enhanced .event-deck__item[data-card-selected] .event-deck__action {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .event-deck--enhanced .event-deck__item:hover {
+      z-index: 20;
+      transform: translate(var(--card-x), calc(var(--card-y) - 1.1rem)) rotate(0);
+    }
+
+    .event-deck--enhanced .event-deck__item:hover .event-deck__action {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .event-deck {
+      padding-inline: 0;
+    }
+
+    .event-deck__header {
+      grid-template-columns: 1fr;
+      padding-inline: var(--page-gutter);
+    }
+
+    .event-deck h2 {
+      font-size: var(--step-4);
+    }
+
+    .event-deck--enhanced .event-deck__viewport {
+      overflow-x: auto;
+      overscroll-behavior-inline: contain;
+      scroll-padding-inline: 12vw;
+      scrollbar-color: var(--color-signal-red) var(--color-gray-dark);
+    }
+
+    .event-deck--enhanced .event-deck__list {
+      display: flex;
+      align-items: center;
+      min-height: 0;
+      width: max-content;
+      padding: 2rem 14vw 3rem;
+    }
+
+    .event-deck--enhanced .event-deck__item {
+      --card-x: 0;
+      flex: 0 0 min(70vw, 19rem);
+      width: min(70vw, 19rem);
+      margin-left: -10vw;
+      transform: translateY(var(--card-y)) rotate(var(--card-angle));
+    }
+
+    .event-deck--enhanced .event-deck__item:first-child {
+      margin-left: 0;
+    }
+
+    .event-deck--enhanced .event-deck__item:focus-within,
+    .event-deck--enhanced .event-deck__item[data-card-selected] {
+      transform: translateY(calc(var(--card-y) - 0.8rem)) rotate(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .event-deck__item,
+    .event-deck__action,
+    .event-deck__toggle :global(svg) {
+      transition: none !important;
+    }
+  }
+</style>

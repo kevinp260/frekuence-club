@@ -4,10 +4,12 @@ This repository contains the bilingual Astro frontend for Frekuence Club in Tira
 served at the root and English under `/en/`.
 
 Phase 2 checkpoints 1–3 establish the approved signal-interference design system, an event-led
-homepage with a truthful empty state, and localized About / Who we are pages. The site remains a
-static build at this checkpoint. Django, PostgreSQL, event administration, poster uploads, and the
-dynamic event API are approved for later checkpoints but are not implemented yet. Reservations,
-payments, public accounts, analytics, tracking, and third-party embeds remain out of scope.
+homepage, localized event detail routes, and localized About / Who we are pages. The site remains
+a static build at this checkpoint. Published entries in the transitional Astro event collection
+drive the homepage, event index, and detail routes; Django/PostgreSQL will replace that source in
+checkpoint 6 without redesigning the public routes or components. Django, event administration,
+poster uploads, and the dynamic event API are not implemented yet. Reservations, payments, public
+accounts, analytics, tracking, and third-party embeds remain out of scope.
 
 ## Local commands
 
@@ -16,9 +18,11 @@ npm ci
 npm run dev
 npm run check
 npm run build
+npm run build:fixtures
 npm run test:e2e
 npm run test:visual
 npm run audit:lighthouse
+npm run audit:lighthouse:fixtures
 ```
 
 `npm run build` runs formatting, linting, Astro diagnostics, unit checks, the static build,
@@ -26,6 +30,11 @@ and production-output validation. Browser tests use the local Google Chrome inst
 default; set `CHROME_PATH` when Chrome is installed elsewhere. The Lighthouse command starts
 and stops its own loopback preview server, then enforces the documented score and Core Web
 Vitals thresholds.
+
+`npm run build:fixtures` is an explicit non-production visual-review mode. It includes only the
+records and renamed poster assets under `src/content/event-fixtures/` and writes them to the
+ignored `dist-fixtures/` directory. A normal `npm run build` reads only `src/content/events/`, and
+its production validator fails if fixture names or routes leak into `dist/`.
 
 The checked-in favicons and social image are derivatives of the temporary, approved brand
 exports. Regenerate them with `npm run assets:generate` after changing those source exports.

@@ -1,64 +1,68 @@
 # Phase 2 checkpoint 3 validation
 
-Validated on 2026-09-09 against `feat/phase-2-foundation` after completing Phase 2 checkpoints
-1–3 only.
+Validated on 2026-09-09 against `feat/phase-2-foundation` after the P1 event-homepage review
+follow-up. This remains frontend-only checkpoint 3 work; Django/backend checkpoint 4 has not
+started.
 
-## Pre-change baseline
+## Baseline context
 
-- `npm run build` stopped at `format:check` because the newly merged
-  `docs/PHASE_2_IMPLEMENTATION_BRIEF.md` did not match Prettier formatting. The brief was formatted
-  without changing its meaning before final validation.
-- `npm run test:e2e` passed 20 functional, accessibility, navigation, 404, external-link,
-  reduced-motion, and responsive-overflow tests; 15 opt-in visual tests were skipped as designed.
-- `npm run test:visual` passed and captured the existing 15-image Phase 1 review set.
-- `npm run audit:lighthouse` passed with Performance 99, Accessibility 100, Best Practices 100,
-  SEO 100, LCP 1,812 ms, and CLS 0.01155.
-- The baseline dependency audit later identified critical advisory `GHSA-26w7-cxv4-gfx2` in
-  Astro 7.2.4. The exact Astro pin was updated to the patched 7.2.8 release and all final gates were
-  rerun.
+- The original checkpoint 3 baseline and final gates passed before this follow-up.
+- The Astro event collection was genuinely empty, but the homepage did not consume it and would
+  therefore have continued to show the empty state after a real published entry was added.
+- The three newly tracked poster files had generic numeric names and no explicit non-production
+  inclusion boundary.
 
-## Final automated gates
+## Current automated gates
 
-| Gate                       | Result                                                                                                                           |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run build`            | Passed: formatting, ESLint, Astro diagnostics, unit parity test, 13-page static build, sitemap, and production-output validation |
-| Astro diagnostics          | Passed: 0 errors, 0 warnings, 0 hints across 47 files                                                                            |
-| Production validator       | Passed: 12 localized canonical routes and 38 generated files; About routes, links, metadata, hreflang, sitemap, and 404 verified |
-| `npm run test:e2e`         | Passed: 24 functional, axe, navigation, editorial, 404, external-link, reduced-motion, and responsive-overflow tests; 21 skipped |
-| `npm run test:visual`      | Passed: 21 desktop, intermediate, mobile, minimum-width, inner-page, and 404 screenshots captured                                |
-| `npm run audit:lighthouse` | Passed: Performance 100, Accessibility 100, Best Practices 100, SEO 100, LCP 1,659 ms, CLS 0.00013                               |
-| `npm audit`                | Passed: 0 known vulnerabilities after the exact Astro 7.2.8 security update                                                      |
+| Gate                                | Result                                                                                                                                                |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run build`                     | Passed: formatting, ESLint, Astro diagnostics, 10 unit assertions, 13-page production build, sitemap, and production-output validation                |
+| Astro diagnostics                   | Passed: 0 errors, 0 warnings, 0 hints across 59 files                                                                                                 |
+| Production validator                | Passed: 12 localized canonical routes and 43 generated files; fixture names/routes absent; internal links, metadata, hreflang, sitemap, and 404 valid |
+| `npm run test:e2e`                  | Passed: 37 functional/browser tests; 26 opt-in visual tests skipped                                                                                   |
+| `npm run test:visual`               | Passed: 26 screenshots, including the five committed PR review captures                                                                               |
+| `npm run audit:lighthouse`          | Passed: Performance 100, Accessibility 100, Best Practices 100, SEO 100; LCP 1,658 ms; CLS 0                                                          |
+| `npm run audit:lighthouse:fixtures` | Passed: Performance 98, Accessibility 100, Best Practices 100, SEO 100; LCP 2,342 ms; CLS 0.00013                                                     |
+| `npm audit`                         | Passed: 0 known vulnerabilities                                                                                                                       |
 
-The empty Astro event collection warning remains intentional. No event facts were inferred from
-the candidate poster artwork, no Event JSON-LD is emitted, and `assets/posters/` and
-`assets/inspiration/` are absent from the generated public output.
+## Event behavior covered
 
-## Responsive and visual review
+- Valid featured-event priority and earliest-upcoming fallback.
+- Rejection of draft, cancelled, and past featured candidates.
+- Chronological secondary selection with a hard five-card cap.
+- Separately typed and visibly labelled upcoming and recent-past groups.
+- Genuine zero-published-event fallback and no-upcoming-with-history behavior.
+- Pointer hover, keyboard focus, explicit mobile tap selection, Escape reset, reduced motion,
+  and a readable linked list when JavaScript is disabled.
+- Real localized detail destinations, reciprocal language links, localized metadata, and truthful
+  `MusicEvent` data without fabricated offers.
+- Unique SVG resource IDs when multiple event frequency fields render together.
+- No page-level horizontal overflow in the empty and fixture event homepages from 320 to 1440 px.
+- Exact opt-in fixture loading and both build-time and browser-level proof that a normal production
+  build excludes fixture content and routes.
 
-The final review checked the event-led empty-state homepage and localized About page at desktop,
-intermediate, mobile, and minimum widths. It found and fixed an existing CSS override that made the
-enhanced mobile menu visible despite its `hidden` state. The final captures have a collapsed menu,
-no page-level horizontal overflow, no clipped titles, no overlapping controls, and readable text
-over stable surfaces. The frequency field is decorative and ignored by assistive technology; its
-motion resolves to a designed static state under reduced-motion preferences.
+## Visual evidence
 
-The local review evidence is regenerated with `npm run test:visual` and lives in the ignored
-`screenshots/` directory:
+The five requested captures are committed and linked from
+[`docs/review/phase-2-foundation/README.md`](review/phase-2-foundation/README.md):
 
-- `home-{sq,en}-{320x900,390x844,1024x900,1440x1000}.png`
-- `about-{sq,en}-{390x844,1440x1000}.png`
-- `{events,policy,visit,privacy}-{sq,en}-1440x1000.png`
-- `404-bilingual-1440x1000.png`
+- Homepage with events at 1440 × 1000.
+- Homepage with events at 390 × 844.
+- Homepage empty state at 1440 × 1000.
+- About page at 1440 × 1000.
+- About page at 390 × 844.
 
-## Checkpoint boundary and remaining work
+The event captures use only visibly marked visual fixtures. Manual inspection found no page-level
+overflow, clipped primary content, overlapping CTA controls, or illegible card metadata. The mobile
+deck is an explicitly labelled horizontal region with visible selection controls and separate links.
 
-This checkpoint intentionally retains static Astro output. It does not install the Node adapter,
-Django, PostgreSQL, Django Admin, MFA, poster processing, or an event API. Container and deployment
-files were not changed, so the container rebuild/recreate checks required for topology changes were
-not rerun. Phase 1 container evidence remains historical rather than evidence for this frontend
-commit.
+## Fixture and checkpoint boundary
 
-Checkpoint 4 must not begin until the owner has visually reviewed checkpoints 1–3. Production
-event publication remains blocked by the event metadata, translation, poster-rights, staff-access,
-backup, legal, and final signal-token inputs recorded in `docs/CONTENT_TODOS.md` and
-`docs/BRAND_ASSET_TODOS.md`.
+Normal builds load only `src/content/events/`. The opt-in fixture build loads the clearly named
+records and poster assets under `src/content/event-fixtures/`, writes to ignored `dist-fixtures/`,
+and never runs in the production Dockerfile. The production validator fails if fixture markers
+appear in `dist/`.
+
+No Django, PostgreSQL, Node adapter, event API, staff administration, upload processing, or
+container-topology change is included. Checkpoint 6 is still responsible for replacing the
+transitional collection source with Django/SSR without redesigning the routes or event components.

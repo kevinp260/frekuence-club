@@ -1,131 +1,72 @@
 ---
-import { ExternalLink } from '@lucide/astro';
-import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
+
+import { isPastEvent, isPublishedEvent } from '../data/events';
 import { t } from '../data/i18n';
 import type { Locale } from '../data/routes';
+import EventList from './EventList.astro';
 
 interface Props {
   locale: Locale;
-  context?: 'preview' | 'index';
 }
 
-const { locale, context = 'index' } = Astro.props;
+const { locale } = Astro.props;
 const copy = t(locale);
-const publishedEvents = (await getCollection('events', ({ data }) => !data.draft))
-  .filter(({ data }) => data.status !== 'past')
+const now = new Date();
+const published = (await getCollection('events')).filter((event) => isPublishedEvent(event));
+const upcoming = published
+  .filter((event) => !isPastEvent(event, now))
   .sort((first, second) => first.data.startsAt.getTime() - second.data.startsAt.getTime());
-
-const dateFormatter = new Intl.DateTimeFormat(locale === 'sq' ? 'sq-AL' : 'en-GB', {
-  timeZone: 'Europe/Tirane',
-  weekday: 'short',
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
-});
-
-const statusLabels = {
-  sq: {
-    scheduled: 'Planifikuar',
-    postponed: 'Shtyrë',
-    cancelled: 'Anuluar',
-    sold_out: 'Ezauruar',
-    past: 'Përfunduar',
-    door_only: 'Pagesa në derë',
-    tickets: 'Bileta',
-  },
-  en: {
-    scheduled: 'Scheduled',
-    postponed: 'Postponed',
-    cancelled: 'Cancelled',
-    sold_out: 'Sold out',
-    past: 'Past',
-    door_only: 'Payment at the door',
-    tickets: 'Tickets',
-  },
-} as const;
-
-const labels = statusLabels[locale];
-const EventHeading = context === 'preview' ? 'h3' : 'h2';
+const past = published
+  .filter((event) => isPastEvent(event, now))
+  .sort((first, second) => second.data.startsAt.getTime() - first.data.startsAt.getTime())
+  .slice(0, 20);
 ---
 
-<section
-  class:list={['event-collection', `event-collection--${context}`]}
-  aria-label={copy.events.collectionLabel}
->
+<section class="event-collection" aria-label={copy.events.collectionLabel}>
   {
-    publishedEvents.length === 0 ? (
-      <div class="event-empty">
+    published.length === 0 ? (
+      <div class="event-empty" data-event-index-state="empty">
         <p class="event-empty__number" aria-hidden="true">
           00
         </p>
         <div class="event-empty__copy">
           <p class="event-empty__label">No signal / Europe–Tirane</p>
-          <EventHeading>
-            {context === 'preview' ? copy.home.nextTitle : copy.events.emptyTitle}
-          </EventHeading>
-          <p>{context === 'preview' ? copy.home.channelNote : copy.events.emptyBody}</p>
+          <h2>{copy.events.emptyTitle}</h2>
+          <p>{copy.events.emptyBody}</p>
           <p class="availability-status">{copy.common.reservationsStatus}</p>
         </div>
       </div>
     ) : (
-      <ol class="event-list">
-        {publishedEvents.map((event, index) => (
-          <li class="event-card">
-            <div class="event-card__index" aria-hidden="true">
-              {String(index + 1).padStart(2, '0')}
+      <div class="event-groups" data-event-index-state="published">
+        <section class="event-group" aria-labelledby="upcoming-events-title">
+          <h2 id="upcoming-events-title">{copy.events.upcomingLabel}</h2>
+          {upcoming.length > 0 ? (
+            <EventList locale={locale} events={upcoming} />
+          ) : (
+            <div class="event-group__empty">
+              <p>{copy.events.emptyTitle}</p>
+              <p>{copy.events.emptyBody}</p>
             </div>
-            <div class="event-card__poster">
-              <Image
-                src={event.data.poster}
-                alt={event.data.posterAlt}
-                widths={[360, 640, 900]}
-                sizes="(max-width: 48rem) 100vw, 32vw"
-                loading={index === 0 && context === 'index' ? 'eager' : 'lazy'}
-              />
-            </div>
-            <div class="event-card__content">
-              <p class="event-card__status">{labels[event.data.status]}</p>
-              <EventHeading>{event.data.title}</EventHeading>
-              <time datetime={event.data.startsAt.toISOString()}>
-                {dateFormatter.format(event.data.startsAt)}
-              </time>
-              <p>{event.data.summary}</p>
-              <p class="event-card__lineup">{event.data.lineup.join(' / ')}</p>
-              <div class="event-card__actions">
-                {event.data.ticketMode === 'door_only' && <span>{labels.door_only}</span>}
-                {event.data.ticketMode === 'external' && event.data.externalTicketUrl && (
-                  <a
-                    href={event.data.externalTicketUrl}
-                    target="_blank"
-                    rel="external noopener noreferrer"
-                  >
-                    <span>{labels.tickets}</span>
-                    <ExternalLink class="event-card__action-icon" size={16} stroke-width={1.8} />
-                  </a>
-                )}
-                {!event.data.reservationsAvailable && <span>{copy.common.reservationsStatus}</span>}
-              </div>
-            </div>
-          </li>
-        ))}
-      </ol>
+          )}
+        </section>
+        {past.length > 0 && (
+          <section class="event-group" aria-labelledby="past-events-title">
+            <h2 id="past-events-title">{copy.events.pastLabel}</h2>
+            <EventList locale={locale} events={past} />
+          </section>
+        )}
+      </div>
     )
   }
 </section>
 
 <style>
-  .event-collection {
-    border-block: 1px solid var(--color-gray-dark);
-  }
-
   .event-empty {
     display: grid;
     grid-template-columns: minmax(11rem, 0.55fr) minmax(0, 1.45fr);
     min-height: clamp(24rem, 52vw, 42rem);
+    border-block: 1px solid var(--color-gray-dark);
   }
 
   .event-empty__number {
@@ -158,8 +99,7 @@ const EventHeading = context === 'preview' ? 'h3' : 'h2';
     text-transform: uppercase;
   }
 
-  .event-empty h2,
-  .event-empty h3 {
+  .event-empty h2 {
     max-width: 16ch;
     margin: 0;
     font-size: var(--step-4);
@@ -184,94 +124,32 @@ const EventHeading = context === 'preview' ? 'h3' : 'h2';
     text-transform: uppercase;
   }
 
-  .event-list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .event-card {
+  .event-groups {
     display: grid;
-    grid-template-columns: 7rem minmax(16rem, 0.8fr) minmax(0, 1.2fr);
-    border-bottom: 1px solid var(--color-gray-dark);
+    gap: var(--space-7);
   }
 
-  .event-card:last-child {
-    border-bottom: 0;
-  }
-
-  .event-card__index,
-  .event-card__content {
-    padding: var(--space-4);
-  }
-
-  .event-card__index,
-  .event-card__poster {
-    border-right: 1px solid var(--color-gray-dark);
-  }
-
-  .event-card__index {
-    color: var(--color-signal-red);
-    font-weight: 700;
-  }
-
-  .event-card__poster img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .event-card__content {
-    display: flex;
-    align-items: flex-start;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .event-card__status,
-  .event-card__lineup {
-    color: var(--color-signal-red);
-    font-size: var(--step--1);
-    font-weight: 700;
-    text-transform: uppercase;
-  }
-
-  .event-card h2,
-  .event-card h3 {
-    margin-block: 0.5rem 1rem;
+  .event-group > h2 {
+    margin-block: 0 var(--space-4);
     font-size: var(--step-3);
     line-height: 0.95;
     letter-spacing: -0.05em;
-  }
-
-  .event-card time {
-    color: var(--color-pale-slate);
-  }
-
-  .event-card__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: var(--space-4);
-    font-size: var(--step--1);
-    font-weight: 700;
     text-transform: uppercase;
   }
 
-  .event-card__actions > span,
-  .event-card__actions > a {
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--color-gray-dark);
+  .event-group__empty {
+    padding: var(--space-5);
+    border: 1px solid var(--color-gray-dark);
   }
 
-  .event-card__actions a {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
+  .event-group__empty p {
+    max-width: 42rem;
+    margin: 0;
   }
 
-  .event-card__actions :global(.event-card__action-icon) {
-    flex: 0 0 auto;
+  .event-group__empty p + p {
+    margin-top: 0.75rem;
+    color: var(--color-pale-slate);
   }
 
   @media (max-width: 47.99rem) {
@@ -285,23 +163,6 @@ const EventHeading = context === 'preview' ? 'h3' : 'h2';
       border-right: 0;
       border-bottom: 1px solid var(--color-gray-dark);
       font-size: 8rem;
-    }
-
-    .event-card {
-      grid-template-columns: 4rem 1fr;
-    }
-
-    .event-card__poster,
-    .event-card__content {
-      grid-column: 2;
-    }
-
-    .event-card__poster {
-      border-bottom: 1px solid var(--color-gray-dark);
-    }
-
-    .event-card__content {
-      padding-block: var(--space-5);
     }
   }
 </style>

@@ -9,9 +9,10 @@ import navigationScript from '../scripts/navigation.js?url';
 interface Props {
   locale: Locale;
   page: PageKey;
+  alternateHref?: string;
 }
 
-const { locale, page } = Astro.props;
+const { locale, page, alternateHref } = Astro.props;
 const copy = t(locale);
 const alternate = alternateLocale(locale);
 const navPages = ['events', 'about', 'policy', 'visit'] as const;
@@ -59,7 +60,7 @@ const navPages = ['events', 'about', 'policy', 'visit'] as const;
       </ul>
       <a
         class="language-switch"
-        href={routeFor(page, alternate)}
+        href={alternateHref ?? routeFor(page, alternate)}
         lang={t(alternate).documentLang}
         hreflang={t(alternate).documentLang}
         aria-label={`${alternate.toUpperCase()} — ${copy.global.languageSwitch}`}

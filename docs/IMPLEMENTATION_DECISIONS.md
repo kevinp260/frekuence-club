@@ -75,9 +75,19 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
 - The new cyan, magenta, and green signal tokens are provisional decorative values sampled from
   the supplied club poster set. They are not semantic status/control colors, and final exact token
   approval remains an owner TODO.
-- `assets/inspiration/` remains reference-only and `assets/posters/` remains outside public build
-  output. No visible poster text has been converted into event content.
-- The homepage now leads with the truthful no-published-events state. It does not render fake event
-  cards, and its former manifesto, policy summary, and visit summary have moved out of the homepage.
+- `assets/inspiration/` remains reference-only. The three generic poster files previously named
+  `1.png`, `2.png`, and `3.png` were moved into `src/content/event-fixtures/` and renamed with a
+  `.visual-fixture` marker. They are available only when `FREKUENCE_EVENT_FIXTURES=true`; the normal
+  production loader excludes the entire fixture directory, and production validation scans built
+  text for fixture leakage. No visible poster text has been converted into event content.
+- While Astro content remains the transitional event source, a shared selection module chooses a
+  valid featured published upcoming event or the earliest valid upcoming event, caps the secondary
+  deck at five, and uses a separately labelled recent-past fallback only when no additional upcoming
+  event exists. The empty homepage remains the zero-published-event branch.
+- Event cards progressively enhance from an ordinary linked list into a deterministic overlapping
+  hand. Pointer hover, keyboard focus, reduced motion, and explicit touch selection share the same
+  readable action state. Localized prerendered detail routes preserve the final URL shape until the
+  Django/API source replaces Astro content in checkpoint 6.
+- The homepage no longer duplicates its former manifesto, policy summary, or visit summary.
 - Human Hz and 7.83 editorial content now lives on localized About routes. The 7.83 explanation is
   explicitly symbolic and makes no medical or unsupported scientific claim.

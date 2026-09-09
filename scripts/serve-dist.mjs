@@ -3,7 +3,6 @@ import { stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { extname, join, normalize, relative, sep } from 'node:path';
 
-const root = join(process.cwd(), 'dist');
 const argumentsList = process.argv.slice(2);
 const valueAfter = (flag) => {
   const index = argumentsList.indexOf(flag);
@@ -11,6 +10,7 @@ const valueAfter = (flag) => {
 };
 const host = valueAfter('--host') || '127.0.0.1';
 const port = Number(valueAfter('--port') || process.env.PORT || 4321);
+const root = join(process.cwd(), valueAfter('--root') || 'dist');
 const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',

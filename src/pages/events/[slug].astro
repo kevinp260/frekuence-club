@@ -1,0 +1,16 @@
+---
+import { getCollection } from 'astro:content';
+
+import { isPublishedEvent } from '../../data/events';
+import EventDetailView from '../../views/EventDetailView.astro';
+
+export async function getStaticPaths() {
+  const events = (await getCollection('events')).filter((event) => isPublishedEvent(event));
+
+  return events.map((event) => ({ params: { slug: event.data.slug }, props: { event } }));
+}
+
+const { event } = Astro.props;
+---
+
+<EventDetailView locale="sq" event={event} />

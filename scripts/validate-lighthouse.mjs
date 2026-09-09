@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const report = JSON.parse(await readFile('lighthouse-report.json', 'utf8'));
+const report = JSON.parse(
+  await readFile(process.env.LIGHTHOUSE_REPORT_PATH || 'lighthouse-report.json', 'utf8'),
+);
 const scores = Object.fromEntries(
   Object.entries(report.categories).map(([key, value]) => [key, Math.round(value.score * 100)]),
 );

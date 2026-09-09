@@ -1,9 +1,9 @@
 ---
 interface Props {
-  marker?: string;
+  marker: string;
 }
 
-const { marker = '7.83 / phase' } = Astro.props;
+const { marker } = Astro.props;
 ---
 
 <div class="signal-divider" aria-hidden="true">

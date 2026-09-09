@@ -60,6 +60,19 @@ const forbiddenFiles = relativeFiles.filter((file) =>
 );
 assert.deepEqual(forbiddenFiles, [], `Forbidden production files: ${forbiddenFiles.join(', ')}`);
 
+const productionText = (
+  await Promise.all(
+    files
+      .filter((file) => ['.html', '.js', '.json', '.xml'].includes(extname(file)))
+      .map((file) => readFile(file, 'utf8')),
+  )
+).join('\n');
+assert.doesNotMatch(
+  productionText,
+  /visual-fixture|Visual Fixture|Fiksim vizual/i,
+  'Development event fixtures leaked into production output.',
+);
+
 const pageRecords = new Map();
 const titles = new Set();
 const descriptions = new Set();

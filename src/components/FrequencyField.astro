@@ -1,9 +1,13 @@
 ---
 interface Props {
   variant?: 'events' | 'about' | 'policy' | 'visit';
+  instanceId: string;
 }
 
-const { variant = 'events' } = Astro.props;
+const { variant = 'events', instanceId } = Astro.props;
+const idBase = `frequency-field-${variant}-${instanceId}`;
+const halftoneId = `${idBase}-halftone`;
+const clipId = `${idBase}-clip`;
 ---
 
 <svg
@@ -15,20 +19,17 @@ const { variant = 'events' } = Astro.props;
   focusable="false"
 >
   <defs>
-    <pattern id={`halftone-${variant}`} width="14" height="14" patternUnits="userSpaceOnUse">
+    <pattern id={halftoneId} width="14" height="14" patternUnits="userSpaceOnUse">
       <circle cx="2" cy="2" r="1.25" fill="currentColor"></circle>
     </pattern>
-    <clipPath id={`field-clip-${variant}`}>
+    <clipPath id={clipId}>
       <rect width="960" height="640" rx="2"></rect>
     </clipPath>
   </defs>
 
-  <g clip-path={`url(#field-clip-${variant})`}>
-    <rect
-      class="frequency-field__halftone"
-      width="960"
-      height="640"
-      fill={`url(#halftone-${variant})`}></rect>
+  <g clip-path={`url(#${clipId})`}>
+    <rect class="frequency-field__halftone" width="960" height="640" fill={`url(#${halftoneId})`}
+    ></rect>
 
     {
       variant === 'about' ? (

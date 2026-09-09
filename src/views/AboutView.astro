@@ -19,7 +19,7 @@ const copy = t(locale);
 <BaseLayout locale={locale} page="about">
   <section class="about-hero section-shell" aria-labelledby="about-title">
     <div class="about-hero__field" aria-hidden="true">
-      <FrequencyField variant="about" />
+      <FrequencyField variant="about" instanceId="about-hero" />
     </div>
     <p class="kicker">{copy.about.kicker}</p>
     <div class="about-hero__title">
@@ -30,7 +30,7 @@ const copy = t(locale);
     <p class="about-hero__intro">{copy.about.intro}</p>
   </section>
 
-  <SignalDivider marker="Human / signal / shared field" />
+  <SignalDivider marker={copy.about.dividerMarker} />
 
   <section class="manifesto section-shell" aria-labelledby="manifesto-title">
     <div class="manifesto__heading">

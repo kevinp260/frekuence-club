@@ -38,17 +38,28 @@ type Dictionary = {
     reservationsStatus: string;
     physicalId: string;
     noMedia: string;
+    viewEvent: string;
+    backToEvents: string;
   };
   home: {
     nextKicker: string;
     nextTitle: string;
     emptyStatus: string;
     emptyBody: string;
+    noUpcomingStatus: string;
+    noUpcomingBody: string;
     channelNote: string;
     awaitingArtwork: string;
     timezone: string;
     ageContext: string;
     doorContext: string;
+    dividerMarker: string;
+    upcomingDeckLabel: string;
+    pastDeckLabel: string;
+    deckRegionLabel: string;
+    selectEvent: string;
+    closeEvent: string;
+    fixtureNotice: string;
   };
   about: {
     kicker: string;
@@ -69,6 +80,7 @@ type Dictionary = {
     onwardKicker: string;
     onwardTitle: string;
     onwardBody: string;
+    dividerMarker: string;
   };
   events: {
     kicker: string;
@@ -78,6 +90,14 @@ type Dictionary = {
     emptyBody: string;
     instagramNote: string;
     collectionLabel: string;
+    upcomingLabel: string;
+    pastLabel: string;
+    detailsKicker: string;
+    startsLabel: string;
+    endsLabel: string;
+    doorsLabel: string;
+    lineupLabel: string;
+    statusLabels: Record<'scheduled' | 'postponed' | 'cancelled', string>;
   };
   policy: {
     kicker: string;
@@ -182,6 +202,8 @@ export const translations: Record<Locale, Dictionary> = {
       reservationsStatus: 'Rezervimet — së shpejti',
       physicalId: 'Kërkohet dokument fizik identifikimi.',
       noMedia: 'Pa foto. Pa video.',
+      viewEvent: 'Shiko eventin',
+      backToEvents: 'Kthehu te eventet',
     },
     home: {
       nextKicker: 'Sinjali i radhës',
@@ -189,11 +211,21 @@ export const translations: Record<Locale, Dictionary> = {
       emptyStatus: '00 / Asnjë event i publikuar',
       emptyBody:
         'Nuk ka evente të publikuara aktualisht. Kur programi të konfirmohet, eventi i ardhshëm do të shfaqet i pari këtu.',
+      noUpcomingStatus: '00 / Asnjë event i ardhshëm',
+      noUpcomingBody:
+        'Nuk ka një event të ardhshëm të vlefshëm aktualisht. Frekuencat e publikuara më herët mbeten më poshtë.',
       channelNote: 'Njoftimet publikohen këtu dhe në kanalin tonë zyrtar në Instagram.',
       awaitingArtwork: 'Në pritje të sinjalit',
       timezone: 'Europe / Tiranë',
       ageContext: 'Vetëm 18+ / Kërkohet dokument fizik identifikimi',
       doorContext: 'Hyrja miratohet në derë para pagesës.',
+      dividerMarker: 'Sinjali i radhës / 00',
+      upcomingDeckLabel: 'Në radar',
+      pastDeckLabel: 'Frekuencat e kaluara',
+      deckRegionLabel: 'Dora e eventeve',
+      selectEvent: 'Zgjidh',
+      closeEvent: 'Mbyll',
+      fixtureNotice: 'Fiksim vizual / Nuk është event real',
     },
     about: {
       kicker: 'Rreth nesh / Human Hz',
@@ -218,6 +250,7 @@ export const translations: Record<Locale, Dictionary> = {
       onwardKicker: 'Më tej',
       onwardTitle: 'Hapësira mbahet nga të gjithë.',
       onwardBody: 'Lexo politikën e hyrjes dhe informacionin praktik përpara se të vish në klub.',
+      dividerMarker: 'Njeri / sinjal / fushë e përbashkët',
     },
     events: {
       kicker: 'Programi / Europe–Tirane',
@@ -228,6 +261,18 @@ export const translations: Record<Locale, Dictionary> = {
         'Nuk ka evente të publikuara aktualisht. Ndiq kanalin zyrtar për sinjalin e ardhshëm.',
       instagramNote: 'Instagrami është kanal njoftimi, jo kanal rezervimi.',
       collectionLabel: 'Eventet e publikuara',
+      upcomingLabel: 'Eventet e ardhshme',
+      pastLabel: 'Frekuencat e kaluara',
+      detailsKicker: 'Detajet e eventit / Europe–Tirane',
+      startsLabel: 'Fillon',
+      endsLabel: 'Përfundon',
+      doorsLabel: 'Dyert',
+      lineupLabel: 'Formacioni',
+      statusLabels: {
+        scheduled: 'Planifikuar',
+        postponed: 'Shtyrë',
+        cancelled: 'Anuluar',
+      },
     },
     policy: {
       kicker: 'Hyrja / Kodi i sjelljes',
@@ -388,6 +433,8 @@ export const translations: Record<Locale, Dictionary> = {
       reservationsStatus: 'Reservations — coming soon',
       physicalId: 'A physical identity document is required.',
       noMedia: 'No photos. No videos.',
+      viewEvent: 'View event',
+      backToEvents: 'Back to events',
     },
     home: {
       nextKicker: 'Next signal',
@@ -395,11 +442,21 @@ export const translations: Record<Locale, Dictionary> = {
       emptyStatus: '00 / No published event',
       emptyBody:
         'There are no published events right now. Once the programme is confirmed, the next event will appear first here.',
+      noUpcomingStatus: '00 / No upcoming event',
+      noUpcomingBody:
+        'There is no valid upcoming event right now. Earlier published frequencies remain available below.',
       channelNote: 'Announcements are published here and on our official Instagram channel.',
       awaitingArtwork: 'Awaiting signal',
       timezone: 'Europe / Tirana',
       ageContext: 'Strictly 18+ / A physical identity document is required',
       doorContext: 'Admission is approved at the door before payment.',
+      dividerMarker: 'Next signal / 00',
+      upcomingDeckLabel: 'On the radar',
+      pastDeckLabel: 'Past frequencies',
+      deckRegionLabel: 'Event card hand',
+      selectEvent: 'Select',
+      closeEvent: 'Close',
+      fixtureNotice: 'Visual fixture / Not a real event',
     },
     about: {
       kicker: 'Who we are / Human Hz',
@@ -425,6 +482,7 @@ export const translations: Record<Locale, Dictionary> = {
       onwardTitle: 'Everyone holds the space.',
       onwardBody:
         'Read the entry policy and practical information before making your way to the club.',
+      dividerMarker: 'Human / signal / shared field',
     },
     events: {
       kicker: 'Programme / Europe–Tirane',
@@ -435,6 +493,18 @@ export const translations: Record<Locale, Dictionary> = {
         'There are no published events right now. Follow the official channel for the next signal.',
       instagramNote: 'Instagram is an announcement channel, not a reservation channel.',
       collectionLabel: 'Published events',
+      upcomingLabel: 'Upcoming events',
+      pastLabel: 'Past frequencies',
+      detailsKicker: 'Event details / Europe–Tirane',
+      startsLabel: 'Starts',
+      endsLabel: 'Ends',
+      doorsLabel: 'Doors',
+      lineupLabel: 'Lineup',
+      statusLabels: {
+        scheduled: 'Scheduled',
+        postponed: 'Postponed',
+        cancelled: 'Cancelled',
+      },
     },
     policy: {
       kicker: 'Entry / Code of conduct',

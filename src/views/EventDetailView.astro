@@ -1,0 +1,317 @@
+---
+import { Image } from 'astro:assets';
+
+import SignalLink from '../components/SignalLink.astro';
+import type { EventEntry } from '../data/events';
+import { eventRoute, formatEventDate, formatEventTime, localizedEvent } from '../data/events';
+import { t } from '../data/i18n';
+import { routeFor, type Locale } from '../data/routes';
+import { SITE } from '../data/site';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  locale: Locale;
+  event: EventEntry;
+}
+
+const { locale, event } = Astro.props;
+const copy = t(locale);
+const content = localizedEvent(event, locale);
+const canonicalPath = eventRoute(event.data.slug, locale);
+const alternatePaths = {
+  sq: eventRoute(event.data.slug, 'sq'),
+  en: eventRoute(event.data.slug, 'en'),
+};
+const metadata = {
+  title: `${content.title} — Frekuence Club`,
+  description: content.summary,
+};
+const eventStatusUrls = {
+  scheduled: 'https://schema.org/EventScheduled',
+  postponed: 'https://schema.org/EventPostponed',
+  cancelled: 'https://schema.org/EventCancelled',
+} as const;
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'MusicEvent',
+  name: content.title,
+  description: content.summary,
+  startDate: event.data.startsAt.toISOString(),
+  endDate: event.data.endsAt.toISOString(),
+  eventStatus: eventStatusUrls[event.data.status],
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+  image: new URL(event.data.poster.src, SITE.url).toString(),
+  location: {
+    '@type': 'Place',
+    name: SITE.name,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: SITE.address.venue,
+      addressLocality: SITE.address.locality,
+      addressCountry: SITE.address.countryCode,
+    },
+  },
+  performer: event.data.lineup.map((name) => ({ '@type': 'Person', name })),
+};
+---
+
+<BaseLayout
+  locale={locale}
+  page="events"
+  metadata={metadata}
+  canonicalPath={canonicalPath}
+  alternatePaths={alternatePaths}
+  socialImagePath={event.data.poster.src}
+  socialImageAlt={content.posterAlt}
+  documentType="article"
+  structuredData={structuredData}
+>
+  <article class="event-detail section-shell">
+    <header class="event-detail__header">
+      <div class="event-detail__title">
+        <p class="kicker">{copy.events.detailsKicker}</p>
+        {event.data.visualFixture && <p class="fixture-notice">{copy.home.fixtureNotice}</p>}
+        <p class="event-detail__status">{copy.events.statusLabels[event.data.status]}</p>
+        <h1>{content.title}</h1>
+        <p class="event-detail__summary">{content.summary}</p>
+      </div>
+      <div class="event-detail__poster">
+        <Image
+          src={event.data.poster}
+          alt={content.posterAlt}
+          widths={[480, 640, 800, 960]}
+          sizes="(max-width: 48rem) 100vw, 44vw"
+          quality={65}
+          loading="eager"
+          fetchpriority="high"
+        />
+      </div>
+    </header>
+
+    <div class="event-detail__body">
+      <dl class="event-detail__schedule">
+        <div>
+          <dt>{copy.events.startsLabel}</dt>
+          <dd>
+            <time datetime={event.data.startsAt.toISOString()}>
+              {formatEventDate(event.data.startsAt, locale)}
+            </time>
+          </dd>
+        </div>
+        <div>
+          <dt>{copy.events.endsLabel}</dt>
+          <dd>
+            <time datetime={event.data.endsAt.toISOString()}>
+              {formatEventDate(event.data.endsAt, locale)}
+            </time>
+          </dd>
+        </div>
+        {
+          event.data.doorsAt && (
+            <div>
+              <dt>{copy.events.doorsLabel}</dt>
+              <dd>
+                <time datetime={event.data.doorsAt.toISOString()}>
+                  {formatEventTime(event.data.doorsAt, locale)}
+                </time>
+              </dd>
+            </div>
+          )
+        }
+      </dl>
+
+      <div class="event-detail__editorial">
+        <p>{content.description}</p>
+        {content.entryNote && <p>{content.entryNote}</p>}
+        <section aria-labelledby="event-lineup-title">
+          <h2 id="event-lineup-title">{copy.events.lineupLabel}</h2>
+          <ol>
+            {event.data.lineup.map((artist) => <li>{artist}</li>)}
+          </ol>
+        </section>
+        <div class="event-detail__context">
+          <p>{copy.home.ageContext}</p>
+          <p>{copy.home.doorContext}</p>
+          <p>{copy.common.noMedia}</p>
+        </div>
+        <div class="event-detail__actions">
+          <SignalLink href={routeFor('events', locale)}>{copy.common.backToEvents}</SignalLink>
+          <SignalLink href={SITE.maps} external>{copy.common.directions}</SignalLink>
+          <SignalLink href={SITE.instagram} external>{copy.common.instagram}</SignalLink>
+        </div>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .event-detail {
+    padding-block: var(--space-5) var(--space-7);
+  }
+
+  .event-detail__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
+    align-items: end;
+    gap: var(--space-6);
+    min-height: calc(100svh - var(--header-height) - var(--space-5));
+    padding-bottom: var(--space-6);
+  }
+
+  .fixture-notice,
+  .event-detail__status {
+    margin: var(--space-3) 0 0;
+    color: var(--color-signal-red);
+    font-size: var(--step--2);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .fixture-notice {
+    display: inline-block;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid currentcolor;
+  }
+
+  .event-detail h1 {
+    max-width: 12ch;
+    margin-block: var(--space-3) 0;
+    font-size: var(--step-5);
+    line-height: 0.84;
+    letter-spacing: -0.07em;
+    text-transform: uppercase;
+  }
+
+  .event-detail__summary {
+    max-width: 42rem;
+    margin-block: var(--space-4) 0;
+    color: var(--color-soft-linen);
+    font-size: var(--step-1);
+    font-weight: 600;
+  }
+
+  .event-detail__poster {
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border: 1px solid var(--color-signal-cyan);
+    box-shadow:
+      -0.7rem 0.7rem 0 -1px var(--color-black),
+      -0.7rem 0.7rem 0 var(--color-signal-magenta);
+  }
+
+  .event-detail__poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .event-detail__body {
+    display: grid;
+    grid-template-columns: minmax(14rem, 0.55fr) minmax(0, 1.45fr);
+    gap: var(--space-6);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-gray-dark);
+  }
+
+  .event-detail__schedule {
+    margin: 0;
+  }
+
+  .event-detail__schedule > div {
+    padding-block: 1rem;
+    border-top: 1px solid var(--color-gray-dark);
+  }
+
+  .event-detail__schedule dt {
+    color: var(--color-signal-red);
+    font-size: var(--step--2);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .event-detail__schedule dd {
+    margin: 0.35rem 0 0;
+    font-weight: 700;
+  }
+
+  .event-detail__editorial {
+    max-width: 52rem;
+  }
+
+  .event-detail__editorial > p {
+    margin-block: 0 var(--space-4);
+    font-size: var(--step-1);
+  }
+
+  .event-detail__editorial h2 {
+    margin-block: var(--space-5) var(--space-3);
+    font-size: var(--step-3);
+    line-height: 0.9;
+    text-transform: uppercase;
+  }
+
+  .event-detail__editorial ol {
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--color-gray-dark);
+    list-style: none;
+  }
+
+  .event-detail__editorial li {
+    padding-block: 0.8rem;
+    border-bottom: 1px solid var(--color-gray-dark);
+    color: var(--color-signal-cyan);
+    font-weight: 750;
+    text-transform: uppercase;
+  }
+
+  .event-detail__context {
+    margin-top: var(--space-5);
+    padding: var(--space-4);
+    border: 1px solid var(--color-gray-dark);
+  }
+
+  .event-detail__context p {
+    margin: 0;
+    font-size: var(--step--1);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .event-detail__context p + p {
+    margin-top: 0.6rem;
+  }
+
+  .event-detail__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: var(--space-5);
+  }
+
+  @media (max-width: 47.99rem) {
+    .event-detail__header,
+    .event-detail__body {
+      grid-template-columns: 1fr;
+    }
+
+    .event-detail__header {
+      min-height: 0;
+    }
+
+    .event-detail__title {
+      order: 2;
+    }
+
+    .event-detail__poster {
+      width: min(82vw, 22rem);
+      justify-self: center;
+    }
+
+    .event-detail__actions :global(.signal-link) {
+      width: 100%;
+    }
+  }
+</style>

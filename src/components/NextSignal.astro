@@ -1,0 +1,384 @@
+---
+import { Image } from 'astro:assets';
+
+import type { EventEntry } from '../data/events';
+import { eventRoute, formatEventDate, localizedEvent } from '../data/events';
+import { t } from '../data/i18n';
+import { routeFor, type Locale } from '../data/routes';
+import { SITE } from '../data/site';
+import FrequencyField from './FrequencyField.astro';
+import SignalLink from './SignalLink.astro';
+
+interface Props {
+  locale: Locale;
+  event: EventEntry | null;
+  hasPublishedEvents: boolean;
+}
+
+const { locale, event, hasPublishedEvents } = Astro.props;
+const copy = t(locale);
+const content = event ? localizedEvent(event, locale) : null;
+const status = event ? copy.events.statusLabels[event.data.status] : null;
+---
+
+<section
+  class:list={['next-signal', event ? 'next-signal--event' : 'next-signal--incoming']}
+  aria-labelledby="next-signal-title"
+  data-next-signal-state={event ? 'event' : hasPublishedEvents ? 'no-upcoming' : 'empty'}
+>
+  <div class="next-signal__field" aria-hidden="true">
+    <FrequencyField variant="events" instanceId="home-next" />
+  </div>
+
+  <div class="next-signal__rail section-shell">
+    <p class="kicker">{copy.home.nextKicker}</p>
+    <p>{copy.home.timezone}</p>
+  </div>
+
+  <div class="next-signal__stage section-shell">
+    {
+      event && content ? (
+        <div class="next-signal__poster">
+          <Image
+            src={event.data.poster}
+            alt={content.posterAlt}
+            widths={[320, 480, 560]}
+            sizes="(max-width: 48rem) 65vw, 38vw"
+            quality={40}
+            loading="eager"
+            fetchpriority="high"
+          />
+          {event.data.visualFixture && (
+            <span class="fixture-notice">{copy.home.fixtureNotice}</span>
+          )}
+        </div>
+      ) : (
+        <div class="next-signal__poster next-signal__poster--empty" aria-hidden="true">
+          <span>00</span>
+          <span>{copy.home.awaitingArtwork}</span>
+        </div>
+      )
+    }
+
+    <div class="next-signal__copy">
+      {
+        event && content ? (
+          <>
+            <p class="next-signal__status">{status}</p>
+            <h1 id="next-signal-title">{content.title}</h1>
+            <time datetime={event.data.startsAt.toISOString()}>
+              {formatEventDate(event.data.startsAt, locale)}
+            </time>
+            <p class="next-signal__lineup">{event.data.lineup.join(' / ')}</p>
+            <p class="next-signal__body">{content.summary}</p>
+            <div class="next-signal__actions">
+              <SignalLink href={eventRoute(event.data.slug, locale)} variant="red">
+                {copy.common.viewEvent}
+              </SignalLink>
+              <SignalLink href={routeFor('events', locale)}>{copy.common.events}</SignalLink>
+            </div>
+          </>
+        ) : (
+          <>
+            <p class="next-signal__status">
+              {hasPublishedEvents ? copy.home.noUpcomingStatus : copy.home.emptyStatus}
+            </p>
+            <h1 id="next-signal-title">{copy.home.nextTitle}</h1>
+            <p class="next-signal__body">
+              {hasPublishedEvents ? copy.home.noUpcomingBody : copy.home.emptyBody}
+            </p>
+            <p class="next-signal__channel">{copy.home.channelNote}</p>
+            <div class="next-signal__actions">
+              <SignalLink href={SITE.instagram} variant="red" external>
+                {copy.common.instagram}
+              </SignalLink>
+              <SignalLink href={routeFor('events', locale)}>{copy.common.events}</SignalLink>
+            </div>
+          </>
+        )
+      }
+    </div>
+  </div>
+
+  <div class="next-signal__context section-shell">
+    <p>{copy.home.ageContext}</p>
+    <p>{copy.home.doorContext}</p>
+  </div>
+</section>
+
+<style>
+  .next-signal {
+    position: relative;
+    min-height: calc(100svh - var(--header-height));
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .next-signal__field {
+    position: absolute;
+    z-index: -2;
+    inset: 0;
+    opacity: 0.62;
+  }
+
+  .next-signal__field::after {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, var(--color-black) 0%, transparent 42%, var(--color-black) 100%),
+      linear-gradient(180deg, transparent 45%, var(--color-black) 96%);
+    content: '';
+  }
+
+  .next-signal__field :global(.frequency-field) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .next-signal__rail,
+  .next-signal__context {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .next-signal__rail {
+    min-height: 4.25rem;
+    border-bottom: var(--line-hairline);
+  }
+
+  .next-signal__rail p,
+  .next-signal__context p {
+    margin: 0;
+  }
+
+  .next-signal__rail > p:last-child,
+  .next-signal__context {
+    color: var(--color-pale-slate);
+    font-size: var(--step--2);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .next-signal__stage {
+    display: grid;
+    grid-template-columns: minmax(15rem, 0.78fr) minmax(0, 1.22fr);
+    align-items: stretch;
+    gap: clamp(2rem, 6vw, 7rem);
+    min-height: clamp(34rem, 72svh, 58rem);
+    padding-block: var(--space-5);
+  }
+
+  .next-signal__poster {
+    position: relative;
+    align-self: center;
+    aspect-ratio: 4 / 5;
+    max-height: 64svh;
+    overflow: hidden;
+    border: 1px solid var(--color-signal-cyan);
+    box-shadow:
+      -0.7rem 0.7rem 0 -1px var(--color-black),
+      -0.7rem 0.7rem 0 var(--color-signal-magenta);
+  }
+
+  .next-signal__poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .fixture-notice {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    max-width: calc(100% - 2rem);
+    padding: 0.55rem 0.7rem;
+    background: var(--color-black);
+    color: var(--color-white);
+    font-size: var(--step--2);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .next-signal__poster--empty {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: clamp(1rem, 2.4vw, 2rem);
+    background:
+      linear-gradient(var(--color-signal-magenta-muted), transparent 42%),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0 1.8rem,
+        var(--color-signal-cyan-muted) 1.8rem calc(1.8rem + 1px)
+      ),
+      var(--color-black);
+    color: var(--color-white);
+    text-transform: uppercase;
+  }
+
+  .next-signal__poster--empty::before,
+  .next-signal__poster--empty::after {
+    position: absolute;
+    inset-inline: -12%;
+    height: 34%;
+    border-block: 1px solid var(--color-signal-green);
+    background: repeating-radial-gradient(
+      ellipse at center,
+      transparent 0 0.45rem,
+      var(--color-signal-green-muted) 0.5rem 0.56rem
+    );
+    content: '';
+    transform: rotate(-7deg);
+  }
+
+  .next-signal__poster--empty::before {
+    top: 18%;
+  }
+
+  .next-signal__poster--empty::after {
+    top: 43%;
+    border-color: var(--color-signal-magenta);
+    background: none;
+    transform: rotate(9deg);
+  }
+
+  .next-signal__poster--empty span {
+    position: relative;
+    z-index: 1;
+    font-size: var(--step--2);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+  }
+
+  .next-signal__poster--empty span:first-child {
+    font-size: clamp(5rem, 11vw, 10rem);
+    line-height: 0.7;
+    letter-spacing: -0.1em;
+  }
+
+  .next-signal__poster--empty span:last-child {
+    writing-mode: vertical-rl;
+  }
+
+  .next-signal__copy {
+    align-self: end;
+    padding-bottom: var(--space-3);
+  }
+
+  .next-signal__status {
+    margin: 0 0 var(--space-3);
+    color: var(--color-signal-red);
+    font-size: var(--step--2);
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .next-signal h1 {
+    max-width: 12ch;
+    margin: 0;
+    font-size: clamp(3.5rem, 7.6vw, 8rem);
+    line-height: 0.84;
+    letter-spacing: -0.075em;
+    text-transform: uppercase;
+  }
+
+  .next-signal__copy time {
+    display: block;
+    margin-top: var(--space-4);
+    color: var(--color-soft-linen);
+    font-weight: 750;
+    text-transform: uppercase;
+  }
+
+  .next-signal__lineup {
+    margin-block: 0.65rem 0;
+    color: var(--color-signal-cyan);
+    font-size: var(--step--1);
+    font-weight: 750;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .next-signal__body,
+  .next-signal__channel {
+    max-width: 44rem;
+    margin-block: var(--space-4) 0;
+  }
+
+  .next-signal__body {
+    font-size: var(--step-1);
+    font-weight: 600;
+  }
+
+  .next-signal__channel {
+    color: var(--color-pale-slate);
+  }
+
+  .next-signal__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: var(--space-5);
+  }
+
+  .next-signal__context {
+    min-height: 5rem;
+    padding-block: 1rem;
+    border-top: var(--line-hairline);
+  }
+
+  @media (max-width: 58rem) {
+    .next-signal__stage {
+      grid-template-columns: minmax(12rem, 0.65fr) minmax(0, 1.35fr);
+      gap: var(--space-5);
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    .next-signal__stage {
+      grid-template-columns: 1fr;
+      min-height: auto;
+      padding-block: var(--space-4) var(--space-6);
+    }
+
+    .next-signal__poster {
+      width: min(78vw, 21rem);
+      max-height: none;
+      justify-self: center;
+      box-shadow:
+        -0.45rem 0.45rem 0 -1px var(--color-black),
+        -0.45rem 0.45rem 0 var(--color-signal-magenta);
+    }
+
+    .next-signal h1 {
+      font-size: clamp(3.1rem, 15vw, 6.5rem);
+    }
+
+    .next-signal__actions :global(.signal-link) {
+      width: 100%;
+    }
+
+    .next-signal__context {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width: 23rem) {
+    .next-signal__rail {
+      align-items: flex-start;
+      flex-direction: column;
+      justify-content: center;
+      padding-block: 0.75rem;
+    }
+
+    .next-signal__poster {
+      width: min(78vw, 16rem);
+    }
+  }
+</style>

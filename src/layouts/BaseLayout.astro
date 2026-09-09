@@ -11,16 +11,34 @@ interface Props {
   locale: Locale;
   page: PageKey;
   structuredData?: object;
+  metadata?: { title: string; description: string };
+  canonicalPath?: string;
+  alternatePaths?: Record<Locale, string>;
+  socialImagePath?: string;
+  socialImageAlt?: string;
+  documentType?: 'website' | 'article';
 }
 
-const { locale, page, structuredData } = Astro.props;
+const {
+  locale,
+  page,
+  structuredData,
+  metadata: metadataOverride,
+  canonicalPath: canonicalPathOverride,
+  alternatePaths,
+  socialImagePath = '/og/frekuence-club.jpg',
+  socialImageAlt = 'Frekuence Club — Human Hz',
+  documentType = 'website',
+} = Astro.props;
 const copy = t(locale);
-const canonicalPath = routeFor(page, locale);
+const canonicalPath = canonicalPathOverride ?? routeFor(page, locale);
 const canonicalUrl = new URL(canonicalPath, SITE.url).toString();
-const sqUrl = new URL(routeFor(page, 'sq'), SITE.url).toString();
-const enUrl = new URL(routeFor(page, 'en'), SITE.url).toString();
-const metadata = copy.seo[page];
-const ogImage = new URL('/og/frekuence-club.jpg', SITE.url).toString();
+const sqPath = alternatePaths?.sq ?? routeFor(page, 'sq');
+const enPath = alternatePaths?.en ?? routeFor(page, 'en');
+const sqUrl = new URL(sqPath, SITE.url).toString();
+const enUrl = new URL(enPath, SITE.url).toString();
+const metadata = metadataOverride ?? copy.seo[page];
+const ogImage = new URL(socialImagePath, SITE.url).toString();
 const isNoIndex = import.meta.env.PUBLIC_NOINDEX === 'true';
 const structuredDataJson = structuredData
   ? JSON.stringify(structuredData).replaceAll('<', '\\u003c')
@@ -48,19 +66,27 @@ const structuredDataJson = structuredData
     <meta property="og:description" content={metadata.description} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={ogImage} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Frekuence Club — Human Hz" />
+    {
+      socialImagePath === '/og/frekuence-club.jpg' && (
+        <meta property="og:image:width" content="1200" />
+      )
+    }
+    {
+      socialImagePath === '/og/frekuence-club.jpg' && (
+        <meta property="og:image:height" content="630" />
+      )
+    }
+    <meta property="og:image:alt" content={socialImageAlt} />
     <meta property="og:locale" content={locale === 'sq' ? 'sq_AL' : 'en_GB'} />
     <meta property="og:locale:alternate" content={locale === 'sq' ? 'en_GB' : 'sq_AL'} />
     <meta property="og:site_name" content={SITE.name} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={documentType} />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={metadata.title} />
     <meta name="twitter:description" content={metadata.description} />
     <meta name="twitter:image" content={ogImage} />
-    <meta name="twitter:image:alt" content="Frekuence Club — Human Hz" />
+    <meta name="twitter:image:alt" content={socialImageAlt} />
 
     <link rel="icon" type="image/png" href="/favicons/favicon-32.png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" />
@@ -75,7 +101,7 @@ const structuredDataJson = structuredData
   </head>
   <body>
     <a class="skip-link" href="#main-content">{copy.global.skip}</a>
-    <SiteHeader locale={locale} page={page} />
+    <SiteHeader locale={locale} page={page} alternateHref={locale === 'sq' ? enPath : sqPath} />
     <main id="main-content" tabindex="-1">
       <slot />
     </main>
