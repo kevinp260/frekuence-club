@@ -22,6 +22,11 @@ def env_list(name, default=""):
 
 
 ENVIRONMENT = os.getenv("DJANGO_ENVIRONMENT", "production")
+VALID_ENVIRONMENTS = frozenset({"development", "test", "production"})
+if ENVIRONMENT not in VALID_ENVIRONMENTS:
+    choices = ", ".join(sorted(VALID_ENVIRONMENTS))
+    raise ImproperlyConfigured(f"DJANGO_ENVIRONMENT must be one of: {choices}")
+
 DEBUG = env_bool("DJANGO_DEBUG", False)
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
 
@@ -79,12 +84,25 @@ TEMPLATES = [
     }
 ]
 
+POSTGRES_DB = os.getenv("POSTGRES_DB", "frekuence")
+POSTGRES_USER = os.getenv("POSTGRES_USER", "frekuence")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "")
+UNSAFE_PRODUCTION_POSTGRES_PASSWORDS = frozenset(
+    {
+        "",
+        "development-only-not-a-secret",
+        "replace-with-a-random-database-password",
+    }
+)
+if ENVIRONMENT == "production" and POSTGRES_PASSWORD in UNSAFE_PRODUCTION_POSTGRES_PASSWORDS:
+    raise ImproperlyConfigured("Production requires a non-empty, non-default POSTGRES_PASSWORD")
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DB", "frekuence"),
-        "USER": os.getenv("POSTGRES_USER", "frekuence"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD", ""),
+        "NAME": POSTGRES_DB,
+        "USER": POSTGRES_USER,
+        "PASSWORD": POSTGRES_PASSWORD,
         "HOST": os.getenv("POSTGRES_HOST", "db"),
         "PORT": os.getenv("POSTGRES_PORT", "5432"),
         "CONN_MAX_AGE": 60,

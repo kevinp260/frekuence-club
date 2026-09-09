@@ -8,12 +8,13 @@ disconnected from Django until checkpoint 6.
 
 | Gate                                                              | Result                                                                                                                                                                                           |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `docker compose --profile tools run --rm --build backend-check`   | Passed: Ruff format and lint; no pending migrations; Django system check; Django deployment check; migrations; 45 tests in 4.572 s; installed-environment audit with no known vulnerabilities    |
+| `docker compose --profile tools run --rm --build backend-check`   | Passed: Ruff format and lint; no pending migrations; Django system check; Django deployment check; migrations; 48 tests in 11.970 s; installed-environment audit with no known vulnerabilities   |
 | `docker compose --profile tools run --rm --build backend-migrate` | Passed: explicit migration job; all migrations applied and no pending migration                                                                                                                  |
 | `docker compose --profile tools run --rm --build backend-static`  | Passed: 131 Django/staff static files collected; final refresh copied 1 changed file and retained 130 unchanged files                                                                            |
 | `docker compose --profile tools run --rm --build frontend-check`  | Passed: Prettier, ESLint, 0 Astro diagnostics across 58 files, 11 unit tests, 13-page production build, 12-route/40-file production validation, 37 browser tests; 26 opt-in visual tests skipped |
 | `docker compose build web backend`                                | Passed: final pinned Astro/Nginx and Django/Gunicorn production images built                                                                                                                     |
 | Backend and database health                                       | Passed: Django and PostgreSQL healthy on private container ports; no backend/database host bindings                                                                                              |
+| Isolated production-configuration health smoke                    | Passed: Django and PostgreSQL healthy with production environment, host, HTTPS redirect, secure-cookie, and non-default database settings; trusted internal probe returned 200; plain HTTP returned 301 to the exact HTTPS health URL                      |
 | Staff visual workflow                                             | Passed: TOTP login and draft-only event list/editor captured in the pinned Playwright container at 1440 × 1000 and 1024 × 768; no page-level horizontal overflow                                 |
 
 The Django deployment check reports two deliberately silenced HSTS subdomain/preload warnings.
@@ -31,8 +32,9 @@ applicable hostname over HTTPS. All other deployment warnings are treated as fai
   Event editor permissions; no signup; CSRF enforcement; request-user attribution; and payload
   actor-field exclusion.
 - Authentication/security: actual TOTP login, five-attempt username-plus-IP rate limiting,
-  Argon2-first strong password configuration, secure production cookie requirements, health check,
-  and private QR provisioning.
+  Argon2-first strong password configuration, secure production cookie requirements, production
+  environment and database-credential fail-closed guards, an HTTPS-aware internal health probe
+  without a public redirect exemption, and private QR provisioning.
 - Upload attacks/processing: JPEG/PNG/WebP decode acceptance; SVG, malformed, truncated, spoofed
   extension/MIME, encoded-byte, and decoded-pixel rejection; traversal-resistant randomized names;
   orientation normalization; metadata stripping from managed original and derivatives; responsive

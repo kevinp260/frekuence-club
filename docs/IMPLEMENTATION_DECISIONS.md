@@ -127,3 +127,9 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   database, check, migration, fixture, static collection, and browser-review processes all run in
   Docker. Only the existing Astro container remains loopback-published at this checkpoint; final
   gateway routing belongs to checkpoint 7.
+- Django environment selection fails closed to the explicit `development`, `test`, and `production`
+  set. Production also rejects an empty PostgreSQL password and both documented development/default
+  password values before application startup.
+- The internal backend health probe keeps the public HTTPS redirect enabled. It uses the first
+  configured exact allowed host and the trusted `X-Forwarded-Proto: https` signal for the private
+  HTTP hop to Gunicorn; requests without that signal continue to redirect to HTTPS.

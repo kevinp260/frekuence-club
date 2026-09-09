@@ -35,9 +35,11 @@ Production requires:
 - `DJANGO_SECURE_SSL_REDIRECT=true` and `DJANGO_SECURE_COOKIES=true`;
 - unique PostgreSQL credentials.
 
-Django refuses to start in production with debug, insecure cookies, or the HTTPS redirect enabled
-incorrectly. The Compose defaults are visibly development-only and must never be used for a public
-deployment.
+Django accepts only `development`, `test`, or `production` as the environment name and fails closed
+for any other value. It refuses to start in production with debug, insecure cookies, HTTPS redirect
+configured incorrectly, an empty PostgreSQL password, or either documented development/default
+PostgreSQL password. The Compose defaults are visibly development-only and must never be used for a
+public deployment.
 
 ## Backend build, migration, and checks
 
@@ -60,11 +62,14 @@ backend process never runs `migrate` itself.
 At checkpoint 4, backend health can be checked from its private network without adding a host port:
 
 ```sh
-docker compose exec backend python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/healthz/').status)"
+docker compose exec backend python -c "import os, urllib.request; host = os.environ['DJANGO_ALLOWED_HOSTS'].split(',')[0].strip(); request = urllib.request.Request('http://127.0.0.1:8000/healthz/', headers={'Host': host, 'X-Forwarded-Proto': 'https'}); print(urllib.request.urlopen(request).status)"
 ```
 
-The command must print `200`. `docker compose ps` must show only the Astro `web` service with a
-loopback host binding; Django and PostgreSQL must show only their private container ports.
+The probe uses the first exact configured allowed host and marks the private HTTP hop as HTTPS at
+the trusted proxy boundary. The command must print `200`; an otherwise identical public HTTP
+request without that trusted header still redirects to HTTPS. `docker compose ps` must show only
+the Astro `web` service with a loopback host binding; Django and PostgreSQL must show only their
+private container ports.
 
 ## Staff accounts and TOTP
 

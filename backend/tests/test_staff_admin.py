@@ -278,6 +278,32 @@ class StaffAdminTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "ok"})
 
+    @override_settings(
+        ALLOWED_HOSTS=["frekuence.club"],
+        CSRF_COOKIE_SECURE=True,
+        SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"),
+        SECURE_SSL_REDIRECT=True,
+        SESSION_COOKIE_SECURE=True,
+    )
+    def test_internal_health_probe_works_with_production_security_settings(self):
+        response = self.client.get(
+            "/healthz/",
+            HTTP_HOST="frekuence.club",
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok"})
+
+        public_http_response = self.client.get(
+            "/healthz/",
+            HTTP_HOST="frekuence.club",
+        )
+        self.assertEqual(public_http_response.status_code, 301)
+        self.assertEqual(
+            public_http_response.headers["Location"],
+            "https://frekuence.club/healthz/",
+        )
+
 
 class EventEditorMigrationTests(TestCase):
     def test_event_editor_group_contains_exactly_event_crud_permissions(self):
