@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import { getImage, Image } from 'astro:assets';
 
 import SignalLink from '../components/SignalLink.astro';
 import type { EventEntry } from '../data/events';
@@ -26,6 +26,12 @@ const metadata = {
   title: `${content.title} — Frekuence Club`,
   description: content.summary,
 };
+const socialImage = await getImage({
+  src: event.data.poster,
+  width: 960,
+  format: 'webp',
+  quality: 65,
+});
 const eventStatusUrls = {
   scheduled: 'https://schema.org/EventScheduled',
   postponed: 'https://schema.org/EventPostponed',
@@ -40,7 +46,7 @@ const structuredData = {
   endDate: event.data.endsAt.toISOString(),
   eventStatus: eventStatusUrls[event.data.status],
   eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-  image: new URL(event.data.poster.src, SITE.url).toString(),
+  image: new URL(socialImage.src, SITE.url).toString(),
   location: {
     '@type': 'Place',
     name: SITE.name,
@@ -51,7 +57,6 @@ const structuredData = {
       addressCountry: SITE.address.countryCode,
     },
   },
-  performer: event.data.lineup.map((name) => ({ '@type': 'Person', name })),
 };
 ---
 
@@ -61,7 +66,7 @@ const structuredData = {
   metadata={metadata}
   canonicalPath={canonicalPath}
   alternatePaths={alternatePaths}
-  socialImagePath={event.data.poster.src}
+  socialImagePath={socialImage.src}
   socialImageAlt={content.posterAlt}
   documentType="article"
   structuredData={structuredData}
