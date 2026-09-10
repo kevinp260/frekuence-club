@@ -260,7 +260,8 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   remain explicit operations. Deployment documentation exports one immutable gateway/web/backend
   tag set across build, migration, static collection, and startup. Isolated restoration likewise
   exports a unique Compose project, random gateway port, and compatible immutable tag set across
-  its entire command sequence so it cannot reuse live ports or volumes.
+  its entire command sequence so it cannot reuse live ports or volumes; its explicit static
+  collection job populates the isolated static volume before the restored gateway starts.
 - Checkpoint 7 adds no model, migration, frontend behavior, event content, Redis, worker,
   reservation, payment, or custom staff-application work. Checkpoint 8 integrated QA, a real
   host/TLS deployment, an operator-run encrypted backup/restore exercise, monitoring, and the

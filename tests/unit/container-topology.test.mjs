@@ -125,6 +125,12 @@ test('restore commands retain isolated project, random port, and compatible tags
   for (const variable of ['FREKUENCE_GATEWAY_TAG', 'FREKUENCE_WEB_TAG', 'FREKUENCE_BACKEND_TAG']) {
     assert.match(section, new RegExp(`export ${variable}=COMPATIBLE_`));
   }
-  assert.match(section, /docker compose up -d --no-build --wait backend web gateway/);
+  const collectStatic = section.indexOf('docker compose --profile tools run --rm backend-static');
+  const restoredStartup = section.indexOf(
+    'docker compose up -d --no-build --wait backend web gateway',
+  );
+  assert.notEqual(collectStatic, -1, 'restore does not collect static files');
+  assert.notEqual(restoredStartup, -1, 'restore does not start the application stack');
+  assert.ok(collectStatic < restoredStartup, 'restore starts gateway before collecting static');
   assert.doesNotMatch(section, /^COMPOSE_PROJECT_NAME=.*docker compose/gm);
 });

@@ -1,10 +1,10 @@
 # Phase 2 checkpoint 7 validation
 
-Validated on 2026-09-10 against `feat/phase-2-container-topology`, including the PR #6 client-IP
-and deployment-scope review follow-up. This checkpoint adds only the container gateway, production
-network/volume topology, host proxy example, operational lifecycle, and their regression coverage.
-Checkpoint 6 rendering and event behavior are preserved; checkpoint 8 integrated QA is not
-included.
+Validated on 2026-09-10 against `feat/phase-2-container-topology`, including the PR #6 client-IP,
+deployment-scope, and isolated-restore static-volume review follow-ups. This checkpoint adds only
+the container gateway, production network/volume topology, host proxy example, operational
+lifecycle, and their regression coverage. Checkpoint 6 rendering and event behavior are preserved;
+checkpoint 8 integrated QA is not included.
 
 ## Automated gates
 
@@ -21,7 +21,9 @@ included.
 The frontend browser gate reran the existing checkpoint 6 route, interaction, accessibility,
 metadata, failure-state, 320–1440 px overflow, keyboard, touch, and reduced-motion regressions. No
 visual markup or styling changed, so the opt-in screenshot suite was not rerun and no screenshots
-were replaced.
+were replaced. The 29 unit tests include a restore-workflow regression that requires the explicit
+`backend-static` job to appear before restored gateway startup while preserving the exported
+project, random-port, and compatible-tag scope.
 
 ## Production-topology coverage
 
@@ -68,7 +70,8 @@ read candidate posters, touch the development database, or publish a real event.
   immutable hashed frontend/processed-media caching.
 - Explicit migrations/static collection, named persistent volumes, one exported immutable tag set
   across deployment jobs/services, and an isolated restore sequence whose project, random port,
-  and compatible tags remain exported for every command.
+  and compatible tags remain exported for every command and whose explicit static collection
+  completes before the restored gateway starts.
 
 ## Checkpoint boundary and known limitations
 

@@ -272,14 +272,16 @@ docker compose --profile tools run --rm --no-deps \
   tar -C /vol/media -xzf /backup/frekuence-media.tar.gz
 docker compose --profile tools run --rm backend-migrate \
   python manage.py migrate --check
+docker compose --profile tools run --rm backend-static
 docker compose up -d --no-build --wait backend web gateway
 ```
 
 The exported project name isolates every container, network, and named volume from the live stack;
 the random host port remains active when gateway starts. The three explicit compatible tags apply
-to the restore jobs and long-running services for the full exercise. Run the workflow in a fresh
-shell and close that shell when finished so none of these restore-scoped values affect later
-production commands.
+to the restore jobs and long-running services for the full exercise. The explicit `backend-static`
+job populates the new isolated static volume before gateway starts; normal application startup
+still performs no collection. Run the workflow in a fresh shell and close that shell when finished
+so none of these restore-scoped values affect later production commands.
 
 Then verify event counts, managed derivative files, staff login with a designated test account,
 API/public routes, and a real 404 before recording the restore exercise. End the isolated exercise
