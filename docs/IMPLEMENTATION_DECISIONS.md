@@ -232,10 +232,14 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   when the requested managed original exists.
 - The host Nginx template is the trusted public boundary. It replaces rather than appends the
   client forwarding chain and overwrites host, scheme, port, and real-IP headers. Gateway accepts
-  only exact `http`/`https` scheme values from that loopback boundary, rebuilds upstream forwarding
-  headers, and clears generic `Forwarded`, request CSP, and request nonce headers. Missing or
-  malformed scheme input becomes HTTP, preserving Django's production HTTPS redirect and secure
-  cookies.
+  only exact `http`/`https` scheme values from that loopback boundary, forwards only one
+  syntactically plausible client address without appending a chain, and falls back to the socket
+  peer for missing, multi-value, or malformed input. Django Axes 8.3.1 uses its supported
+  `AXES_CLIENT_IP_CALLABLE` hook to validate and canonicalize that value with Python `ipaddress`,
+  then falls back to a valid socket address or no address. This resolved value supplies Axes'
+  username/address lockout keys and access-attempt audit records. Gateway also clears generic
+  `Forwarded`, request CSP, and request nonce headers. Missing or malformed scheme input becomes
+  HTTP, preserving Django's production HTTPS redirect and secure cookies.
 - CSP ownership is refined from the checkpoint 1 plan: Astro itself emits the complete strict
   per-response nonce policy for dynamic pages. Gateway and host Nginx pass that response header
   unchanged and emit no CSP of their own, avoiding intersecting/obsolete policies. Gateway removes
@@ -253,7 +257,10 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
 - PostgreSQL, original/processed media, and collected static remain named volumes. The gateway
   mounts media/static read-only. Migrations and `collectstatic` remain explicit `tools` profile jobs
   and are absent from all normal startup commands; accounts and development fixtures likewise
-  remain explicit operations.
+  remain explicit operations. Deployment documentation exports one immutable gateway/web/backend
+  tag set across build, migration, static collection, and startup. Isolated restoration likewise
+  exports a unique Compose project, random gateway port, and compatible immutable tag set across
+  its entire command sequence so it cannot reuse live ports or volumes.
 - Checkpoint 7 adds no model, migration, frontend behavior, event content, Redis, worker,
   reservation, payment, or custom staff-application work. Checkpoint 8 integrated QA, a real
   host/TLS deployment, an operator-run encrypted backup/restore exercise, monitoring, and the

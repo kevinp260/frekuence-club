@@ -79,11 +79,11 @@ Use immutable tags, take a matched database/media backup, and review the migrati
 changing running containers:
 
 ```sh
-FREKUENCE_GATEWAY_TAG=2026-09-10.1 \
-FREKUENCE_WEB_TAG=2026-09-10.1 \
-FREKUENCE_BACKEND_TAG=2026-09-10.1 \
-docker compose build --pull gateway web backend
+export FREKUENCE_GATEWAY_TAG=2026-09-10.1
+export FREKUENCE_WEB_TAG=2026-09-10.1
+export FREKUENCE_BACKEND_TAG=2026-09-10.1
 
+docker compose build --pull gateway web backend
 docker compose --profile tools run --rm backend-migrate python manage.py showmigrations --plan
 docker compose run --rm --no-deps gateway nginx -t
 docker compose up -d --wait db
@@ -119,10 +119,14 @@ decoded pixels, and content. Gateway connect timeout is 5 seconds; normal upstre
 35 seconds and staff reads/sends are 60 seconds.
 
 Host Nginx is the public TLS boundary and overwrites client-supplied forwarding headers. Gateway
-then emits one normalized host, scheme, port, client chain, and real-IP value to the application;
-it clears generic `Forwarded`, request CSP, and request nonce headers. An exact inbound `https`
-scheme from the loopback host boundary is sent to Django as HTTPS. Other/missing values become
-HTTP, so `SECURE_SSL_REDIRECT` remains effective.
+accepts only a single syntactically plausible IPv4/IPv6 value, never appends a forwarding chain,
+and falls back to its trusted socket peer for absent, multi-value, or malformed input. Django's
+django-axes resolver then validates and canonicalizes the single address with Python's `ipaddress`
+module, falling back to a valid socket address or no address. The resolved value supplies Axes'
+combined username/address lockout key and its access records. Gateway also emits one normalized
+host, scheme, and port value, and clears generic `Forwarded`, request CSP, and request nonce
+headers. An exact inbound `https` scheme from the loopback host boundary is sent to Django as
+HTTPS. Other/missing values become HTTP, so `SECURE_SSL_REDIRECT` remains effective.
 
 Astro owns its dynamic per-response Content Security Policy and nonce. Gateway and host Nginx do
 not add, hide, or replace CSP response headers. Gateway normalizes one frame, MIME-sniffing,
@@ -252,18 +256,30 @@ Test restoration in a separately named Compose project with isolated volumes and
 port. Never restore over live volumes:
 
 ```sh
-COMPOSE_PROJECT_NAME=frekuence-restore-check FREKUENCE_GATEWAY_PORT=0 docker compose up -d --wait db
+export COMPOSE_PROJECT_NAME=frekuence-restore-check
+export FREKUENCE_GATEWAY_PORT=0
+export FREKUENCE_GATEWAY_TAG=COMPATIBLE_GATEWAY_TAG
+export FREKUENCE_WEB_TAG=COMPATIBLE_WEB_TAG
+export FREKUENCE_BACKEND_TAG=COMPATIBLE_BACKEND_TAG
+
+docker compose up -d --wait db
 cat /absolute/private-backup/2026-09-10T2000Z/frekuence.dump | \
-  COMPOSE_PROJECT_NAME=frekuence-restore-check docker compose exec -T db \
+  docker compose exec -T db \
   pg_restore --clean --if-exists --no-owner --username=PRODUCTION_DB_USER \
   --dbname=PRODUCTION_DB_NAME
-COMPOSE_PROJECT_NAME=frekuence-restore-check docker compose --profile tools run --rm --no-deps \
+docker compose --profile tools run --rm --no-deps \
   --volume /absolute/private-backup/2026-09-10T2000Z:/backup backend-migrate \
   tar -C /vol/media -xzf /backup/frekuence-media.tar.gz
-COMPOSE_PROJECT_NAME=frekuence-restore-check docker compose --profile tools run --rm backend-migrate \
+docker compose --profile tools run --rm backend-migrate \
   python manage.py migrate --check
-COMPOSE_PROJECT_NAME=frekuence-restore-check docker compose up -d --wait backend web gateway
+docker compose up -d --no-build --wait backend web gateway
 ```
+
+The exported project name isolates every container, network, and named volume from the live stack;
+the random host port remains active when gateway starts. The three explicit compatible tags apply
+to the restore jobs and long-running services for the full exercise. Run the workflow in a fresh
+shell and close that shell when finished so none of these restore-scoped values affect later
+production commands.
 
 Then verify event counts, managed derivative files, staff login with a designated test account,
 API/public routes, and a real 404 before recording the restore exercise. End the isolated exercise

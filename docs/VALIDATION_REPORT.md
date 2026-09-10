@@ -1,20 +1,21 @@
 # Phase 2 checkpoint 7 validation
 
-Validated on 2026-09-10 against `feat/phase-2-container-topology`. This checkpoint adds only the
-container gateway, production network/volume topology, host proxy example, operational lifecycle,
-and their regression coverage. Checkpoint 6 rendering and event behavior are preserved; checkpoint
-8 integrated QA is not included.
+Validated on 2026-09-10 against `feat/phase-2-container-topology`, including the PR #6 client-IP
+and deployment-scope review follow-up. This checkpoint adds only the container gateway, production
+network/volume topology, host proxy example, operational lifecycle, and their regression coverage.
+Checkpoint 6 rendering and event behavior are preserved; checkpoint 8 integrated QA is not
+included.
 
 ## Automated gates
 
 | Gate                                                             | Result                                                                                                                                                                                                             |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `docker compose config`                                          | Passed: the resolved model contains one loopback-published gateway, explicit application/database networks, and no frontend/backend/database host binding                                                          |
-| `docker compose --profile tools run --rm --build backend-check`  | Passed: Ruff format/lint; no pending migrations; Django system/deployment checks; migrations; 65 tests in 9.733 s; no known installed-environment vulnerabilities                                                  |
-| `docker compose --profile tools run --rm --build frontend-check` | Passed: Prettier, ESLint, 0 Astro diagnostics, 27 unit tests, mixed Astro Node build, 8-route/58-file production-output validation, and 43 browser/integration/accessibility tests; 26 opt-in visual tests skipped |
-| `npm run smoke:production-topology`                              | Passed: isolated production stack, explicit migration/static jobs, real gateway routes and security behavior, all health checks, and database/media/static persistence across forced recreation                    |
+| `docker compose --profile tools run --rm --build backend-check`  | Passed: Ruff format/lint; no pending migrations; Django system/deployment checks; migrations; 69 tests in 11.951 s; no known installed-environment vulnerabilities                                                 |
+| `docker compose --profile tools run --rm --build frontend-check` | Passed: Prettier, ESLint, 0 Astro diagnostics, 29 unit tests, mixed Astro Node build, 8-route/58-file production-output validation, and 43 browser/integration/accessibility tests; 26 opt-in visual tests skipped |
+| `npm run smoke:production-topology`                              | Passed: isolated production stack, distinct Axes client lockouts, forwarding-chain rejection, explicit migration/static jobs, gateway routes/security, all health checks, and persistence across recreation        |
 | Gateway and host-example Nginx `nginx -t`                        | Passed inside the pinned unprivileged gateway image; the smoke also runs the gateway check before startup                                                                                                          |
-| `npm run check`                                                  | Passed locally: formatting, ESLint, 0 Astro diagnostics across 65 files, and all 27 unit tests                                                                                                                     |
+| `npm run check`                                                  | Passed locally: formatting, ESLint, 0 Astro diagnostics across 65 files, and all 29 unit tests                                                                                                                     |
 | `git diff --check`                                               | Passed with no whitespace errors                                                                                                                                                                                   |
 
 The frontend browser gate reran the existing checkpoint 6 route, interaction, accessibility,
@@ -34,6 +35,9 @@ non-default application/database credentials, and a random loopback host port. I
 - the public event API retains its published-only representation, ETag, and conditional 304;
 - anonymous `/staff/` redirects to the Django login boundary with `no-store`, secure/HttpOnly CSRF
   cookie behavior remains active, and collected Django Admin CSS is served;
+- five failed staff logins from one sanitized forwarded IPv4 address lock only that
+  username/address pair, a different address remains unlocked, and Axes stores separate attempt
+  counts and audit addresses; a multi-value forwarding chain is replaced by a valid socket peer;
 - a real randomized processed WebP derivative is served with immutable caching, while the matching
   managed original path returns 404;
 - a 17 MiB staff request receives 413 at gateway, while ordinary public-page writes receive 405;
@@ -58,11 +62,13 @@ read candidate posters, touch the development database, or publish a real event.
 - Separate application and internal database networks with Django as the sole bridge.
 - Same-origin Astro, API, staff, static, and derivative routing; all other media paths denied.
 - Host-boundary forwarding-header replacement, gateway normalization, public-host redirects, safe
-  proxy limits/timeouts, one normalized non-CSP security-header set, and exact Astro CSP pass-through.
+  proxy limits/timeouts, strict single-address Axes resolution, one normalized non-CSP
+  security-header set, and exact Astro CSP pass-through.
 - API cache/validator pass-through, staff `no-store`, conservative collected-static caching, and
   immutable hashed frontend/processed-media caching.
-- Explicit migrations/static collection, named persistent volumes, and documented development,
-  deploy, health, backup, isolated restore, rollback, and host-Nginx/Certbot commands.
+- Explicit migrations/static collection, named persistent volumes, one exported immutable tag set
+  across deployment jobs/services, and an isolated restore sequence whose project, random port,
+  and compatible tags remain exported for every command.
 
 ## Checkpoint boundary and known limitations
 

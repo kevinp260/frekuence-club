@@ -185,6 +185,7 @@ AXES_RESET_ON_SUCCESS = True
 AXES_HTTP_RESPONSE_CODE = 429
 AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
 AXES_SENSITIVE_PARAMETERS = ["password", "otp_token"]
+AXES_CLIENT_IP_CALLABLE = "config.client_ip.get_axes_client_ip_address"
 
 LOGGING = {
     "version": 1,

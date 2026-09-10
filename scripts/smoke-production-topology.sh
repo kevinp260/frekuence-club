@@ -83,7 +83,7 @@ done
 
 echo "Creating one unmistakably synthetic published event in isolated storage..."
 "${compose[@]}" exec --no-TTY backend python manage.py shell -c \
-  'import io; from datetime import timedelta; from django.core.files.uploadedfile import SimpleUploadedFile; from django.utils import timezone; from PIL import Image; from events.models import Event; output = io.BytesIO(); image = Image.new("RGB", (120, 180), "#ff3737"); image.save(output, format="PNG"); image.close(); start = timezone.now() + timedelta(days=7); Event.objects.create(slug="checkpoint7-synthetic-smoke-not-real", title_sq="CHECKPOINT 7 SYNTHETIC SMOKE - JO EVENT REAL", title_en="CHECKPOINT 7 SYNTHETIC SMOKE - NOT A REAL EVENT", summary_sq="Te dhena sintetike vetem per proven e topologjise.", summary_en="Synthetic data used only by the production topology smoke.", description_sq="Ky eshte nje event sintetik dhe nuk eshte event real.", description_en="This is a synthetic event and is not a real event.", starts_at=start, ends_at=start + timedelta(hours=6), doors_at=start - timedelta(hours=1), lineup=[], poster=SimpleUploadedFile("checkpoint7-synthetic-smoke.png", output.getvalue(), content_type="image/png"), poster_alt_sq="", poster_alt_en="", publication_status=Event.PublicationStatus.PUBLISHED)'
+  'import io; from datetime import timedelta; from django.contrib.auth import get_user_model; from django.core.files.uploadedfile import SimpleUploadedFile; from django.utils import timezone; from PIL import Image; from events.models import Event; output = io.BytesIO(); image = Image.new("RGB", (120, 180), "#ff3737"); image.save(output, format="PNG"); image.close(); start = timezone.now() + timedelta(days=7); Event.objects.create(slug="checkpoint7-synthetic-smoke-not-real", title_sq="CHECKPOINT 7 SYNTHETIC SMOKE - JO EVENT REAL", title_en="CHECKPOINT 7 SYNTHETIC SMOKE - NOT A REAL EVENT", summary_sq="Te dhena sintetike vetem per proven e topologjise.", summary_en="Synthetic data used only by the production topology smoke.", description_sq="Ky eshte nje event sintetik dhe nuk eshte event real.", description_en="This is a synthetic event and is not a real event.", starts_at=start, ends_at=start + timedelta(hours=6), doors_at=start - timedelta(hours=1), lineup=[], poster=SimpleUploadedFile("checkpoint7-synthetic-smoke.png", output.getvalue(), content_type="image/png"), poster_alt_sq="", poster_alt_en="", publication_status=Event.PublicationStatus.PUBLISHED); get_user_model().objects.create_user(username="checkpoint7-lockout-smoke", password="Checkpoint7-smoke-password-only-783", is_staff=True)'
 
 original_path="$("${compose[@]}" exec --no-TTY backend python manage.py shell -c 'from events.models import Event; print(Event.objects.get(slug="checkpoint7-synthetic-smoke-not-real").poster.name)' | tail -n 1)"
 [[ "${original_path}" == events/originals/* ]] || fail "could not resolve the managed original path"
@@ -158,6 +158,32 @@ echo "Verifying public, API, staff, static, media, HTTPS, CSP, and error behavio
   const cookie = login.response.headers.get("set-cookie") ?? "";
   if (login.response.status !== 200 || !cookie.includes("Secure") || !cookie.includes("HttpOnly")) throw new Error("secure staff CSRF cookie is missing");
 
+  const failedLogin = async (ip, username = "checkpoint7-lockout-smoke") => {
+    const loginPage = await read("/staff/login/", { headers: { ...publicHeaders, "X-Forwarded-For": ip } });
+    const csrfCookie = (loginPage.response.headers.get("set-cookie") ?? "").match(/csrftoken=([^;]+)/)?.[1];
+    const csrfToken = loginPage.body.match(/name="csrfmiddlewaretoken" value="([^"]+)"/)?.[1];
+    if (!csrfCookie || !csrfToken) throw new Error("could not establish a CSRF-protected staff login session");
+    const body = Buffer.from(new URLSearchParams({ csrfmiddlewaretoken: csrfToken, username, password: "wrong-password" }).toString());
+    return read("/staff/login/", {
+      method: "POST",
+      headers: {
+        ...publicHeaders,
+        "X-Forwarded-For": ip,
+        Cookie: `csrftoken=${csrfCookie}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+        Origin: "https://frekuence.club",
+      },
+      body,
+    });
+  };
+  let lockedClient;
+  for (let attempt = 0; attempt < 5; attempt += 1) lockedClient = await failedLogin("198.51.100.24");
+  if (lockedClient.response.status !== 429) throw new Error(`first forwarded client was not locked: ${lockedClient.response.status}`);
+  const independentClient = await failedLogin("203.0.113.9");
+  if (independentClient.response.status !== 200) throw new Error(`second forwarded client inherited lockout: ${independentClient.response.status}`);
+  const malformedChain = await failedLogin("198.51.100.80, 203.0.113.80", "checkpoint7-malformed-chain-smoke");
+  if (malformedChain.response.status !== 200) throw new Error(`malformed forwarding-chain check returned ${malformedChain.response.status}`);
+
   const adminStatic = await read("/static/admin/css/base.css");
   if (adminStatic.response.status !== 200 || !adminStatic.body.includes("--primary")) throw new Error("Django Admin static asset was not served");
 
@@ -181,6 +207,9 @@ echo "Verifying public, API, staff, static, media, HTTPS, CSP, and error behavio
 
   console.log("Gateway route and security checks passed.");
 '
+
+"${compose[@]}" exec --no-TTY backend python manage.py shell -c \
+  'from ipaddress import ip_address; from axes.models import AccessAttempt; username = "checkpoint7-lockout-smoke"; attempts = {attempt.ip_address: attempt.failures_since_start for attempt in AccessAttempt.objects.filter(username=username)}; assert attempts == {"198.51.100.24": 5, "203.0.113.9": 1}, attempts; fallback = AccessAttempt.objects.get(username="checkpoint7-malformed-chain-smoke").ip_address; ip_address(fallback); assert fallback not in {"198.51.100.80", "203.0.113.80"} and "," not in fallback, fallback; print("Axes client lockout keys and audit addresses are isolated and sanitized.")'
 
 echo "Recreating all long-running containers without rerunning deployment jobs..."
 "${compose[@]}" up --detach --force-recreate --wait db backend web gateway

@@ -2,11 +2,12 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [compose, gatewayConfig, hostConfig, gatewayDockerfile] = await Promise.all([
+const [compose, gatewayConfig, hostConfig, gatewayDockerfile, deployment] = await Promise.all([
   readFile(new URL('../../compose.yaml', import.meta.url), 'utf8'),
   readFile(new URL('../../deploy/nginx/container.conf', import.meta.url), 'utf8'),
   readFile(new URL('../../deploy/nginx/frekuence.club.conf.example', import.meta.url), 'utf8'),
   readFile(new URL('../../Dockerfile.gateway', import.meta.url), 'utf8'),
+  readFile(new URL('../../docs/DEPLOYMENT.md', import.meta.url), 'utf8'),
 ]);
 
 function serviceBlock(name) {
@@ -23,6 +24,14 @@ function locationBlock(pathPattern) {
   );
   assert.ok(match, `missing ${pathPattern} location`);
   return match[1];
+}
+
+function documentationSection(heading, nextHeading) {
+  const start = deployment.indexOf(heading);
+  const end = deployment.indexOf(nextHeading, start + heading.length);
+  assert.notEqual(start, -1, `missing ${heading}`);
+  assert.notEqual(end, -1, `missing ${nextHeading}`);
+  return deployment.slice(start, end);
 }
 
 test('only the unprivileged pinned gateway publishes a loopback port', () => {
@@ -56,6 +65,9 @@ test('gateway owns routing and limits without replacing the Astro CSP', () => {
   assert.match(gatewayConfig, /location \^~ \/media\/ \{\n {8}return 404;/);
   assert.match(gatewayConfig, /client_max_body_size 16m/);
   assert.match(gatewayConfig, /proxy_set_header X-Forwarded-Proto \$frekuence_original_scheme/);
+  assert.match(gatewayConfig, /default \$remote_addr;/);
+  assert.match(gatewayConfig, /proxy_set_header X-Forwarded-For \$frekuence_client_address/);
+  assert.doesNotMatch(gatewayConfig, /proxy_add_x_forwarded_for/);
   assert.doesNotMatch(gatewayConfig, /add_header Content-Security-Policy/i);
 
   for (const pathPattern of ['/staff/', '/_astro/']) {
@@ -89,4 +101,30 @@ test('migration and static collection remain explicit profile jobs', () => {
   for (const service of ['gateway', 'web', 'backend']) {
     assert.doesNotMatch(serviceBlock(service), /manage\.py.*(?:migrate|collectstatic)/);
   }
+});
+
+test('deployment commands keep one immutable release tag set in scope', () => {
+  const section = documentationSection(
+    '## Production deployment order',
+    '## Gateway routes, limits, and headers',
+  );
+  for (const variable of ['FREKUENCE_GATEWAY_TAG', 'FREKUENCE_WEB_TAG', 'FREKUENCE_BACKEND_TAG']) {
+    assert.match(section, new RegExp(`export ${variable}=`));
+  }
+  assert.match(serviceBlock('gateway'), /image: frekuence-gateway:\$\{FREKUENCE_GATEWAY_TAG/);
+  assert.match(serviceBlock('web'), /image: frekuence-website:\$\{FREKUENCE_WEB_TAG/);
+  for (const service of ['backend', 'backend-migrate', 'backend-static']) {
+    assert.match(serviceBlock(service), /image: frekuence-backend:\$\{FREKUENCE_BACKEND_TAG/);
+  }
+});
+
+test('restore commands retain isolated project, random port, and compatible tags', () => {
+  const section = documentationSection('## Matched backup and isolated restoration', '## Rollback');
+  assert.match(section, /export COMPOSE_PROJECT_NAME=frekuence-restore-check/);
+  assert.match(section, /export FREKUENCE_GATEWAY_PORT=0/);
+  for (const variable of ['FREKUENCE_GATEWAY_TAG', 'FREKUENCE_WEB_TAG', 'FREKUENCE_BACKEND_TAG']) {
+    assert.match(section, new RegExp(`export ${variable}=COMPATIBLE_`));
+  }
+  assert.match(section, /docker compose up -d --no-build --wait backend web gateway/);
+  assert.doesNotMatch(section, /^COMPOSE_PROJECT_NAME=.*docker compose/gm);
 });
