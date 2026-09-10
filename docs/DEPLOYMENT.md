@@ -84,14 +84,15 @@ docker compose exec backend python -c "import json, os, urllib.request; host = o
 The response must be `200`, include an ETag, and contain only intentionally published records.
 Supported read contracts are:
 
-- `/api/v1/events/?locale=sq|en&when=upcoming|recent&limit=1..20&offset=0..n`;
+- `/api/v1/events/?locale=sq|en&when=upcoming|recent&limit=1..20&offset=0..10000`;
 - `/api/v1/events/{slug}/?locale=sq|en`.
 
-Albanian, `upcoming`, a six-item limit, and offset zero are the list defaults. Send the returned
-ETag in `If-None-Match` to verify a `304` response. Unknown and unpublished detail slugs share the
-same non-disclosing 404. Original media is never an API asset; only managed derivatives are
-serialized. Public API routing, derivative media serving, proxy limits, and cache handling at the
-gateway remain checkpoint 7 work. Astro consumption and SSR remain checkpoint 6 work.
+Albanian, `upcoming`, a six-item limit, and offset zero are the list defaults. Offsets above 10,000
+are rejected with 400 before database slicing. Send the returned ETag in `If-None-Match` to verify a
+`304` response. Unknown and unpublished detail slugs share the same non-disclosing 404. Original
+media is never an API asset; only managed derivatives are serialized. Public API routing,
+derivative media serving, proxy limits, and cache handling at the gateway remain checkpoint 7
+work. Astro consumption and SSR remain checkpoint 6 work.
 
 ## Staff accounts and TOTP
 

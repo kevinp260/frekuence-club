@@ -65,7 +65,8 @@ The checkpoint 5 API is JSON-only and read-only:
 - `GET /api/v1/events/{slug}/?locale=sq|en`
 
 Albanian is the default locale. Lists use a `count`/`next`/`previous`/`results` envelope, accept a
-maximum `limit` of 20, and expose published localized content and managed poster derivatives only.
+maximum `limit` of 20 and an `offset` from 0 through 10,000, and expose published localized content
+and managed poster derivatives only.
 
 ## Production signoff
 

@@ -261,6 +261,30 @@ class PublicEventAPITests(TestCase):
         self.assertEqual(len(first_page["results"]), 2)
         self.assertEqual(len(second_page["results"]), 2)
 
+    def test_maximum_offset_is_accepted(self):
+        response = self.client.get(self.list_url, {"offset": 10_000})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 4)
+        self.assertEqual(response.json()["results"], [])
+
+    def test_offset_above_the_practical_maximum_is_rejected_before_querying(self):
+        with self.assertNumQueries(0):
+            response = self.client.get(self.list_url, {"offset": 10_001})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
+
+    def test_offset_above_postgresql_bigint_is_rejected_before_querying(self):
+        with self.assertNumQueries(0):
+            response = self.client.get(
+                self.list_url,
+                {"offset": 9_223_372_036_854_775_808},
+            )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
+
     def test_invalid_locales_filters_pagination_and_query_shapes_return_400(self):
         invalid_queries = (
             "?locale=fr",

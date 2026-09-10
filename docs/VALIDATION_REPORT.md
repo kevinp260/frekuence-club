@@ -1,15 +1,15 @@
 # Phase 2 checkpoint 5 validation
 
-Validated on 2026-09-09 against `feat/phase-2-read-only-api`. This checkpoint adds only the
-published-only Django events API. Astro still reads its transitional content collection, Django
-remains private, and no public route or visual design changed.
+Validated on 2026-09-10 against `feat/phase-2-read-only-api` after the pagination review follow-up.
+This checkpoint adds only the published-only Django events API. Astro still reads its transitional
+content collection, Django remains private, and no public route or visual design changed.
 
 ## Automated gates
 
 | Gate                                                                                                                      | Result                                                                                                                                                                                                                  |
 | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docker compose --profile tools run --rm --build backend-check`                                                           | Passed: Ruff format and lint; no pending migrations; Django system and deployment checks; all migrations; 62 tests in 11.435 s; installed-environment audit with no known vulnerabilities                               |
-| `docker compose --profile tools run --rm --build backend-check python manage.py test tests.test_public_api --verbosity 2` | Passed: 14 focused public API tests in 0.549 s                                                                                                                                                                          |
+| `docker compose --profile tools run --rm --build backend-check`                                                           | Passed: Ruff format and lint; no pending migrations; Django system and deployment checks; all migrations; 65 tests in 7.394 s; installed-environment audit with no known vulnerabilities                                |
+| `docker compose --profile tools run --rm --build backend-check python manage.py test tests.test_public_api --verbosity 2` | Passed: 17 focused public API tests in 0.660 s                                                                                                                                                                          |
 | `docker compose --profile tools run --rm --build frontend-check`                                                          | Passed: Prettier, ESLint, 0 Astro diagnostics across 58 files, 11 unit tests, 13-page production build, 12-route/40-file production validation, 37 browser tests; 26 opt-in visual tests skipped                        |
 | `docker compose up -d --build backend` and private API smoke                                                              | Passed: production-target backend image built; Django and PostgreSQL healthy with private container ports only; Albanian upcoming list returned 200, an ETag, documented cache policy, and the four-field page envelope |
 
@@ -27,8 +27,10 @@ subdomain/preload warnings documented at checkpoint 4.
 - Indistinguishable 404 responses for unknown, draft, and intentionally unpublished slugs.
 - Separate lifecycle status and derived timing for scheduled, postponed, cancelled, current,
   future, and past events; stable chronological and reverse-chronological ordering.
-- Bounded `limit`/`offset` pagination with a default of 6, maximum of 20, deterministic relative
-  links, and constant query budgets of two queries for list and one for detail.
+- Bounded pagination with a default limit of 6, maximum limit of 20, and exact offset range of
+  0–10,000. Boundary tests accept 10,000 and reject 10,001 plus a value above PostgreSQL's bigint
+  range with 400/no-store and zero database queries. Pagination retains deterministic relative
+  links and constant query budgets of two queries for list and one for detail.
 - GET/HEAD/OPTIONS-only behavior, 405 write rejection, strong content ETags, documented public
   cache policy, and conditional 304 responses for list and detail.
 - Managed responsive WebP derivative URLs, dimensions, format, and localized alt text only.

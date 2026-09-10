@@ -141,8 +141,9 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   mutation surface. `GET`, `HEAD`, and `OPTIONS` are the only allowed methods; writes return 405.
 - The list route is `/api/v1/events/`; detail is `/api/v1/events/{slug}/`. `locale` accepts exactly
   `sq` or `en` and defaults to Albanian. `when` accepts exactly `upcoming` or `recent`; `limit`
-  defaults to 6, is capped at 20, and combines with a non-negative `offset`. Unknown, duplicated,
-  malformed, or out-of-range query parameters fail with a bounded 400 response.
+  defaults to 6 and is capped at 20. `offset` defaults to 0 and is capped at the practical maximum
+  of 10,000 before queryset slicing. Unknown, duplicated, malformed, or out-of-range query
+  parameters fail with a bounded 400 response without reaching PostgreSQL.
 - Lists use a `count`/`next`/`previous`/`results` envelope with relative same-origin pagination
   links. Upcoming includes current events whose `ends_at` remains in the future and sorts by start
   ascending; recent contains ended events and sorts by start descending. UUID primary keys are the

@@ -8,6 +8,7 @@ SUPPORTED_LOCALES = ("sq", "en")
 SUPPORTED_EVENT_WINDOWS = ("upcoming", "recent")
 DEFAULT_EVENT_LIMIT = 6
 MAX_EVENT_LIMIT = 20
+MAX_EVENT_OFFSET = 10_000
 
 
 class EventListQuerySerializer(serializers.Serializer):
@@ -18,7 +19,7 @@ class EventListQuerySerializer(serializers.Serializer):
         min_value=1,
         max_value=MAX_EVENT_LIMIT,
     )
-    offset = serializers.IntegerField(default=0, min_value=0)
+    offset = serializers.IntegerField(default=0, min_value=0, max_value=MAX_EVENT_OFFSET)
 
 
 class EventDetailQuerySerializer(serializers.Serializer):
