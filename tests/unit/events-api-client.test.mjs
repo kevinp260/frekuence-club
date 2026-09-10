@@ -72,6 +72,62 @@ test('list validates the published API envelope and converts timestamps to Date 
   assert.ok(requests[0].options.signal instanceof globalThis.AbortSignal);
 });
 
+test('requests identify the trusted public scheme to production Django', async () => {
+  let requestOptions;
+  const client = createEventApiClient({
+    environment,
+    fetcher: async (_url, options) => {
+      requestOptions = options;
+      return response({ count: 0, next: null, previous: null, results: [] });
+    },
+  });
+
+  await client.list('sq', 'upcoming');
+
+  assert.equal(requestOptions.headers['X-Forwarded-Proto'], 'https');
+});
+
+test('requests reject redirects instead of following an unexpected target', async () => {
+  let requestOptions;
+  const client = createEventApiClient({
+    environment,
+    fetcher: async (_url, options) => {
+      requestOptions = options;
+      return response({ count: 0, next: null, previous: null, results: [] });
+    },
+  });
+
+  await client.list('sq', 'recent');
+
+  assert.equal(requestOptions.redirect, 'error');
+});
+
+test('empty optional poster alt text is accepted', async () => {
+  const payload = event();
+  payload.poster.alt = '';
+  const client = createEventApiClient({
+    environment,
+    fetcher: async () => response({ count: 1, next: null, previous: null, results: [payload] }),
+  });
+
+  const [result] = await client.list('sq', 'upcoming');
+
+  assert.equal(result.poster.alt, '');
+});
+
+test('an empty optional lineup is accepted', async () => {
+  const payload = event();
+  payload.lineup = [];
+  const client = createEventApiClient({
+    environment,
+    fetcher: async () => response({ count: 1, next: null, previous: null, results: [payload] }),
+  });
+
+  const [result] = await client.list('sq', 'upcoming');
+
+  assert.deepEqual(result.lineup, []);
+});
+
 test('detail maps a backend 404 to a private-record-neutral not-found error', async () => {
   const client = createEventApiClient({
     environment,

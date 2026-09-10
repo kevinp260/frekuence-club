@@ -20,6 +20,7 @@
     "test:unit": "node --test --test-isolation=none tests/unit/*.test.mjs",
     "test:e2e": "npm run build && playwright test",
     "test:visual": "npm run build && CAPTURE_VISUALS=true playwright test tests/browser/visual.spec.ts",
+    "smoke:production-integration": "./scripts/smoke-production-integration.sh",
     "audit:lighthouse": "node scripts/run-lighthouse.mjs",
     "audit:lighthouse:fixtures": "npm run build && FREKUENCE_LIGHTHOUSE_FIXTURES=true node scripts/run-lighthouse.mjs",
     "validate:production": "node scripts/validate-production.mjs"

@@ -62,7 +62,9 @@ const status = event ? copy.events.statusLabels[event.status] : null;
             <time datetime={event.startsAt.toISOString()}>
               {formatEventDate(event.startsAt, locale)}
             </time>
-            <p class="next-signal__lineup">{event.lineup.join(' / ')}</p>
+            {event.lineup.length > 0 && (
+              <p class="next-signal__lineup">{event.lineup.join(' / ')}</p>
+            )}
             <p class="next-signal__body">{event.summary}</p>
             <div class="next-signal__actions">
               <SignalLink href={eventRoute(event.slug, locale)} variant="red">

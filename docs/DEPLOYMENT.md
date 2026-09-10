@@ -212,6 +212,18 @@ The last command must print `404`. Each dynamic HTML response must contain a req
 nonce and must not contain `unsafe-inline` or `unsafe-eval`. Managed poster URLs are same-origin
 `/media/` paths but are not publicly served until the checkpoint 7 gateway mounts the media volume.
 
+Run the checkpoint 6 production integration smoke after frontend/backend changes:
+
+```sh
+npm run smoke:production-integration
+```
+
+The command starts a separate Compose project with production Django HTTPS/cookie settings and
+non-default smoke-only credentials, migrates a fresh PostgreSQL volume, and publishes one clearly
+synthetic event with empty optional poster alt text and lineup. It checks the homepage, event index,
+sitemap, and both localized details through Astro, confirms direct Django HTTP still redirects when
+the trusted proxy header is absent, and removes its project-scoped containers and volumes.
+
 ## Configure host Nginx and TLS
 
 Install the reviewed HTTP bootstrap configuration through the host's normal Nginx process,

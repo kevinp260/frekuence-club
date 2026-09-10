@@ -26,7 +26,7 @@ const derivativeSchema = z
   .strict();
 const posterSchema = z
   .object({
-    alt: z.string().min(1).max(240),
+    alt: z.string().max(240),
     sources: z.array(derivativeSchema).max(3),
     social: derivativeSchema.nullable(),
   })
@@ -42,7 +42,7 @@ const eventBaseSchema = z.object({
   endsAt: z.iso.datetime({ offset: true }),
   doorsAt: z.iso.datetime({ offset: true }).nullable(),
   timezone: z.literal('Europe/Tirane'),
-  lineup: z.array(z.string().min(1).max(160)).min(1).max(50),
+  lineup: z.array(z.string().min(1).max(160)).max(50),
   status: statusSchema,
   timing: timingSchema,
   featured: z.boolean(),
@@ -136,7 +136,8 @@ export function createEventApiClient({
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       try {
         const response = await fetcher(url, {
-          headers: { Accept: 'application/json' },
+          headers: { Accept: 'application/json', 'X-Forwarded-Proto': 'https' },
+          redirect: 'error',
           signal: AbortSignal.timeout(timeoutMs),
         });
         if (response.status === 404) throw new EventApiNotFoundError();

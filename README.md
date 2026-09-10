@@ -52,6 +52,7 @@ docker compose --profile tools run --rm --build backend-static
 docker compose up -d --build backend
 docker compose up -d --build web
 docker compose ps
+npm run smoke:production-integration
 ```
 
 The Django service and PostgreSQL have no host port. Development fixtures require an explicit

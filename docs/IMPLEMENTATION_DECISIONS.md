@@ -186,10 +186,13 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   into browser output.
 - A centralized server-only client reads `FREKUENCE_EVENT_API_ORIGIN` at runtime, rejects embedded
   credentials and non-origin URLs, applies an integer timeout bounded to 250–5,000 ms, and permits
-  at most two safe GET attempts. Zod schemas use strict public-field allowlists, validate locale,
-  paths, timestamps, lifecycle/timing values, and managed WebP derivative metadata, and convert
-  dates only after validation. At most 100 events per window may be rendered; a larger API count
-  fails truthfully with 503 instead of silently truncating output.
+  at most two safe GET attempts. Private requests set the trusted public scheme header required by
+  Django's production HTTPS configuration and reject redirects instead of following an unexpected
+  target. Zod schemas use strict public-field allowlists, validate locale, paths, timestamps,
+  lifecycle/timing values, and managed WebP derivative metadata, and convert dates only after
+  validation. Django-valid empty poster alt text and lineups remain accepted; empty lineups are not
+  rendered as meaningless UI sections. At most 100 events per window may be rendered; a larger API
+  count fails truthfully with 503 instead of silently truncating output.
 - Published API 404s map to localized event 404 pages with a real 404 status and no private-record
   distinction. Network, status, content-type, JSON, and contract failures map to localized 503
   pages with `no-store`; no internal exception or URL is rendered. Because all event content is

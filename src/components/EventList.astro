@@ -39,7 +39,9 @@ const EventHeading = headingLevel;
               {formatEventDate(event.startsAt, locale)}
             </time>
             <p>{event.summary}</p>
-            <p class="event-card__lineup">{event.lineup.join(' / ')}</p>
+            {event.lineup.length > 0 && (
+              <p class="event-card__lineup">{event.lineup.join(' / ')}</p>
+            )}
             <div class="event-card__actions">
               <a class="event-card__detail" href={eventRoute(event.slug, locale)}>
                 {copy.common.viewEvent}

@@ -118,12 +118,18 @@ const structuredData = {
       <div class="event-detail__editorial">
         <p>{event.description}</p>
         {event.entryNote && <p>{event.entryNote}</p>}
-        <section aria-labelledby="event-lineup-title">
-          <h2 id="event-lineup-title">{copy.events.lineupLabel}</h2>
-          <ol>
-            {event.lineup.map((artist) => <li>{artist}</li>)}
-          </ol>
-        </section>
+        {
+          event.lineup.length > 0 && (
+            <section aria-labelledby="event-lineup-title">
+              <h2 id="event-lineup-title">{copy.events.lineupLabel}</h2>
+              <ol>
+                {event.lineup.map((artist) => (
+                  <li>{artist}</li>
+                ))}
+              </ol>
+            </section>
+          )
+        }
         <div class="event-detail__context">
           <p>{copy.home.ageContext}</p>
           <p>{copy.home.doorContext}</p>

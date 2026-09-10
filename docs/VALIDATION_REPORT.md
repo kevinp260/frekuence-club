@@ -6,29 +6,34 @@ only the Astro dynamic migration. Checkpoint 7 routing and topology are not incl
 
 ## Automated gates
 
-| Gate                                                             | Result                                                                                                                                                                                                                                        |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docker compose --profile tools run --rm --build backend-check`  | Passed: Ruff format/lint; no pending migrations; Django system/deployment checks; all migrations; 65 tests in 14.899 s; no known installed-environment vulnerabilities                                                                        |
-| `docker compose --profile tools run --rm --build frontend-check` | Passed: Prettier, ESLint, 0 Astro diagnostics, 18 unit tests, mixed Astro Node build, production-output validation, and 43 browser/integration/accessibility tests; 26 opt-in visual tests skipped                                            |
-| `npm run test:visual`                                            | Passed: 26 visual captures at 320, 390, 1024, and 1440 px, including five checkpoint 6 PR captures                                                                                                                                            |
-| `npm run audit:lighthouse`                                       | Passed empty API state: Performance 100, Accessibility 100, Best Practices 100, SEO 100; LCP 1,374 ms; CLS 0                                                                                                                                  |
-| `npm run audit:lighthouse:fixtures`                              | Passed synthetic event state: Performance 99, Accessibility 100, Best Practices 96, SEO 100; LCP 1,941 ms; CLS 0.000127                                                                                                                       |
-| `docker compose build web` and loopback runtime smoke            | Passed: pinned Astro Node standalone image built; web/backend/database healthy; only web bound to `127.0.0.1:3010`; homepage, About, and dynamic sitemap returned 200; unknown event returned 404; dynamic CSP contained a per-response nonce |
+| Gate                                                             | Result                                                                                                                                                                                                                                          |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docker compose --profile tools run --rm --build backend-check`  | Passed: Ruff format/lint; no pending migrations; Django system/deployment checks; all migrations; 65 tests in 10.615 s; no known installed-environment vulnerabilities                                                                          |
+| `docker compose --profile tools run --rm --build frontend-check` | Passed: Prettier, ESLint, 0 Astro diagnostics, 22 unit tests, mixed Astro Node build, production-output validation, and 43 browser/integration/accessibility tests; 26 opt-in visual tests skipped                                              |
+| `npm run smoke:production-integration`                           | Passed: isolated production-configured PostgreSQL/Django/Astro stack; synthetic empty-alt/empty-lineup event rendered through five localized Astro routes; ordinary direct Django HTTP returned a 301 HTTPS redirect without the trusted header |
+| `npm run test:visual`                                            | Passed: 26 visual captures at 320, 390, 1024, and 1440 px, including five checkpoint 6 PR captures                                                                                                                                              |
+| `npm run audit:lighthouse`                                       | Passed empty API state: Performance 100, Accessibility 100, Best Practices 100, SEO 100; LCP 1,374 ms; CLS 0                                                                                                                                    |
+| `npm run audit:lighthouse:fixtures`                              | Passed synthetic event state: Performance 99, Accessibility 100, Best Practices 96, SEO 100; LCP 1,941 ms; CLS 0.000127                                                                                                                         |
+| `docker compose build web` and loopback runtime smoke            | Passed: pinned Astro Node standalone image built; web/backend/database healthy; only web bound to `127.0.0.1:3010`; homepage, About, and dynamic sitemap returned 200; unknown event returned 404; dynamic CSP contained a per-response nonce   |
 
-The final gate figures above are recorded from the final rerun after implementation and
-documentation were complete. The development database contained no published event, and no real
-event was created or published for validation.
+The gate figures above are recorded from the requested final reruns. The integration smoke created
+one unmistakably synthetic published event only in fresh project-scoped database/media volumes and
+removed those containers and volumes on completion. The development database was not changed, and
+no real event was created or published for validation.
 
 ## Frontend and integration coverage
 
 - Strict typed client validation for list/detail envelopes, localized public fields, reciprocal
   paths, date invariants, statuses/timing, and managed WebP derivative metadata only.
-- Server-only origin validation, no credentialed URLs, a configurable 250–5,000 ms timeout, one
-  bounded safe retry, and a 100-event-per-window ceiling that fails instead of silently truncating.
+- Server-only origin validation, no credentialed URLs, a fixed trusted `X-Forwarded-Proto: https`
+  header, redirect rejection, a configurable 250–5,000 ms timeout, one bounded safe retry, and a
+  100-event-per-window ceiling that fails instead of silently truncating.
 - API 404 to localized real 404 mapping; status/content-type/network/schema failures to designed
   localized 503 responses with `no-store` and no internal URL, exception, or private-record leak.
 - Featured/earliest/current event selection, five-card limit, separate upcoming/past groupings,
   scheduled/postponed/cancelled labels, and genuine empty behavior.
+- Django-valid empty optional poster alt text and lineup values are accepted. Empty lineups emit no
+  homepage, card, or detail-section markup.
 - Pointer, keyboard, explicit touch selection, Escape reset, no-JavaScript, reduced motion,
   navigation, reciprocal language links, minimum-width overflow, and axe accessibility coverage.
 - Dynamic localized canonical/hreflang, Open Graph poster derivative, `MusicEvent` JSON-LD without
