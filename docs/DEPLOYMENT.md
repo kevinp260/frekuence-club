@@ -3,8 +3,9 @@
 ## Current checkpoint topology
 
 Public traffic terminates at the host's existing Nginx installation, which proxies to the
-static web container through a loopback-only port. Checkpoint 4 also provides a private Django
-runtime and PostgreSQL database, but deliberately does not route them into the public stack yet:
+static web container through a loopback-only port. Checkpoint 5 provides a private Django runtime,
+PostgreSQL database, and published-only event API, but deliberately does not route them into the
+public stack yet:
 
 ```text
 Internet → host Nginx/TLS → 127.0.0.1:3010 → container Nginx:8080 → Astro dist
@@ -59,7 +60,7 @@ dependency audit. `backend-migrate` is the explicit migration job. Review the mi
 take a matched database/media backup before applying a new production migration. The long-running
 backend process never runs `migrate` itself.
 
-At checkpoint 4, backend health can be checked from its private network without adding a host port:
+At checkpoint 5, backend health can be checked from its private network without adding a host port:
 
 ```sh
 docker compose exec backend python -c "import os, urllib.request; host = os.environ['DJANGO_ALLOWED_HOSTS'].split(',')[0].strip(); request = urllib.request.Request('http://127.0.0.1:8000/healthz/', headers={'Host': host, 'X-Forwarded-Proto': 'https'}); print(urllib.request.urlopen(request).status)"
@@ -70,6 +71,28 @@ the trusted proxy boundary. The command must print `200`; an otherwise identical
 request without that trusted header still redirects to HTTPS. `docker compose ps` must show only
 the Astro `web` service with a loopback host binding; Django and PostgreSQL must show only their
 private container ports.
+
+## Private event API verification
+
+The checkpoint 5 API exists inside Django but is not routed through the public Astro container or
+host Nginx. Verify it from the private Compose network only; do not add a temporary host port:
+
+```sh
+docker compose exec backend python -c "import json, os, urllib.request; host = os.environ['DJANGO_ALLOWED_HOSTS'].split(',')[0].strip(); request = urllib.request.Request('http://127.0.0.1:8000/api/v1/events/?locale=sq&when=upcoming&limit=6', headers={'Host': host, 'X-Forwarded-Proto': 'https'}); response = urllib.request.urlopen(request); print(response.status, response.headers['ETag']); print(json.load(response)['count'])"
+```
+
+The response must be `200`, include an ETag, and contain only intentionally published records.
+Supported read contracts are:
+
+- `/api/v1/events/?locale=sq|en&when=upcoming|recent&limit=1..20&offset=0..10000`;
+- `/api/v1/events/{slug}/?locale=sq|en`.
+
+Albanian, `upcoming`, a six-item limit, and offset zero are the list defaults. Offsets above 10,000
+are rejected with 400 before database slicing. Send the returned ETag in `If-None-Match` to verify a
+`304` response. Unknown and unpublished detail slugs share the same non-disclosing 404. Original
+media is never an API asset; only managed derivatives are serialized. Public API routing,
+derivative media serving, proxy limits, and cache handling at the gateway remain checkpoint 7
+work. Astro consumption and SSR remain checkpoint 6 work.
 
 ## Staff accounts and TOTP
 
@@ -127,9 +150,10 @@ archive into that isolated project's media volume. Then run `migrate --check`, D
 count draft/published records, verify processed-image files, and sign in with a designated test
 account. A database-only or media-only restore is incomplete.
 
-For checkpoint 4 rollback, stop the unused private backend services and return to the prior Astro
-image while retaining the named data/media volumes. Do not reverse the initial Event migration in
-place: that would drop data. Restore the matched backup when schema/data rollback is required.
+For checkpoint 5 rollback, deploy the previous backend image while retaining the named data/media
+volumes. Checkpoint 5 adds no database migration, so no schema reversal is required. Do not reverse
+the checkpoint 4 Event migration in place: that would drop data. The Astro image and public routing
+remain unchanged throughout this rollback.
 
 ## Before launch
 

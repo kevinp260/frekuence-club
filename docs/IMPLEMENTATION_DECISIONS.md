@@ -133,3 +133,41 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
 - The internal backend health probe keeps the public HTTPS redirect enabled. It uses the first
   configured exact allowed host and the trusted `X-Forwarded-Proto: https` signal for the private
   HTTP hop to Gunicorn; requests without that signal continue to redirect to HTTPS.
+
+## Phase 2 checkpoint 5 — public read-only events API
+
+- Django REST Framework 3.18.1 is an exact, hashed production dependency. The API is namespaced at
+  `/api/v1/`, JSON-only, anonymously readable, and deliberately has no authentication parser or
+  mutation surface. `GET`, `HEAD`, and `OPTIONS` are the only allowed methods; writes return 405.
+- The list route is `/api/v1/events/`; detail is `/api/v1/events/{slug}/`. `locale` accepts exactly
+  `sq` or `en` and defaults to Albanian. `when` accepts exactly `upcoming` or `recent`; `limit`
+  defaults to 6 and is capped at 20. `offset` defaults to 0 and is capped at the practical maximum
+  of 10,000 before queryset slicing. Unknown, duplicated, malformed, or out-of-range query
+  parameters fail with a bounded 400 response without reaching PostgreSQL.
+- Lists use a `count`/`next`/`previous`/`results` envelope with relative same-origin pagination
+  links. Upcoming includes current events whose `ends_at` remains in the future and sorts by start
+  ascending; recent contains ended events and sorts by start descending. UUID primary keys are the
+  deterministic tie-breaker but are never serialized.
+- Published cancelled events remain public and explicitly carry `status: cancelled`; this avoids
+  hiding a cancellation notice. Lifecycle status and derived `timing` (`current`, `upcoming`, or
+  `past`) remain separate. Postponed events likewise retain their status while timing comes only
+  from timestamps.
+- The base queryset applies the publication boundary before lookup. Unknown, draft, and otherwise
+  unpublished slugs therefore return the same 404 body and do not disclose whether a private row
+  exists. Serializers allowlist localized public fields; database identifiers, audit actors and
+  timestamps, publication internals, other-language copy, original poster uploads, and storage
+  paths are excluded.
+- Poster JSON contains alt text and validated metadata for server-managed WebP derivatives only.
+  A file must reside under the managed derivative prefix and have consistent positive dimensions
+  in server-generated metadata before it is serialized.
+- Successful representations use a strong SHA-256 ETag and
+  `Cache-Control: public, max-age=60, stale-while-revalidate=300`; `If-None-Match` receives 304 when
+  unchanged. Validation failures, not-found responses, method failures, and metadata responses use
+  `no-store`. A content-derived validator was selected instead of `Last-Modified` so deletion or
+  unpublication cannot leave an older validator apparently current.
+- List requests use one count query and one bounded page query; detail uses one query. Explicit
+  field selection, bounded slicing, and stable ordering prevent result-size and related-object
+  query growth.
+- The Astro frontend does not consume this API yet, Django remains private with no host binding,
+  and no gateway route was added. Those integration and exposure decisions remain checkpoints 6
+  and 7 respectively.

@@ -1,4 +1,56 @@
-# Phase 2 checkpoint 4 validation
+# Phase 2 checkpoint 5 validation
+
+Validated on 2026-09-10 against `feat/phase-2-read-only-api` after the pagination review follow-up.
+This checkpoint adds only the published-only Django events API. Astro still reads its transitional
+content collection, Django remains private, and no public route or visual design changed.
+
+## Automated gates
+
+| Gate                                                                                                                      | Result                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docker compose --profile tools run --rm --build backend-check`                                                           | Passed: Ruff format and lint; no pending migrations; Django system and deployment checks; all migrations; 65 tests in 7.394 s; installed-environment audit with no known vulnerabilities                                |
+| `docker compose --profile tools run --rm --build backend-check python manage.py test tests.test_public_api --verbosity 2` | Passed: 17 focused public API tests in 0.660 s                                                                                                                                                                          |
+| `docker compose --profile tools run --rm --build frontend-check`                                                          | Passed: Prettier, ESLint, 0 Astro diagnostics across 58 files, 11 unit tests, 13-page production build, 12-route/40-file production validation, 37 browser tests; 26 opt-in visual tests skipped                        |
+| `docker compose up -d --build backend` and private API smoke                                                              | Passed: production-target backend image built; Django and PostgreSQL healthy with private container ports only; Albanian upcoming list returned 200, an ETag, documented cache policy, and the four-field page envelope |
+
+The running development database contained no published events, so the private API smoke returned
+the expected empty `results` with `count: 0`; it did not create or publish test data. The Django
+deployment check continues to report only the two deliberately silenced host-Nginx-owned HSTS
+subdomain/preload warnings documented at checkpoint 4.
+
+## API coverage
+
+- Published-only list and slug detail responses in Albanian and English, with Albanian defaults
+  and rejection of unknown, duplicated, or malformed query input.
+- Public-field allowlisting: no UUID/database identifiers, audit actors or timestamps,
+  publication internals, other-language content, original uploads, or filesystem paths.
+- Indistinguishable 404 responses for unknown, draft, and intentionally unpublished slugs.
+- Separate lifecycle status and derived timing for scheduled, postponed, cancelled, current,
+  future, and past events; stable chronological and reverse-chronological ordering.
+- Bounded pagination with a default limit of 6, maximum limit of 20, and exact offset range of
+  0–10,000. Boundary tests accept 10,000 and reject 10,001 plus a value above PostgreSQL's bigint
+  range with 400/no-store and zero database queries. Pagination retains deterministic relative
+  links and constant query budgets of two queries for list and one for detail.
+- GET/HEAD/OPTIONS-only behavior, 405 write rejection, strong content ETags, documented public
+  cache policy, and conditional 304 responses for list and detail.
+- Managed responsive WebP derivative URLs, dimensions, format, and localized alt text only.
+
+## Checkpoint boundary and known limitations
+
+- No database migration was added; the checkpoint 4 Event schema and staff/security behavior are
+  unchanged.
+- Checkpoint 6's Astro Node/SSR migration and API consumption are not implemented. The public site
+  therefore remains on the transitional Astro event collection.
+- Checkpoint 7's gateway/API/media routing, proxy limits, and production topology are not
+  implemented. Django, PostgreSQL, `/api/v1/`, and `/staff/` remain private with no host binding.
+- No real event data was created or published. No frontend or staff UI changed, so new visual
+  screenshots were neither required nor generated.
+- Production staff operations, backup ownership/retention, final hosts/origins, public cache
+  ownership, and real event content remain owner/operator TODOs.
+
+---
+
+# Previous Phase 2 checkpoint 4 validation
 
 Validated on 2026-09-09 against `feat/phase-2-backend-foundation`. This checkpoint adds only the
 Django/PostgreSQL backend foundation. The public Astro source and design are unchanged and remain
@@ -6,16 +58,16 @@ disconnected from Django until checkpoint 6.
 
 ## Automated gates
 
-| Gate                                                              | Result                                                                                                                                                                                           |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `docker compose --profile tools run --rm --build backend-check`   | Passed: Ruff format and lint; no pending migrations; Django system check; Django deployment check; migrations; 48 tests in 11.970 s; installed-environment audit with no known vulnerabilities   |
-| `docker compose --profile tools run --rm --build backend-migrate` | Passed: explicit migration job; all migrations applied and no pending migration                                                                                                                  |
-| `docker compose --profile tools run --rm --build backend-static`  | Passed: 131 Django/staff static files collected; final refresh copied 1 changed file and retained 130 unchanged files                                                                            |
-| `docker compose --profile tools run --rm --build frontend-check`  | Passed: Prettier, ESLint, 0 Astro diagnostics across 58 files, 11 unit tests, 13-page production build, 12-route/40-file production validation, 37 browser tests; 26 opt-in visual tests skipped |
-| `docker compose build web backend`                                | Passed: final pinned Astro/Nginx and Django/Gunicorn production images built                                                                                                                     |
-| Backend and database health                                       | Passed: Django and PostgreSQL healthy on private container ports; no backend/database host bindings                                                                                              |
-| Isolated production-configuration health smoke                    | Passed: Django and PostgreSQL healthy with production environment, host, HTTPS redirect, secure-cookie, and non-default database settings; trusted internal probe returned 200; plain HTTP returned 301 to the exact HTTPS health URL                      |
-| Staff visual workflow                                             | Passed: TOTP login and draft-only event list/editor captured in the pinned Playwright container at 1440 × 1000 and 1024 × 768; no page-level horizontal overflow                                 |
+| Gate                                                              | Result                                                                                                                                                                                                                                |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docker compose --profile tools run --rm --build backend-check`   | Passed: Ruff format and lint; no pending migrations; Django system check; Django deployment check; migrations; 48 tests in 11.970 s; installed-environment audit with no known vulnerabilities                                        |
+| `docker compose --profile tools run --rm --build backend-migrate` | Passed: explicit migration job; all migrations applied and no pending migration                                                                                                                                                       |
+| `docker compose --profile tools run --rm --build backend-static`  | Passed: 131 Django/staff static files collected; final refresh copied 1 changed file and retained 130 unchanged files                                                                                                                 |
+| `docker compose --profile tools run --rm --build frontend-check`  | Passed: Prettier, ESLint, 0 Astro diagnostics across 58 files, 11 unit tests, 13-page production build, 12-route/40-file production validation, 37 browser tests; 26 opt-in visual tests skipped                                      |
+| `docker compose build web backend`                                | Passed: final pinned Astro/Nginx and Django/Gunicorn production images built                                                                                                                                                          |
+| Backend and database health                                       | Passed: Django and PostgreSQL healthy on private container ports; no backend/database host bindings                                                                                                                                   |
+| Isolated production-configuration health smoke                    | Passed: Django and PostgreSQL healthy with production environment, host, HTTPS redirect, secure-cookie, and non-default database settings; trusted internal probe returned 200; plain HTTP returned 301 to the exact HTTPS health URL |
+| Staff visual workflow                                             | Passed: TOTP login and draft-only event list/editor captured in the pinned Playwright container at 1440 × 1000 and 1024 × 768; no page-level horizontal overflow                                                                      |
 
 The Django deployment check reports two deliberately silenced HSTS subdomain/preload warnings.
 Host Nginx owns final HSTS, and those flags remain disabled until checkpoint 7 verifies every

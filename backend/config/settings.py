@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "axes",
     "django_otp",
     "django_otp.plugins.otp_totp",
+    "rest_framework",
     "events.apps.EventsConfig",
 ]
 
