@@ -13,4 +13,3 @@ screenshots
 *.log
 *.pdf
 docs
-deploy/nginx/frekuence.club.conf.example

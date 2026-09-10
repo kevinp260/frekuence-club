@@ -1,4 +1,83 @@
-# Phase 2 checkpoint 6 validation
+# Phase 2 checkpoint 7 validation
+
+Validated on 2026-09-10 against `feat/phase-2-container-topology`. This checkpoint adds only the
+container gateway, production network/volume topology, host proxy example, operational lifecycle,
+and their regression coverage. Checkpoint 6 rendering and event behavior are preserved; checkpoint
+8 integrated QA is not included.
+
+## Automated gates
+
+| Gate                                                             | Result                                                                                                                                                                                                             |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `docker compose config`                                          | Passed: the resolved model contains one loopback-published gateway, explicit application/database networks, and no frontend/backend/database host binding                                                          |
+| `docker compose --profile tools run --rm --build backend-check`  | Passed: Ruff format/lint; no pending migrations; Django system/deployment checks; migrations; 65 tests in 9.733 s; no known installed-environment vulnerabilities                                                  |
+| `docker compose --profile tools run --rm --build frontend-check` | Passed: Prettier, ESLint, 0 Astro diagnostics, 27 unit tests, mixed Astro Node build, 8-route/58-file production-output validation, and 43 browser/integration/accessibility tests; 26 opt-in visual tests skipped |
+| `npm run smoke:production-topology`                              | Passed: isolated production stack, explicit migration/static jobs, real gateway routes and security behavior, all health checks, and database/media/static persistence across forced recreation                    |
+| Gateway and host-example Nginx `nginx -t`                        | Passed inside the pinned unprivileged gateway image; the smoke also runs the gateway check before startup                                                                                                          |
+| `npm run check`                                                  | Passed locally: formatting, ESLint, 0 Astro diagnostics across 65 files, and all 27 unit tests                                                                                                                     |
+| `git diff --check`                                               | Passed with no whitespace errors                                                                                                                                                                                   |
+
+The frontend browser gate reran the existing checkpoint 6 route, interaction, accessibility,
+metadata, failure-state, 320–1440 px overflow, keyboard, touch, and reduced-motion regressions. No
+visual markup or styling changed, so the opt-in screenshot suite was not rerun and no screenshots
+were replaced.
+
+## Production-topology coverage
+
+The smoke uses a fresh Compose project with production Django HTTPS/secure-cookie settings,
+non-default application/database credentials, and a random loopback host port. It proves:
+
+- gateway is the sole host-bound service and is connected only to the application network;
+- Astro, Django, and PostgreSQL have no host bindings, while all four services become healthy;
+- Albanian/English homepages, event index, both localized event details, sitemap, and a real 404
+  retain their status/content through gateway;
+- the public event API retains its published-only representation, ETag, and conditional 304;
+- anonymous `/staff/` redirects to the Django login boundary with `no-store`, secure/HttpOnly CSRF
+  cookie behavior remains active, and collected Django Admin CSS is served;
+- a real randomized processed WebP derivative is served with immutable caching, while the matching
+  managed original path returns 404;
+- a 17 MiB staff request receives 413 at gateway, while ordinary public-page writes receive 405;
+- trusted original HTTPS reaches Django without disabling `SECURE_SSL_REDIRECT`; an equivalent
+  gateway request without the trusted scheme receives Django's public-host HTTPS redirect;
+- dynamic HTML carries exactly one matching request-specific CSP nonce, changes nonce between
+  responses, and contains neither `unsafe-inline` nor `unsafe-eval`;
+- checked responses expose no private service hostnames, internal exception type, or traceback;
+- forcing recreation of database, backend, Astro, and gateway without rerunning migrations or
+  `collectstatic` retains the synthetic database record, derivative, and collected static asset;
+- migration and static collection services remain removable `tools` profile jobs rather than
+  normal startup services.
+
+The synthetic event and 120 × 180 generated poster existed only in disposable project-scoped
+database/media volumes. The smoke removed its containers, networks, and volumes on exit. It did not
+read candidate posters, touch the development database, or publish a real event.
+
+## Configuration and delivery decisions covered
+
+- Pinned unprivileged gateway runtime; non-root user, dropped capabilities, read-only root,
+  explicit tmpfs, health/restart/graceful-stop behavior, and read-only static/media mounts.
+- Separate application and internal database networks with Django as the sole bridge.
+- Same-origin Astro, API, staff, static, and derivative routing; all other media paths denied.
+- Host-boundary forwarding-header replacement, gateway normalization, public-host redirects, safe
+  proxy limits/timeouts, one normalized non-CSP security-header set, and exact Astro CSP pass-through.
+- API cache/validator pass-through, staff `no-store`, conservative collected-static caching, and
+  immutable hashed frontend/processed-media caching.
+- Explicit migrations/static collection, named persistent volumes, and documented development,
+  deploy, health, backup, isolated restore, rollback, and host-Nginx/Certbot commands.
+
+## Checkpoint boundary and known limitations
+
+- Checkpoint 7 adds no migration, backend/API schema, frontend route/content/design, real event,
+  reservation, payment, public account, analytics, Redis, Celery, worker, or custom staff UI.
+- Checkpoint 8 integrated QA has not begun. This report does not claim a real host-Nginx/TLS
+  deployment, Lighthouse/security signoff, production monitoring, or an operator-run encrypted
+  backup restoration.
+- Production backup destination, retention, owner, alerting, staff roster/MFA recovery, final
+  event content/publication, legal inputs, and production brand assets remain documented owner
+  limitations.
+
+---
+
+# Previous Phase 2 checkpoint 6 validation
 
 Validated on 2026-09-10 against `feat/phase-2-astro-dynamic`. This checkpoint replaces the
 transitional Astro event collection with server-side reads from the private Django API and adds
