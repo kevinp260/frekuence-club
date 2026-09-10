@@ -5,11 +5,16 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const root = process.cwd();
 const host = '127.0.0.1';
-const port = Number(process.env.LIGHTHOUSE_PORT || 4322);
+const port = Number(process.env.LIGHTHOUSE_PORT || 4324);
+const apiPort = Number(process.env.LIGHTHOUSE_API_PORT || 4314);
 const origin = `http://${host}:${port}`;
 const chromePath = process.env.CHROME_PATH || '/usr/bin/google-chrome';
-const previewRoot = process.env.LIGHTHOUSE_ROOT || 'dist';
-const reportPath = process.env.LIGHTHOUSE_REPORT_PATH || './lighthouse-report.json';
+const reportPath =
+  process.env.LIGHTHOUSE_REPORT_PATH ||
+  (process.env.FREKUENCE_LIGHTHOUSE_FIXTURES === 'true'
+    ? './lighthouse-fixtures-report.json'
+    : './lighthouse-report.json');
+const scenario = process.env.FREKUENCE_LIGHTHOUSE_FIXTURES === 'true' ? 'events' : 'empty';
 
 function run(command, argumentsList, options = {}) {
   return new Promise((resolve, reject) => {
@@ -22,49 +27,42 @@ function run(command, argumentsList, options = {}) {
   });
 }
 
-async function waitForPreview(server) {
+async function waitFor(url, processName, child) {
   const deadline = Date.now() + 30_000;
-
   while (Date.now() < deadline) {
-    if (server.exitCode !== null) {
-      throw new Error(`Static preview exited with ${server.exitCode} before becoming ready.`);
+    if (child.exitCode !== null) {
+      throw new Error(`${processName} exited with ${child.exitCode} before becoming ready.`);
     }
-
-    try {
-      const ready = await new Promise((resolve) => {
-        const request = get(`${origin}/healthz`, (response) => {
-          response.resume();
-          resolve(response.statusCode === 200);
-        });
-        request.once('error', () => resolve(false));
+    const ready = await new Promise((resolve) => {
+      const request = get(url, (response) => {
+        response.resume();
+        resolve(response.statusCode === 200);
       });
-      if (ready) return;
-    } catch {
-      // The preview process may still be starting.
-    }
-
+      request.once('error', () => resolve(false));
+    });
+    if (ready) return;
     await delay(200);
   }
-
-  throw new Error(`Static preview did not become ready at ${origin}.`);
+  throw new Error(`${processName} did not become ready at ${url}.`);
 }
 
-const server = spawn(
-  process.execPath,
-  [
-    join(root, 'scripts/serve-dist.mjs'),
-    '--host',
-    host,
-    '--port',
-    String(port),
-    '--root',
-    previewRoot,
-  ],
-  { stdio: 'inherit' },
-);
+const api = spawn(process.execPath, [join(root, 'scripts/mock-events-api.mjs')], {
+  stdio: 'inherit',
+  env: { ...process.env, MOCK_API_PORT: String(apiPort), MOCK_API_SCENARIO: scenario },
+});
+const server = spawn(process.execPath, [join(root, 'dist/server/entry.mjs')], {
+  stdio: 'inherit',
+  env: {
+    ...process.env,
+    FREKUENCE_EVENT_API_ORIGIN: `http://${host}:${apiPort}`,
+    HOST: host,
+    PORT: String(port),
+  },
+});
 
 try {
-  await waitForPreview(server);
+  await waitFor(`http://${host}:${apiPort}/healthz/`, 'Mock events API', api);
+  await waitFor(`${origin}/`, 'Astro preview', server);
   await run(process.execPath, [
     join(root, 'node_modules/lighthouse/cli/index.js'),
     `${origin}/`,
@@ -79,4 +77,5 @@ try {
   });
 } finally {
   if (server.exitCode === null) server.kill('SIGTERM');
+  if (api.exitCode === null) api.kill('SIGTERM');
 }

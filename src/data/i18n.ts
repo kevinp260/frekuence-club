@@ -137,6 +137,12 @@ type Dictionary = {
     body: string;
     home: string;
   };
+  serviceUnavailable: {
+    code: string;
+    title: string;
+    body: string;
+    retry: string;
+  };
 };
 
 export const translations: Record<Locale, Dictionary> = {
@@ -173,7 +179,7 @@ export const translations: Record<Locale, Dictionary> = {
       privacy: {
         title: 'Privatësia e faqes — Frekuence Club',
         description:
-          'Informacion mbi privatësinë për faqen statike të Frekuence Club, regjistrat teknikë të serverit dhe lidhjet e jashtme.',
+          'Informacion mbi privatësinë për faqen publike të Frekuence Club, regjistrat teknikë të serverit dhe lidhjet e jashtme.',
       },
     },
     global: {
@@ -339,7 +345,7 @@ export const translations: Record<Locale, Dictionary> = {
       kicker: 'Faqja / Të dhënat',
       title: 'Privatësia',
       intro:
-        'Kjo faqe statike nuk ka formularë, llogari, analitikë, harta të integruara, feed social ose cookie jo-thelbësore.',
+        'Kjo faqe publike nuk ka formularë, llogari publike, analitikë, harta të integruara, feed social ose cookie jo-thelbësore.',
       draftLabel: 'Draft ligjor — të dhënat e operatorit dhe hostimit mbeten për miratim',
       sections: [
         {
@@ -352,7 +358,7 @@ export const translations: Record<Locale, Dictionary> = {
         },
         {
           title: '03 / Cookie dhe gjurmim',
-          body: 'Faza 1 nuk përdor cookie jo-thelbësore, piksel marketingu ose gjurmim sjelljeje. Për këtë arsye nuk shfaqet banner pëlqimi.',
+          body: 'Faqja publike nuk përdor cookie jo-thelbësore, piksel marketingu ose gjurmim sjelljeje. Për këtë arsye nuk shfaqet banner pëlqimi. Cookie-t thelbësore të stafit kufizohen te zona private e administrimit.',
         },
         {
           title: '04 / Lidhjet e jashtme',
@@ -369,6 +375,12 @@ export const translations: Record<Locale, Dictionary> = {
       title: 'Kjo frekuencë nuk u gjet.',
       body: 'Adresa mund të ketë ndryshuar ose të mos ekzistojë.',
       home: 'Kthehu në hyrje',
+    },
+    serviceUnavailable: {
+      code: '503 / Sinjal i ndërprerë',
+      title: 'Programi nuk mund të ngarkohet tani.',
+      body: 'Sinjali i eventeve është përkohësisht i padisponueshëm. Provo përsëri pas pak.',
+      retry: 'Provo përsëri',
     },
   },
   en: {
@@ -404,7 +416,7 @@ export const translations: Record<Locale, Dictionary> = {
       privacy: {
         title: 'Website privacy — Frekuence Club',
         description:
-          'Privacy information for the static Frekuence Club website, ordinary technical server logs, and external links.',
+          'Privacy information for the public Frekuence Club website, ordinary technical server logs, and external links.',
       },
     },
     global: {
@@ -571,7 +583,7 @@ export const translations: Record<Locale, Dictionary> = {
       kicker: 'Website / Data',
       title: 'Privacy',
       intro:
-        'This static site has no forms, accounts, analytics, embedded maps, social feeds, or non-essential cookies.',
+        'This public site has no forms, public accounts, analytics, embedded maps, social feeds, or non-essential cookies.',
       draftLabel: 'Legal draft — operator and hosting details remain pending approval',
       sections: [
         {
@@ -584,7 +596,7 @@ export const translations: Record<Locale, Dictionary> = {
         },
         {
           title: '03 / Cookies and tracking',
-          body: 'Phase 1 does not use non-essential cookies, marketing pixels, or behavioral tracking. For that reason, no consent banner is displayed.',
+          body: 'The public site does not use non-essential cookies, marketing pixels, or behavioral tracking. For that reason, no consent banner is displayed. Essential staff cookies are limited to the private administration area.',
         },
         {
           title: '04 / External links',
@@ -601,6 +613,12 @@ export const translations: Record<Locale, Dictionary> = {
       title: 'This frequency was not found.',
       body: 'The address may have moved or may not exist.',
       home: 'Return to the entrance',
+    },
+    serviceUnavailable: {
+      code: '503 / Signal interrupted',
+      title: 'The programme cannot be loaded right now.',
+      body: 'The event signal is temporarily unavailable. Please try again shortly.',
+      retry: 'Try again',
     },
   },
 };

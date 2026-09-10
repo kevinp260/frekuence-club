@@ -2,21 +2,21 @@
 
 ## Current checkpoint topology
 
-Public traffic terminates at the host's existing Nginx installation, which proxies to the
-static web container through a loopback-only port. Checkpoint 5 provides a private Django runtime,
-PostgreSQL database, and published-only event API, but deliberately does not route them into the
-public stack yet:
+Public traffic terminates at the host's existing Nginx installation, which proxies to the Astro
+Node container through a loopback-only port. At checkpoint 6 Astro reads published event data from
+private Django while PostgreSQL remains private:
 
 ```text
-Internet → host Nginx/TLS → 127.0.0.1:3010 → container Nginx:8080 → Astro dist
-
-private Compose network: Django:8000 → PostgreSQL:5432
+Internet → host Nginx/TLS → 127.0.0.1:3010 → Astro Node:8080
+                                                ↓ private HTTP
+                                           Django:8000 → PostgreSQL:5432
 ```
 
 The Astro and Django containers run as unprivileged users, drop all Linux capabilities, and use
 read-only filesystems with explicit tmpfs/volumes. Django and PostgreSQL publish no host ports.
-The final single-gateway routing, media serving, and host Nginx integration remain checkpoint 7;
-do not expose Django directly as an interim shortcut.
+This is deliberately an intermediate review topology. The final single-gateway routing, processed
+media serving, `/staff/` routing, and host Nginx integration remain checkpoint 7; do not expose
+Django directly or add a checkpoint 6 proxy shortcut.
 
 PostgreSQL data, processed poster media, and collected staff static files use the named
 `postgres_data`, `backend_media`, and `backend_static` volumes. The application never migrates or
@@ -35,6 +35,12 @@ Production requires:
 - exact `DJANGO_ALLOWED_HOSTS` and HTTPS `DJANGO_CSRF_TRUSTED_ORIGINS` values;
 - `DJANGO_SECURE_SSL_REDIRECT=true` and `DJANGO_SECURE_COOKIES=true`;
 - unique PostgreSQL credentials.
+- `FREKUENCE_EVENT_API_ORIGIN=http://backend:8000` (or the exact private service origin) and an
+  integer `FREKUENCE_EVENT_API_TIMEOUT_MS` from 250 through 5,000, normally `2000`.
+
+The Astro API origin and timeout are server runtime configuration. Never place the origin,
+credentials, or another secret in a `PUBLIC_*` variable. The API is anonymous in this phase and
+requires no credential; do not add one to browser JavaScript or a build argument.
 
 Django accepts only `development`, `test`, or `production` as the environment name and fails closed
 for any other value. It refuses to start in production with debug, insecure cookies, HTTPS redirect
@@ -60,7 +66,7 @@ dependency audit. `backend-migrate` is the explicit migration job. Review the mi
 take a matched database/media backup before applying a new production migration. The long-running
 backend process never runs `migrate` itself.
 
-At checkpoint 5, backend health can be checked from its private network without adding a host port:
+Backend health can be checked from its private network without adding a host port:
 
 ```sh
 docker compose exec backend python -c "import os, urllib.request; host = os.environ['DJANGO_ALLOWED_HOSTS'].split(',')[0].strip(); request = urllib.request.Request('http://127.0.0.1:8000/healthz/', headers={'Host': host, 'X-Forwarded-Proto': 'https'}); print(urllib.request.urlopen(request).status)"
@@ -92,7 +98,7 @@ are rejected with 400 before database slicing. Send the returned ETag in `If-Non
 `304` response. Unknown and unpublished detail slugs share the same non-disclosing 404. Original
 media is never an API asset; only managed derivatives are serialized. Public API routing,
 derivative media serving, proxy limits, and cache handling at the gateway remain checkpoint 7
-work. Astro consumption and SSR remain checkpoint 6 work.
+work. Astro now consumes the API privately for on-demand event pages.
 
 ## Staff accounts and TOTP
 
@@ -155,6 +161,10 @@ volumes. Checkpoint 5 adds no database migration, so no schema reversal is requi
 the checkpoint 4 Event migration in place: that would drop data. The Astro image and public routing
 remain unchanged throughout this rollback.
 
+For checkpoint 6 rollback, deploy the previous static frontend image and retain the backend and
+named data/media volumes. Checkpoint 6 adds no database migration. Astro and any future checkpoint
+7 proxy configuration must always be rolled back as one compatible unit.
+
 ## Before launch
 
 1. Resolve the launch blockers in `CONTENT_TODOS.md` and `BRAND_ASSET_TODOS.md`.
@@ -165,8 +175,9 @@ remain unchanged throughout this rollback.
    copy it blindly.
 5. Confirm the public Astro application port. The default is `3010`; set `FREKUENCE_WEB_PORT` to another
    loopback port if needed.
-6. Recompute the JSON-LD CSP hash whenever structured data changes, then update and review the
-   host example.
+6. Complete checkpoint 7 before public deployment. It must replace the former static JSON-LD hash
+   policy with preservation of Astro's per-response nonce policy and must not add competing CSP
+   headers.
 
 ## Build and verify
 
@@ -176,14 +187,30 @@ Use an immutable deployment tag, such as a release number or commit identifier:
 FREKUENCE_WEB_TAG=2026-08-29.1 docker compose build --pull web
 FREKUENCE_WEB_TAG=2026-08-29.1 docker compose up -d --no-deps web
 docker compose ps
-curl --fail --show-error http://127.0.0.1:3010/healthz
+curl --fail --show-error http://127.0.0.1:3010/about/
 curl --fail --show-error http://127.0.0.1:3010/
 curl --fail --show-error http://127.0.0.1:3010/en/
 curl --silent --output /dev/null --write-out '%{http_code}\n' http://127.0.0.1:3010/not-found-check/
 ```
 
 The final command must print `404`. Also verify that the published socket is
-`127.0.0.1:<port>`, never `0.0.0.0:<port>`.
+`127.0.0.1:<port>`, never `0.0.0.0:<port>`. At checkpoint 6 the root and event routes require a
+healthy private Django API; `/about/` is the frontend health target because it isolates frontend
+process health from backend readiness.
+
+Verify the dynamic boundary directly on the loopback port:
+
+```sh
+curl --fail --show-error http://127.0.0.1:3010/
+curl --fail --show-error http://127.0.0.1:3010/events/
+curl --fail --show-error http://127.0.0.1:3010/sitemap.xml
+curl --silent --output /dev/null --write-out '%{http_code}\n' \
+  http://127.0.0.1:3010/events/not-a-published-event/
+```
+
+The last command must print `404`. Each dynamic HTML response must contain a request-specific CSP
+nonce and must not contain `unsafe-inline` or `unsafe-eval`. Managed poster URLs are same-origin
+`/media/` paths but are not publicly served until the checkpoint 7 gateway mounts the media volume.
 
 ## Configure host Nginx and TLS
 
@@ -193,7 +220,7 @@ then validate and reload Nginx:
 ```sh
 sudo nginx -t
 sudo systemctl reload nginx
-curl --fail --show-error http://frekuence.club/healthz
+curl --fail --show-error http://frekuence.club/about/
 ```
 
 The HTTP site must be reachable publicly on port 80 before using Certbot's Nginx HTTP-01
@@ -217,7 +244,7 @@ Do not enable HSTS until the HTTPS deployment and included subdomains are known 
 
 ## Staging indexing protection
 
-Set `PUBLIC_NOINDEX=true` when creating a non-production static build. Production builds must
+Set `PUBLIC_NOINDEX=true` when creating a non-production build. Production builds must
 omit that variable. The output validator rejects accidental `noindex` on canonical routes.
 
 ## Rollback
@@ -228,7 +255,7 @@ rebuild:
 ```sh
 FREKUENCE_WEB_TAG=2026-08-20.1 docker compose up -d --no-build --no-deps web
 docker compose ps
-curl --fail --show-error http://127.0.0.1:3010/healthz
+curl --fail --show-error http://127.0.0.1:3010/about/
 ```
 
 Then verify representative Albanian and English routes and an unknown route before declaring

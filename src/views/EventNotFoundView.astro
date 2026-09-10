@@ -1,0 +1,59 @@
+---
+import { ArrowUpRight } from '@lucide/astro';
+
+import { t } from '../data/i18n';
+import { routeFor, type Locale } from '../data/routes';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const copy = t(locale);
+---
+
+<BaseLayout locale={locale} page="events" noIndex>
+  <section class="event-not-found section-shell" data-event-state="not-found">
+    <p class="kicker">{copy.notFound.code}</p>
+    <h1>{copy.notFound.title}</h1>
+    <p>{copy.notFound.body}</p>
+    <a href={routeFor('events', locale)}>
+      <span>{copy.common.backToEvents}</span>
+      <ArrowUpRight size={18} stroke-width={1.8} aria-hidden="true" />
+    </a>
+  </section>
+</BaseLayout>
+
+<style>
+  .event-not-found {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100svh - var(--header-height));
+    padding-block: var(--space-7);
+  }
+
+  .event-not-found h1 {
+    max-width: 12ch;
+    margin-block: var(--space-4) 0;
+    font-size: var(--step-4);
+    line-height: 0.9;
+    letter-spacing: -0.06em;
+    text-transform: uppercase;
+  }
+
+  .event-not-found > p:not(.kicker) {
+    color: var(--color-pale-slate);
+  }
+
+  .event-not-found a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: var(--space-3);
+    font-weight: 750;
+    text-transform: uppercase;
+  }
+</style>

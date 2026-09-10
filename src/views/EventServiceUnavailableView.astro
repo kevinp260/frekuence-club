@@ -1,0 +1,64 @@
+---
+import { RefreshCw } from '@lucide/astro';
+
+import { t } from '../data/i18n';
+import type { Locale, PageKey } from '../data/routes';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  locale: Locale;
+  page: PageKey;
+}
+
+const { locale, page } = Astro.props;
+const copy = t(locale);
+---
+
+<BaseLayout locale={locale} page={page} noIndex>
+  <section class="service-error section-shell" data-event-state="unavailable">
+    <p class="kicker">{copy.serviceUnavailable.code}</p>
+    <h1>{copy.serviceUnavailable.title}</h1>
+    <p>{copy.serviceUnavailable.body}</p>
+    <a href={Astro.url.pathname}>
+      <span>{copy.serviceUnavailable.retry}</span>
+      <RefreshCw size={18} stroke-width={1.8} aria-hidden="true" />
+    </a>
+  </section>
+</BaseLayout>
+
+<style>
+  .service-error {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100svh - var(--header-height));
+    padding-block: var(--space-7);
+  }
+
+  .service-error h1 {
+    max-width: 14ch;
+    margin-block: var(--space-4) 0;
+    font-size: var(--step-4);
+    line-height: 0.9;
+    letter-spacing: -0.06em;
+    text-transform: uppercase;
+  }
+
+  .service-error > p:not(.kicker) {
+    max-width: 38rem;
+    color: var(--color-pale-slate);
+  }
+
+  .service-error a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 3rem;
+    margin-top: var(--space-3);
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--color-white);
+    font-weight: 750;
+    text-transform: uppercase;
+  }
+</style>

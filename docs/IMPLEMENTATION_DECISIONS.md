@@ -14,8 +14,9 @@
   during the static build; no icon font, CDN, or client-side icon runtime is used.
 - The empty event collection is intentional. The build warning that no event Markdown files
   match is expected until the first genuine event is supplied.
-- External ticket hostnames are denied by default. An owner-approved hostname must be added to
-  `src/data/tickets.ts` before an external ticket URL validates.
+- The former transitional Astro event schema denied external ticket hostnames by default. That
+  schema was removed at checkpoint 6 when Django became the sole production event source; no
+  public reservation, payment, or ticket control was introduced.
 - The approved monochrome symbol and circular cymatic pattern are direct PDF exports and are
   isolated as temporary assets. The PDF itself is excluded from Docker build context and
   production output.
@@ -171,3 +172,42 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
 - The Astro frontend does not consume this API yet, Django remains private with no host binding,
   and no gateway route was added. Those integration and exposure decisions remain checkpoints 6
   and 7 respectively.
+
+## Phase 2 checkpoint 6 — Astro dynamic migration
+
+- The official `@astrojs/node` 11.1.5 adapter is exactly pinned and runs in standalone mode with
+  Astro 7.2.8. Albanian/English homepages, event indexes, slug details, and `/sitemap.xml` render on
+  demand. About, Policy, Privacy, Visit, and the bilingual 404 are explicitly prerendered and are
+  verified as files in `dist/client`; dynamic event routes are verified absent from static output.
+- Django/PostgreSQL is now the sole production event source. The transitional Astro Markdown
+  records and collection configuration were removed. The three clearly named owner-supplied
+  poster fixtures remain only for Playwright request interception, while a separate loopback mock
+  emits visibly synthetic API data. Neither mechanism is imported into application code or copied
+  into browser output.
+- A centralized server-only client reads `FREKUENCE_EVENT_API_ORIGIN` at runtime, rejects embedded
+  credentials and non-origin URLs, applies an integer timeout bounded to 250–5,000 ms, and permits
+  at most two safe GET attempts. Zod schemas use strict public-field allowlists, validate locale,
+  paths, timestamps, lifecycle/timing values, and managed WebP derivative metadata, and convert
+  dates only after validation. At most 100 events per window may be rendered; a larger API count
+  fails truthfully with 503 instead of silently truncating output.
+- Published API 404s map to localized event 404 pages with a real 404 status and no private-record
+  distinction. Network, status, content-type, JSON, and contract failures map to localized 503
+  pages with `no-store`; no internal exception or URL is rendered. Because all event content is
+  server-rendered, there is no client loading state or browser API request: the response waits only
+  for the bounded server read and then returns the complete page or designed failure state.
+- Runtime poster markup uses only same-origin managed derivative paths and explicit dimensions.
+  Missing/invalid derivative data retains all accessible event text and uses the branded poster
+  fallback. The final gateway that serves `/media/` remains checkpoint 7, so public derivative
+  delivery is intentionally not wired in this review checkpoint.
+- Middleware creates a new cryptographically random nonce for every dynamic response and emits a
+  strict CSP covering executable scripts and JSON-LD. Every dynamic script receives the matching
+  nonce; `unsafe-inline` and `unsafe-eval` are absent. Checkpoint 7 must ensure the gateway and host
+  preserve this policy without adding a competing CSP.
+- The on-demand sitemap contains reciprocal Albanian/English entries for stable routes and the
+  currently published event set; an API outage returns 503 rather than a stale or empty success.
+  Browser-readable output is scanned for fixture copy, API paths/origins, environment files, source
+  maps, and other non-production artifacts.
+- The existing loopback-bound `web` service now runs unprivileged Astro Node and reaches the
+  private Django service directly. This is the checkpoint 6 review topology only. No gateway,
+  public Django/staff routing, host-Nginx change, reservation/payment path, or checkpoint 7 work is
+  included.

@@ -71,7 +71,7 @@ const navPages = ['events', 'about', 'policy', 'visit'] as const;
   </div>
 </header>
 
-<script src={navigationScript} is:inline></script>
+<script src={navigationScript} nonce={Astro.locals.cspNonce} is:inline></script>
 
 <style>
   .site-header {

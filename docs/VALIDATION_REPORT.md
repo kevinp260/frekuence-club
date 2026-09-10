@@ -1,4 +1,73 @@
-# Phase 2 checkpoint 5 validation
+# Phase 2 checkpoint 6 validation
+
+Validated on 2026-09-10 against `feat/phase-2-astro-dynamic`. This checkpoint replaces the
+transitional Astro event collection with server-side reads from the private Django API and adds
+only the Astro dynamic migration. Checkpoint 7 routing and topology are not included.
+
+## Automated gates
+
+| Gate                                                             | Result                                                                                                                                                                                                                                        |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docker compose --profile tools run --rm --build backend-check`  | Passed: Ruff format/lint; no pending migrations; Django system/deployment checks; all migrations; 65 tests in 14.899 s; no known installed-environment vulnerabilities                                                                        |
+| `docker compose --profile tools run --rm --build frontend-check` | Passed: Prettier, ESLint, 0 Astro diagnostics, 18 unit tests, mixed Astro Node build, production-output validation, and 43 browser/integration/accessibility tests; 26 opt-in visual tests skipped                                            |
+| `npm run test:visual`                                            | Passed: 26 visual captures at 320, 390, 1024, and 1440 px, including five checkpoint 6 PR captures                                                                                                                                            |
+| `npm run audit:lighthouse`                                       | Passed empty API state: Performance 100, Accessibility 100, Best Practices 100, SEO 100; LCP 1,374 ms; CLS 0                                                                                                                                  |
+| `npm run audit:lighthouse:fixtures`                              | Passed synthetic event state: Performance 99, Accessibility 100, Best Practices 96, SEO 100; LCP 1,941 ms; CLS 0.000127                                                                                                                       |
+| `docker compose build web` and loopback runtime smoke            | Passed: pinned Astro Node standalone image built; web/backend/database healthy; only web bound to `127.0.0.1:3010`; homepage, About, and dynamic sitemap returned 200; unknown event returned 404; dynamic CSP contained a per-response nonce |
+
+The final gate figures above are recorded from the final rerun after implementation and
+documentation were complete. The development database contained no published event, and no real
+event was created or published for validation.
+
+## Frontend and integration coverage
+
+- Strict typed client validation for list/detail envelopes, localized public fields, reciprocal
+  paths, date invariants, statuses/timing, and managed WebP derivative metadata only.
+- Server-only origin validation, no credentialed URLs, a configurable 250–5,000 ms timeout, one
+  bounded safe retry, and a 100-event-per-window ceiling that fails instead of silently truncating.
+- API 404 to localized real 404 mapping; status/content-type/network/schema failures to designed
+  localized 503 responses with `no-store` and no internal URL, exception, or private-record leak.
+- Featured/earliest/current event selection, five-card limit, separate upcoming/past groupings,
+  scheduled/postponed/cancelled labels, and genuine empty behavior.
+- Pointer, keyboard, explicit touch selection, Escape reset, no-JavaScript, reduced motion,
+  navigation, reciprocal language links, minimum-width overflow, and axe accessibility coverage.
+- Dynamic localized canonical/hreflang, Open Graph poster derivative, `MusicEvent` JSON-LD without
+  fabricated offers, current published-event sitemap entries, and truthful sitemap failure.
+- A fresh cryptographic CSP nonce on every dynamic response, matching nonce attributes on scripts
+  and JSON-LD, and explicit absence of `unsafe-inline` and `unsafe-eval`.
+- Production output confirms eight stable localized editorial routes plus the bilingual 404 are
+  prerendered; event-dependent routes are not static files. The 58-file output contains no source
+  maps, environment files, fixture text, internal API origin/path, or browser-facing API config.
+
+## Visual evidence
+
+Five representative captures and reproduction notes are committed under
+[`docs/review/phase-2-astro-dynamic/`](review/phase-2-astro-dynamic/README.md). They show the
+API-backed homepage and event detail at 1440 × 1000 and 390 × 844 plus the designed 503 state at
+1440 × 1000. The API and poster data are unmistakably synthetic development fixtures. Manual
+inspection found no clipping, page-level overflow, overlapping controls, or illegible primary
+copy; the established Signal Interference composition remains intact.
+
+## Checkpoint boundary and known limitations
+
+- The final checkpoint 7 container gateway does not exist. The intermediate loopback-bound Astro
+  Node `web` service talks directly to private Django; Django and PostgreSQL retain no host port.
+- Managed poster URLs are same-origin `/media/` paths, but public derivative serving is deliberately
+  deferred to checkpoint 7. Missing derivatives retain accessible event text and a branded visual
+  fallback.
+- The committed host Nginx bootstrap example still represents the previous static header policy.
+  It was not changed because host-Nginx work is explicitly checkpoint 7; checkpoint 6 must not be
+  publicly deployed until the proxy chain preserves Astro's nonce CSP without adding a competing
+  policy.
+- The client deliberately fails when either API window reports more than 100 events. Checkpoint 7
+  and later operational review may introduce a bounded cache or pagination UX if the programme
+  grows beyond that documented review ceiling.
+- No public API route, `/staff/` route, media route, gateway, host-Nginx change, reservation,
+  payment, public account, analytics, or new/real event content was implemented.
+
+---
+
+# Previous Phase 2 checkpoint 5 validation
 
 Validated on 2026-09-10 against `feat/phase-2-read-only-api` after the pagination review follow-up.
 This checkpoint adds only the published-only Django events API. Astro still reads its transitional
