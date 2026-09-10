@@ -1,16 +1,33 @@
 ---
-import { getCollection } from 'astro:content';
-
-import { isPublishedEvent } from '../../data/events';
+import { EventApiNotFoundError, loadPublishedEvent } from '../../lib/events-api.server';
+import type { PublicEvent } from '../../data/events';
 import EventDetailView from '../../views/EventDetailView.astro';
+import EventNotFoundView from '../../views/EventNotFoundView.astro';
+import EventServiceUnavailableView from '../../views/EventServiceUnavailableView.astro';
 
-export async function getStaticPaths() {
-  const events = (await getCollection('events')).filter((event) => isPublishedEvent(event));
+export const prerender = false;
 
-  return events.map((event) => ({ params: { slug: event.data.slug }, props: { event } }));
+let event: PublicEvent | undefined;
+let state: 'found' | 'not-found' | 'unavailable' = 'found';
+try {
+  event = await loadPublishedEvent('sq', Astro.params.slug ?? '');
+} catch (error) {
+  if (error instanceof EventApiNotFoundError) {
+    Astro.response.status = 404;
+    state = 'not-found';
+  } else {
+    Astro.response.status = 503;
+    state = 'unavailable';
+  }
 }
-
-const { event } = Astro.props;
 ---
 
-<EventDetailView locale="sq" event={event} />
+{
+  state === 'found' && event ? (
+    <EventDetailView locale="sq" event={event} />
+  ) : state === 'not-found' ? (
+    <EventNotFoundView locale="sq" />
+  ) : (
+    <EventServiceUnavailableView locale="sq" page="events" />
+  )
+}

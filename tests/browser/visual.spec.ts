@@ -1,6 +1,18 @@
 import { test } from '@playwright/test';
+import { join } from 'node:path';
 
 const fixtureOrigin = 'http://127.0.0.1:4322';
+const unavailableOrigin = 'http://127.0.0.1:4323';
+const fixturePoster = join(
+  process.cwd(),
+  'src/content/event-fixtures/poster-magenta-field.visual-fixture.png',
+);
+
+test.beforeEach(async ({ page }) => {
+  await page.route('**/media/events/derivatives/*.webp', (route) =>
+    route.fulfill({ path: fixturePoster, contentType: 'image/png' }),
+  );
+});
 
 test.skip(
   process.env.CAPTURE_VISUALS !== 'true',
@@ -69,29 +81,29 @@ for (const route of [
 
 const pullRequestEvidence = [
   {
-    name: 'homepage-events-1440',
+    name: 'dynamic-homepage-1440',
     url: `${fixtureOrigin}/`,
     viewport: { width: 1440, height: 1000 },
   },
   {
-    name: 'homepage-events-390',
+    name: 'dynamic-homepage-390',
     url: `${fixtureOrigin}/`,
     viewport: { width: 390, height: 844 },
   },
   {
-    name: 'homepage-empty-1440',
-    url: '/',
+    name: 'dynamic-event-detail-1440',
+    url: `${fixtureOrigin}/events/visual-fixture-featured-field/`,
     viewport: { width: 1440, height: 1000 },
   },
   {
-    name: 'about-1440',
-    url: '/about/',
-    viewport: { width: 1440, height: 1000 },
-  },
-  {
-    name: 'about-390',
-    url: '/about/',
+    name: 'dynamic-event-detail-390',
+    url: `${fixtureOrigin}/events/visual-fixture-featured-field/`,
     viewport: { width: 390, height: 844 },
+  },
+  {
+    name: 'event-service-unavailable-1440',
+    url: `${unavailableOrigin}/events/`,
+    viewport: { width: 1440, height: 1000 },
   },
 ];
 
@@ -100,7 +112,7 @@ for (const evidence of pullRequestEvidence) {
     await page.setViewportSize(evidence.viewport);
     await page.goto(evidence.url);
     await page.screenshot({
-      path: `docs/review/phase-2-foundation/${evidence.name}.png`,
+      path: `docs/review/phase-2-astro-dynamic/${evidence.name}.png`,
       fullPage: true,
     });
   });

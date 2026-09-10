@@ -1,7 +1,19 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { join } from 'node:path';
 
 const fixtureOrigin = 'http://127.0.0.1:4322';
+const unavailableOrigin = 'http://127.0.0.1:4323';
+const fixturePoster = join(
+  process.cwd(),
+  'src/content/event-fixtures/poster-magenta-field.visual-fixture.png',
+);
+
+test.beforeEach(async ({ page }) => {
+  await page.route('**/media/events/derivatives/*.webp', (route) =>
+    route.fulfill({ path: fixturePoster, contentType: 'image/png' }),
+  );
+});
 
 const localizedRoutes = [
   '/',
@@ -95,6 +107,8 @@ test('event index separates upcoming events from past frequencies', async ({ pag
   await expect(past).toBeVisible();
   await expect(upcoming.getByText('Fiksim vizual — Frekuencë e kaluar')).toHaveCount(0);
   await expect(past.getByText('Fiksim vizual — Frekuencë e kaluar')).toBeVisible();
+  await expect(upcoming.getByText('Shtyrë', { exact: true })).toBeVisible();
+  await expect(upcoming.getByText('Anuluar', { exact: true })).toBeVisible();
 });
 
 test('event card hover and keyboard focus expose an equivalent detail action', async ({ page }) => {
@@ -154,13 +168,21 @@ test('localized fixture detail routes are real destinations with reciprocal lang
   await expect(
     page.getByRole('heading', { level: 1, name: 'Fiksim vizual — Fusha e zgjedhur' }),
   ).toBeVisible();
-  await expect(page.getByText('Fixture Gamma', { exact: true })).toBeVisible();
+  await expect(page.getByText('Fixture B', { exact: true })).toBeVisible();
   const structuredData = await page
     .locator('script[type="application/ld+json"]')
     .evaluate((element) => JSON.parse(element.textContent ?? '{}'));
   expect(structuredData['@type']).toBe('MusicEvent');
   expect(structuredData.name).toBe('Fiksim vizual — Fusha e zgjedhur');
   expect(structuredData).not.toHaveProperty('offers');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    'https://frekuence.club/events/visual-fixture-featured-field/',
+  );
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    'content',
+    'https://frekuence.club/media/events/derivatives/visual-fixture-featured-field-social.webp',
+  );
   await expect(
     page.getByRole('link', { name: 'EN — Shiko këtë faqe në anglisht' }),
   ).toHaveAttribute('href', '/en/events/visual-fixture-featured-field/');
@@ -188,6 +210,77 @@ test('normal production output excludes visual fixtures and their detail routes'
   await expect(page.getByText(/Fiksim vizual|Visual Fixture/i)).toHaveCount(0);
   const response = await page.goto('/events/visual-fixture-featured-field/');
   expect(response?.status()).toBe(404);
+});
+
+test('unknown event slugs return a localized real 404 without private-record disclosure', async ({
+  page,
+}) => {
+  const response = await page.goto(`${fixtureOrigin}/events/unpublished-or-unknown/`);
+  expect(response?.status()).toBe(404);
+  await expect(page.locator('[data-event-state="not-found"]')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Kjo frekuencë nuk u gjet.' })).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
+  await expect(page.getByText(/draft|unpublished|database/i)).toHaveCount(0);
+});
+
+test('unavailable event service returns a localized, non-leaking 503', async ({ page }) => {
+  const response = await page.goto(`${unavailableOrigin}/en/events/`);
+  expect(response?.status()).toBe(503);
+  await expect(page.locator('[data-event-state="unavailable"]')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'The programme cannot be loaded right now.' }),
+  ).toBeVisible();
+  await expect(page.locator('body')).not.toContainText(/backend:8000|traceback|EventApi/i);
+  expect(response?.headers()['cache-control']).toBe('no-store');
+});
+
+test('dynamic responses use matching per-response CSP nonces without unsafe directives', async ({
+  page,
+}) => {
+  const response = await page.goto(`${fixtureOrigin}/events/visual-fixture-featured-field/`);
+  const csp = response?.headers()['content-security-policy'] ?? '';
+  expect(csp).toContain("default-src 'self'");
+  expect(csp).not.toContain("'unsafe-inline'");
+  expect(csp).not.toContain("'unsafe-eval'");
+  const nonce = csp.match(/'nonce-([^']+)'/)?.[1];
+  expect(nonce).toBeTruthy();
+  const scriptNonces = await page
+    .locator('script')
+    .evaluateAll((scripts) => scripts.map((script) => script.nonce));
+  expect(scriptNonces.length).toBeGreaterThan(1);
+  expect(scriptNonces.every((value) => value === nonce)).toBe(true);
+
+  const second = await page.request.get(`${fixtureOrigin}/events/visual-fixture-featured-field/`);
+  expect(second.headers()['content-security-policy']).not.toContain(`'nonce-${nonce}'`);
+});
+
+test('dynamic sitemap includes static and currently published localized event routes', async ({
+  request,
+}) => {
+  const response = await request.get(`${fixtureOrigin}/sitemap.xml`);
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toContain('application/xml');
+  const xml = await response.text();
+  expect(xml).toContain('https://frekuence.club/about/');
+  expect(xml).toContain('https://frekuence.club/events/visual-fixture-featured-field/');
+  expect(xml).toContain('https://frekuence.club/en/events/visual-fixture-featured-field/');
+  expect(xml).toContain('hreflang="sq-AL"');
+  expect(xml).toContain('hreflang="en"');
+});
+
+test('dynamic sitemap fails truthfully when the private API is unavailable', async ({
+  request,
+}) => {
+  const response = await request.get(`${unavailableOrigin}/sitemap.xml`);
+  expect(response.status()).toBe(503);
+  expect(response.headers()['cache-control']).toBe('no-store');
+  expect(await response.text()).toBe('Event sitemap temporarily unavailable.\n');
+});
+
+test('dynamic HTML never exposes the private API origin or API path', async ({ page }) => {
+  await page.goto(`${fixtureOrigin}/`);
+  const html = await page.content();
+  expect(html).not.toMatch(/127\.0\.0\.1:4310|FREKUENCE_EVENT_API_ORIGIN|\/api\/v1\/events/);
 });
 
 test('repeated FrequencyField variants use unique SVG resource IDs', async ({ page }) => {

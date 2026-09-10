@@ -2,6 +2,7 @@
 import EventCollection from '../components/EventCollection.astro';
 import PageIntro from '../components/PageIntro.astro';
 import SignalLink from '../components/SignalLink.astro';
+import type { PublicEvent } from '../data/events';
 import { t } from '../data/i18n';
 import type { Locale } from '../data/routes';
 import { SITE } from '../data/site';
@@ -9,16 +10,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 interface Props {
   locale: Locale;
+  events: PublicEvent[];
 }
 
-const { locale } = Astro.props;
+const { locale, events } = Astro.props;
 const copy = t(locale);
 ---
 
 <BaseLayout locale={locale} page="events">
   <PageIntro kicker={copy.events.kicker} title={copy.events.title} intro={copy.events.intro} />
   <div class="events-content section-shell">
-    <EventCollection locale={locale} />
+    <EventCollection locale={locale} events={events} />
     <div class="events-channel">
       <p>{copy.events.instagramNote}</p>
       <SignalLink href={SITE.instagram} external>{copy.common.instagram}</SignalLink>

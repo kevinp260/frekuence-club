@@ -1,9 +1,8 @@
 ---
-import { getImage, Image } from 'astro:assets';
-
+import EventPoster from '../components/EventPoster.astro';
 import SignalLink from '../components/SignalLink.astro';
-import type { EventEntry } from '../data/events';
-import { eventRoute, formatEventDate, formatEventTime, localizedEvent } from '../data/events';
+import type { PublicEvent } from '../data/events';
+import { eventRoute, formatEventDate, formatEventTime } from '../data/events';
 import { t } from '../data/i18n';
 import { routeFor, type Locale } from '../data/routes';
 import { SITE } from '../data/site';
@@ -11,27 +10,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 interface Props {
   locale: Locale;
-  event: EventEntry;
+  event: PublicEvent;
 }
 
 const { locale, event } = Astro.props;
 const copy = t(locale);
-const content = localizedEvent(event, locale);
-const canonicalPath = eventRoute(event.data.slug, locale);
+const canonicalPath = eventRoute(event.slug, locale);
 const alternatePaths = {
-  sq: eventRoute(event.data.slug, 'sq'),
-  en: eventRoute(event.data.slug, 'en'),
+  sq: eventRoute(event.slug, 'sq'),
+  en: eventRoute(event.slug, 'en'),
 };
 const metadata = {
-  title: `${content.title} — Frekuence Club`,
-  description: content.summary,
+  title: `${event.title} — Frekuence Club`,
+  description: event.summary,
 };
-const socialImage = await getImage({
-  src: event.data.poster,
-  width: 960,
-  format: 'webp',
-  quality: 65,
-});
+const socialImage = event.poster.social?.url ?? event.poster.sources.at(-1)?.url;
 const eventStatusUrls = {
   scheduled: 'https://schema.org/EventScheduled',
   postponed: 'https://schema.org/EventPostponed',
@@ -40,13 +33,13 @@ const eventStatusUrls = {
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'MusicEvent',
-  name: content.title,
-  description: content.summary,
-  startDate: event.data.startsAt.toISOString(),
-  endDate: event.data.endsAt.toISOString(),
-  eventStatus: eventStatusUrls[event.data.status],
+  name: event.title,
+  description: event.summary,
+  startDate: event.startsAt.toISOString(),
+  endDate: event.endsAt.toISOString(),
+  eventStatus: eventStatusUrls[event.status],
   eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-  image: new URL(socialImage.src, SITE.url).toString(),
+  ...(socialImage ? { image: new URL(socialImage, SITE.url).toString() } : {}),
   location: {
     '@type': 'Place',
     name: SITE.name,
@@ -66,8 +59,8 @@ const structuredData = {
   metadata={metadata}
   canonicalPath={canonicalPath}
   alternatePaths={alternatePaths}
-  socialImagePath={socialImage.src}
-  socialImageAlt={content.posterAlt}
+  socialImagePath={socialImage ?? '/og/frekuence-club.jpg'}
+  socialImageAlt={event.poster.alt}
   documentType="article"
   structuredData={structuredData}
 >
@@ -75,18 +68,15 @@ const structuredData = {
     <header class="event-detail__header">
       <div class="event-detail__title">
         <p class="kicker">{copy.events.detailsKicker}</p>
-        {event.data.visualFixture && <p class="fixture-notice">{copy.home.fixtureNotice}</p>}
-        <p class="event-detail__status">{copy.events.statusLabels[event.data.status]}</p>
-        <h1>{content.title}</h1>
-        <p class="event-detail__summary">{content.summary}</p>
+        <p class="event-detail__status">{copy.events.statusLabels[event.status]}</p>
+        <h1>{event.title}</h1>
+        <p class="event-detail__summary">{event.summary}</p>
       </div>
       <div class="event-detail__poster">
-        <Image
-          src={event.data.poster}
-          alt={content.posterAlt}
-          widths={[480, 640, 800, 960]}
+        <EventPoster
+          poster={event.poster}
+          locale={locale}
           sizes="(max-width: 48rem) 100vw, 44vw"
-          quality={65}
           loading="eager"
           fetchpriority="high"
         />
@@ -98,26 +88,26 @@ const structuredData = {
         <div>
           <dt>{copy.events.startsLabel}</dt>
           <dd>
-            <time datetime={event.data.startsAt.toISOString()}>
-              {formatEventDate(event.data.startsAt, locale)}
+            <time datetime={event.startsAt.toISOString()}>
+              {formatEventDate(event.startsAt, locale)}
             </time>
           </dd>
         </div>
         <div>
           <dt>{copy.events.endsLabel}</dt>
           <dd>
-            <time datetime={event.data.endsAt.toISOString()}>
-              {formatEventDate(event.data.endsAt, locale)}
+            <time datetime={event.endsAt.toISOString()}>
+              {formatEventDate(event.endsAt, locale)}
             </time>
           </dd>
         </div>
         {
-          event.data.doorsAt && (
+          event.doorsAt && (
             <div>
               <dt>{copy.events.doorsLabel}</dt>
               <dd>
-                <time datetime={event.data.doorsAt.toISOString()}>
-                  {formatEventTime(event.data.doorsAt, locale)}
+                <time datetime={event.doorsAt.toISOString()}>
+                  {formatEventTime(event.doorsAt, locale)}
                 </time>
               </dd>
             </div>
@@ -126,14 +116,20 @@ const structuredData = {
       </dl>
 
       <div class="event-detail__editorial">
-        <p>{content.description}</p>
-        {content.entryNote && <p>{content.entryNote}</p>}
-        <section aria-labelledby="event-lineup-title">
-          <h2 id="event-lineup-title">{copy.events.lineupLabel}</h2>
-          <ol>
-            {event.data.lineup.map((artist) => <li>{artist}</li>)}
-          </ol>
-        </section>
+        <p>{event.description}</p>
+        {event.entryNote && <p>{event.entryNote}</p>}
+        {
+          event.lineup.length > 0 && (
+            <section aria-labelledby="event-lineup-title">
+              <h2 id="event-lineup-title">{copy.events.lineupLabel}</h2>
+              <ol>
+                {event.lineup.map((artist) => (
+                  <li>{artist}</li>
+                ))}
+              </ol>
+            </section>
+          )
+        }
         <div class="event-detail__context">
           <p>{copy.home.ageContext}</p>
           <p>{copy.home.doorContext}</p>
@@ -163,7 +159,6 @@ const structuredData = {
     padding-bottom: var(--space-6);
   }
 
-  .fixture-notice,
   .event-detail__status {
     margin: var(--space-3) 0 0;
     color: var(--color-signal-red);
@@ -171,12 +166,6 @@ const structuredData = {
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-  }
-
-  .fixture-notice {
-    display: inline-block;
-    padding: 0.5rem 0.65rem;
-    border: 1px solid currentcolor;
   }
 
   .event-detail h1 {

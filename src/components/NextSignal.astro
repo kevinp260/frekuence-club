@@ -1,24 +1,22 @@
 ---
-import { Image } from 'astro:assets';
-
-import type { EventEntry } from '../data/events';
-import { eventRoute, formatEventDate, localizedEvent } from '../data/events';
+import type { PublicEvent } from '../data/events';
+import { eventRoute, formatEventDate } from '../data/events';
 import { t } from '../data/i18n';
 import { routeFor, type Locale } from '../data/routes';
 import { SITE } from '../data/site';
 import FrequencyField from './FrequencyField.astro';
+import EventPoster from './EventPoster.astro';
 import SignalLink from './SignalLink.astro';
 
 interface Props {
   locale: Locale;
-  event: EventEntry | null;
+  event: PublicEvent | null;
   hasPublishedEvents: boolean;
 }
 
 const { locale, event, hasPublishedEvents } = Astro.props;
 const copy = t(locale);
-const content = event ? localizedEvent(event, locale) : null;
-const status = event ? copy.events.statusLabels[event.data.status] : null;
+const status = event ? copy.events.statusLabels[event.status] : null;
 ---
 
 <section
@@ -37,20 +35,15 @@ const status = event ? copy.events.statusLabels[event.data.status] : null;
 
   <div class="next-signal__stage section-shell">
     {
-      event && content ? (
+      event ? (
         <div class="next-signal__poster">
-          <Image
-            src={event.data.poster}
-            alt={content.posterAlt}
-            widths={[320, 480, 560]}
+          <EventPoster
+            poster={event.poster}
+            locale={locale}
             sizes="(max-width: 48rem) 65vw, 38vw"
-            quality={40}
             loading="eager"
             fetchpriority="high"
           />
-          {event.data.visualFixture && (
-            <span class="fixture-notice">{copy.home.fixtureNotice}</span>
-          )}
         </div>
       ) : (
         <div class="next-signal__poster next-signal__poster--empty" aria-hidden="true">
@@ -62,17 +55,19 @@ const status = event ? copy.events.statusLabels[event.data.status] : null;
 
     <div class="next-signal__copy">
       {
-        event && content ? (
+        event ? (
           <>
             <p class="next-signal__status">{status}</p>
-            <h1 id="next-signal-title">{content.title}</h1>
-            <time datetime={event.data.startsAt.toISOString()}>
-              {formatEventDate(event.data.startsAt, locale)}
+            <h1 id="next-signal-title">{event.title}</h1>
+            <time datetime={event.startsAt.toISOString()}>
+              {formatEventDate(event.startsAt, locale)}
             </time>
-            <p class="next-signal__lineup">{event.data.lineup.join(' / ')}</p>
-            <p class="next-signal__body">{content.summary}</p>
+            {event.lineup.length > 0 && (
+              <p class="next-signal__lineup">{event.lineup.join(' / ')}</p>
+            )}
+            <p class="next-signal__body">{event.summary}</p>
             <div class="next-signal__actions">
-              <SignalLink href={eventRoute(event.data.slug, locale)} variant="red">
+              <SignalLink href={eventRoute(event.slug, locale)} variant="red">
                 {copy.common.viewEvent}
               </SignalLink>
               <SignalLink href={routeFor('events', locale)}>{copy.common.events}</SignalLink>
@@ -187,20 +182,6 @@ const status = event ? copy.events.statusLabels[event.data.status] : null;
     width: 100%;
     height: 100%;
     object-fit: cover;
-  }
-
-  .fixture-notice {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    max-width: calc(100% - 2rem);
-    padding: 0.55rem 0.7rem;
-    background: var(--color-black);
-    color: var(--color-white);
-    font-size: var(--step--2);
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
   }
 
   .next-signal__poster--empty {

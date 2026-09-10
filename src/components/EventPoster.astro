@@ -1,0 +1,72 @@
+---
+import type { PublicPoster } from '../data/events';
+import type { Locale } from '../data/routes';
+
+interface Props {
+  poster: PublicPoster;
+  locale: Locale;
+  sizes: string;
+  loading?: 'eager' | 'lazy';
+  fetchpriority?: 'high' | 'low' | 'auto';
+}
+
+const { poster, locale, sizes, loading = 'lazy', fetchpriority = 'auto' } = Astro.props;
+const sources = [...poster.sources].sort((first, second) => first.width - second.width);
+const fallback = sources.at(-1);
+const srcset = sources.map((source) => `${source.url} ${source.width}w`).join(', ');
+---
+
+{
+  fallback ? (
+    <img
+      src={fallback.url}
+      srcset={srcset}
+      sizes={sizes}
+      width={fallback.width}
+      height={fallback.height}
+      alt={poster.alt}
+      loading={loading}
+      fetchpriority={fetchpriority}
+      decoding="async"
+    />
+  ) : (
+    <div
+      class="event-poster-missing"
+      role="img"
+      aria-label={
+        poster.alt ||
+        (locale === 'sq'
+          ? 'Posteri i eventit nuk është i disponueshëm'
+          : 'Event poster unavailable')
+      }
+    >
+      <span aria-hidden="true">00</span>
+    </div>
+  )
+}
+
+<style>
+  .event-poster-missing {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    min-height: inherit;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        transparent 0 1.8rem,
+        var(--color-signal-cyan-muted) 1.8rem calc(1.8rem + 1px)
+      ),
+      var(--color-black);
+    color: var(--color-gray);
+    place-items: end start;
+  }
+
+  .event-poster-missing span {
+    padding: var(--space-4);
+    font-size: clamp(4rem, 10vw, 8rem);
+    font-weight: 800;
+    line-height: 0.75;
+    letter-spacing: -0.1em;
+  }
+</style>

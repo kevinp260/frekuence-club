@@ -3,12 +3,12 @@
 This repository contains the bilingual Astro frontend for Frekuence Club in Tirana. Albanian is
 served at the root and English under `/en/`.
 
-Phase 2 checkpoints 1–5 establish the approved signal-interference design system, event-led public
-pages, the private Django/PostgreSQL event-management foundation, and its published-only events API.
-The public Astro site remains a static build and continues to use its transitional content
-collection; checkpoint 6 will connect it to Django without redesigning the public routes or
-components. Checkpoint 6 Astro SSR integration and the checkpoint 7 production gateway are not
-implemented, so the API remains private to the Compose network.
+Phase 2 checkpoints 1–6 establish the approved signal-interference design system, event-led public
+pages, the private Django/PostgreSQL event-management foundation, its published-only events API,
+and the Astro dynamic migration. The official Astro Node adapter renders only event-dependent
+routes on demand from the private API; stable editorial, policy, privacy, visit, About, and error
+routes remain prerendered. The checkpoint 7 production gateway is not implemented, so this branch
+is an integration-review checkpoint rather than the final public topology.
 Reservations, payments, public accounts, analytics, tracking, and third-party embeds remain out of
 scope.
 
@@ -16,26 +16,26 @@ scope.
 
 ```sh
 npm ci
-npm run dev
+FREKUENCE_EVENT_API_ORIGIN=http://127.0.0.1:8000 npm run dev
 npm run check
 npm run build
-npm run build:fixtures
 npm run test:e2e
 npm run test:visual
 npm run audit:lighthouse
 npm run audit:lighthouse:fixtures
 ```
 
-`npm run build` runs formatting, linting, Astro diagnostics, unit checks, the static build,
-and production-output validation. Browser tests use the local Google Chrome installation by
+`npm run build` runs formatting, linting, Astro diagnostics, unit checks, the mixed SSR/prerender
+build, and production-output validation. Browser tests use the local Google Chrome installation by
 default; set `CHROME_PATH` when Chrome is installed elsewhere. The Lighthouse command starts
-and stops its own loopback preview server, then enforces the documented score and Core Web
-Vitals thresholds.
+and stops its own loopback mock API and Astro server, then enforces the documented score and Core
+Web Vitals thresholds.
 
-`npm run build:fixtures` is an explicit non-production visual-review mode. It includes only the
-records and renamed poster assets under `src/content/event-fixtures/` and writes them to the
-ignored `dist-fixtures/` directory. A normal `npm run build` reads only `src/content/events/`, and
-its production validator fails if fixture names or routes leak into `dist/`.
+Browser and visual tests use unmistakably synthetic records from `scripts/mock-events-api.mjs`.
+The three renamed poster assets under `src/content/event-fixtures/` are served only through
+Playwright request interception. Application code does not load them, and production validation
+fails if fixture names, private API configuration, source maps, or environment files leak into
+browser-readable output.
 
 The checked-in favicons and social image are derivatives of the temporary, approved brand
 exports. Regenerate them with `npm run assets:generate` after changing those source exports.
@@ -50,7 +50,9 @@ docker compose --profile tools run --rm --build backend-check
 docker compose --profile tools run --rm --build backend-migrate
 docker compose --profile tools run --rm --build backend-static
 docker compose up -d --build backend
+docker compose up -d --build web
 docker compose ps
+npm run smoke:production-integration
 ```
 
 The Django service and PostgreSQL have no host port. Development fixtures require an explicit
@@ -58,7 +60,8 @@ opt-in profile and runtime-only credentials; normal startup and the production b
 contain the fixture command. Staff account provisioning, TOTP enrollment, screenshots, backup, and
 restore procedures are documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-The checkpoint 5 API is JSON-only and read-only:
+The checkpoint 5 API remains JSON-only and read-only. Checkpoint 6 consumes it from Astro over the
+private Compose network:
 
 - `GET /api/v1/events/?locale=sq&when=upcoming&limit=6&offset=0`
 - `GET /api/v1/events/?locale=en&when=recent&limit=5&offset=0`
@@ -67,6 +70,12 @@ The checkpoint 5 API is JSON-only and read-only:
 Albanian is the default locale. Lists use a `count`/`next`/`previous`/`results` envelope, accept a
 maximum `limit` of 20 and an `offset` from 0 through 10,000, and expose published localized content
 and managed poster derivatives only.
+
+Astro runtime configuration uses `FREKUENCE_EVENT_API_ORIGIN` and
+`FREKUENCE_EVENT_API_TIMEOUT_MS`; these names are intentionally server-only. Do not rename them
+with Astro's `PUBLIC_` prefix. A request validates every API representation before rendering,
+retries one safe transient read, and returns a localized 503 after the bounded timeout instead of
+misrepresenting an outage as an empty programme.
 
 ## Production signoff
 

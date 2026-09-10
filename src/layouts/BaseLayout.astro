@@ -17,6 +17,7 @@ interface Props {
   socialImagePath?: string;
   socialImageAlt?: string;
   documentType?: 'website' | 'article';
+  noIndex?: boolean;
 }
 
 const {
@@ -29,6 +30,7 @@ const {
   socialImagePath = '/og/frekuence-club.jpg',
   socialImageAlt = 'Frekuence Club — Human Hz',
   documentType = 'website',
+  noIndex = false,
 } = Astro.props;
 const copy = t(locale);
 const canonicalPath = canonicalPathOverride ?? routeFor(page, locale);
@@ -39,7 +41,7 @@ const sqUrl = new URL(sqPath, SITE.url).toString();
 const enUrl = new URL(enPath, SITE.url).toString();
 const metadata = metadataOverride ?? copy.seo[page];
 const ogImage = new URL(socialImagePath, SITE.url).toString();
-const isNoIndex = import.meta.env.PUBLIC_NOINDEX === 'true';
+const isNoIndex = noIndex || import.meta.env.PUBLIC_NOINDEX === 'true';
 const structuredDataJson = structuredData
   ? JSON.stringify(structuredData).replaceAll('<', '\\u003c')
   : null;
@@ -95,7 +97,12 @@ const structuredDataJson = structuredData
 
     {
       structuredDataJson && (
-        <script type="application/ld+json" set:html={structuredDataJson} is:inline />
+        <script
+          type="application/ld+json"
+          nonce={Astro.locals.cspNonce}
+          set:html={structuredDataJson}
+          is:inline
+        />
       )
     }
   </head>

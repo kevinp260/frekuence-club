@@ -1,5 +1,22 @@
 ---
+import { loadPublishedEvents } from '../lib/events-api.server';
+import EventServiceUnavailableView from '../views/EventServiceUnavailableView.astro';
 import HomeView from '../views/HomeView.astro';
+
+export const prerender = false;
+
+let events;
+try {
+  events = await loadPublishedEvents('sq');
+} catch {
+  Astro.response.status = 503;
+}
 ---
 
-<HomeView locale="sq" />
+{
+  events ? (
+    <HomeView locale="sq" events={events} />
+  ) : (
+    <EventServiceUnavailableView locale="sq" page="home" />
+  )
+}

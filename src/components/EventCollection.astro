@@ -1,25 +1,24 @@
 ---
-import { getCollection } from 'astro:content';
-
-import { isPastEvent, isPublishedEvent } from '../data/events';
+import type { PublicEvent } from '../data/events';
+import { isPastEvent } from '../data/events';
 import { t } from '../data/i18n';
 import type { Locale } from '../data/routes';
 import EventList from './EventList.astro';
 
 interface Props {
   locale: Locale;
+  events: PublicEvent[];
 }
 
-const { locale } = Astro.props;
+const { locale, events: published } = Astro.props;
 const copy = t(locale);
 const now = new Date();
-const published = (await getCollection('events')).filter((event) => isPublishedEvent(event));
 const upcoming = published
   .filter((event) => !isPastEvent(event, now))
-  .sort((first, second) => first.data.startsAt.getTime() - second.data.startsAt.getTime());
+  .sort((first, second) => first.startsAt.getTime() - second.startsAt.getTime());
 const past = published
   .filter((event) => isPastEvent(event, now))
-  .sort((first, second) => second.data.startsAt.getTime() - first.data.startsAt.getTime())
+  .sort((first, second) => second.startsAt.getTime() - first.startsAt.getTime())
   .slice(0, 20);
 ---
 
@@ -31,7 +30,9 @@ const past = published
           00
         </p>
         <div class="event-empty__copy">
-          <p class="event-empty__label">No signal / Europe–Tirane</p>
+          <p class="event-empty__label">
+            {locale === 'sq' ? 'Pa sinjal / Europe–Tirane' : 'No signal / Europe–Tirane'}
+          </p>
           <h2>{copy.events.emptyTitle}</h2>
           <p>{copy.events.emptyBody}</p>
           <p class="availability-status">{copy.common.reservationsStatus}</p>

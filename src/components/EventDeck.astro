@@ -1,17 +1,16 @@
 ---
 import { ChevronUp } from '@lucide/astro';
-import { Image } from 'astro:assets';
-
-import type { EventEntry } from '../data/events';
-import { eventRoute, formatEventDate, localizedEvent } from '../data/events';
+import type { PublicEvent } from '../data/events';
+import { eventRoute, formatEventDate } from '../data/events';
 import { t } from '../data/i18n';
 import type { Locale } from '../data/routes';
 import eventDeckScript from '../scripts/event-deck.js?url';
 import FrequencyField from './FrequencyField.astro';
+import EventPoster from './EventPoster.astro';
 
 interface Props {
   locale: Locale;
-  events: EventEntry[];
+  events: PublicEvent[];
   kind: 'upcoming' | 'past' | null;
 }
 
@@ -38,7 +37,6 @@ const heading = kind === 'past' ? copy.home.pastDeckLabel : copy.home.upcomingDe
       >
         <ol class="event-deck__list">
           {events.map((event, index) => {
-            const content = localizedEvent(event, locale);
             const actionId = `event-card-action-${locale}-${index + 1}`;
 
             return (
@@ -47,18 +45,13 @@ const heading = kind === 'past' ? copy.home.pastDeckLabel : copy.home.upcomingDe
                 data-event-card
               >
                 <article class="event-deck__card">
-                  <Image
-                    src={event.data.poster}
-                    alt={content.posterAlt}
-                    widths={[360, 540, 720]}
+                  <EventPoster
+                    poster={event.poster}
+                    locale={locale}
                     sizes="(max-width: 48rem) 70vw, 23vw"
-                    quality={60}
                     loading="lazy"
                   />
                   <div class="event-deck__wash" aria-hidden="true" />
-                  {event.data.visualFixture && (
-                    <p class="event-deck__fixture">{copy.home.fixtureNotice}</p>
-                  )}
                   <button
                     class="event-deck__toggle"
                     type="button"
@@ -73,13 +66,13 @@ const heading = kind === 'past' ? copy.home.pastDeckLabel : copy.home.upcomingDe
                     <ChevronUp size={18} stroke-width={1.8} aria-hidden="true" />
                   </button>
                   <div class="event-deck__content">
-                    <p class="event-deck__status">{copy.events.statusLabels[event.data.status]}</p>
-                    <h3>{content.title}</h3>
-                    <time datetime={event.data.startsAt.toISOString()}>
-                      {formatEventDate(event.data.startsAt, locale)}
+                    <p class="event-deck__status">{copy.events.statusLabels[event.status]}</p>
+                    <h3>{event.title}</h3>
+                    <time datetime={event.startsAt.toISOString()}>
+                      {formatEventDate(event.startsAt, locale)}
                     </time>
                     <div class="event-deck__action" id={actionId}>
-                      <a href={eventRoute(event.data.slug, locale)}>{copy.common.viewEvent}</a>
+                      <a href={eventRoute(event.slug, locale)}>{copy.common.viewEvent}</a>
                     </div>
                   </div>
                 </article>
@@ -92,7 +85,7 @@ const heading = kind === 'past' ? copy.home.pastDeckLabel : copy.home.upcomingDe
   )
 }
 
-<script src={eventDeckScript} is:inline></script>
+<script src={eventDeckScript} nonce={Astro.locals.cspNonce} is:inline></script>
 
 <style>
   .event-deck {
@@ -173,21 +166,6 @@ const heading = kind === 'past' ? copy.home.pastDeckLabel : copy.home.upcomingDe
     position: absolute;
     inset: 0;
     background: linear-gradient(180deg, transparent 30%, rgb(0 0 0 / 22%) 50%, var(--color-black));
-  }
-
-  .event-deck__fixture {
-    position: absolute;
-    top: 0.8rem;
-    left: 0.8rem;
-    max-width: calc(100% - 5rem);
-    margin: 0;
-    padding: 0.4rem 0.5rem;
-    background: var(--color-black);
-    color: var(--color-white);
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
   }
 
   .event-deck__toggle {

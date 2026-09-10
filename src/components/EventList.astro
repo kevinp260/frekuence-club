@@ -1,14 +1,13 @@
 ---
-import { Image } from 'astro:assets';
-
-import type { EventEntry } from '../data/events';
-import { eventRoute, formatEventDate, localizedEvent } from '../data/events';
+import type { PublicEvent } from '../data/events';
+import { eventRoute, formatEventDate } from '../data/events';
 import { t } from '../data/i18n';
 import type { Locale } from '../data/routes';
+import EventPoster from './EventPoster.astro';
 
 interface Props {
   locale: Locale;
-  events: EventEntry[];
+  events: PublicEvent[];
   headingLevel?: 'h2' | 'h3';
 }
 
@@ -20,40 +19,35 @@ const EventHeading = headingLevel;
 <ol class="event-list">
   {
     events.map((event, index) => {
-      const content = localizedEvent(event, locale);
-
       return (
         <li class="event-card">
           <div class="event-card__index" aria-hidden="true">
             {String(index + 1).padStart(2, '0')}
           </div>
           <div class="event-card__poster">
-            <Image
-              src={event.data.poster}
-              alt={content.posterAlt}
-              widths={[360, 640, 900]}
+            <EventPoster
+              poster={event.poster}
+              locale={locale}
               sizes="(max-width: 48rem) 100vw, 32vw"
-              quality={65}
               loading="lazy"
             />
-            {event.data.visualFixture && (
-              <span class="event-card__fixture">{copy.home.fixtureNotice}</span>
-            )}
           </div>
           <div class="event-card__content">
-            <p class="event-card__status">{copy.events.statusLabels[event.data.status]}</p>
-            <EventHeading>{content.title}</EventHeading>
-            <time datetime={event.data.startsAt.toISOString()}>
-              {formatEventDate(event.data.startsAt, locale)}
+            <p class="event-card__status">{copy.events.statusLabels[event.status]}</p>
+            <EventHeading>{event.title}</EventHeading>
+            <time datetime={event.startsAt.toISOString()}>
+              {formatEventDate(event.startsAt, locale)}
             </time>
-            <p>{content.summary}</p>
-            <p class="event-card__lineup">{event.data.lineup.join(' / ')}</p>
+            <p>{event.summary}</p>
+            {event.lineup.length > 0 && (
+              <p class="event-card__lineup">{event.lineup.join(' / ')}</p>
+            )}
             <div class="event-card__actions">
-              <a class="event-card__detail" href={eventRoute(event.data.slug, locale)}>
+              <a class="event-card__detail" href={eventRoute(event.slug, locale)}>
                 {copy.common.viewEvent}
               </a>
-              {event.data.ticketMode === 'door_only' && <span>{copy.home.doorContext}</span>}
-              {!event.data.reservationsAvailable && <span>{copy.common.reservationsStatus}</span>}
+              <span>{copy.home.doorContext}</span>
+              <span>{copy.common.reservationsStatus}</span>
             </div>
           </div>
         </li>
@@ -104,19 +98,6 @@ const EventHeading = headingLevel;
     width: 100%;
     height: 100%;
     object-fit: cover;
-  }
-
-  .event-card__fixture {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    max-width: calc(100% - 2rem);
-    padding: 0.45rem 0.6rem;
-    background: var(--color-black);
-    color: var(--color-white);
-    font-size: var(--step--2);
-    font-weight: 800;
-    text-transform: uppercase;
   }
 
   .event-card__content {
