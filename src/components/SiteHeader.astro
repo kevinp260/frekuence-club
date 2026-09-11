@@ -12,22 +12,62 @@ interface Props {
   alternateHref?: string;
 }
 
+type DialDestination = {
+  key: 'events' | 'about' | 'policy' | 'visit' | 'language';
+  label: string;
+  href: string;
+  active: boolean;
+  accessibleLabel?: string;
+  lang?: string;
+  hreflang?: string;
+};
+
 const { locale, page, alternateHref } = Astro.props;
 const copy = t(locale);
 const alternate = alternateLocale(locale);
 const navPages = ['events', 'about', 'policy', 'visit'] as const;
+const languageLabel = 'SQ / EN';
+const destinations: DialDestination[] = [
+  ...navPages.map((navPage) => ({
+    key: navPage,
+    label: copy.global.nav[navPage],
+    href: routeFor(navPage, locale),
+    active: page === navPage,
+  })),
+  {
+    key: 'language',
+    label: languageLabel,
+    href: alternateHref ?? routeFor(page, alternate),
+    active: false,
+    accessibleLabel: `${languageLabel} — ${copy.global.languageSwitch}`,
+    lang: t(alternate).documentLang,
+    hreflang: t(alternate).documentLang,
+  },
+];
+const hasCompactFrequency = page !== 'home';
 ---
 
 <header class="site-header" data-site-header>
   <div class="header-frame">
     <a
-      class="brand-mark"
+      class="brand-link"
       href={routeFor('home', locale)}
       aria-label="Frekuence Club"
       aria-current={page === 'home' ? 'page' : undefined}
     >
       <Image src={symbol} width={80} height={80} alt="" loading="eager" />
+      <span class="brand-wordmark">Frekuence Club</span>
     </a>
+
+    <div
+      class:list={['compact-frequency', { 'compact-frequency--active': hasCompactFrequency }]}
+      aria-hidden="true"
+      data-compact-frequency
+    >
+      <span class="compact-frequency__track"></span>
+      <span class="compact-frequency__station"></span>
+      {hasCompactFrequency && <span class="compact-frequency__label">7.83 Hz</span>}
+    </div>
 
     <button
       class="nav-toggle"
@@ -39,35 +79,67 @@ const navPages = ['events', 'about', 'policy', 'visit'] as const;
       data-open-label={copy.global.openMenu}
       data-close-label={copy.global.closeMenu}
     >
-      <Menu class="nav-toggle__icon nav-toggle__menu" size={28} stroke-width={1.75} />
-      <X class="nav-toggle__icon nav-toggle__close" size={28} stroke-width={1.75} />
+      <Menu class="nav-toggle__icon nav-toggle__menu" size={27} stroke-width={1.7} />
+      <X class="nav-toggle__icon nav-toggle__close" size={27} stroke-width={1.7} />
     </button>
 
-    <nav id="primary-navigation" class="primary-navigation" aria-label={copy.global.navigation}>
-      <ul>
-        {
-          navPages.map((navPage) => (
-            <li>
-              <a
-                href={routeFor(navPage, locale)}
-                aria-current={page === navPage ? 'page' : undefined}
+    <div
+      id="primary-navigation"
+      class="navigation-shell"
+      data-navigation-shell
+      aria-label={copy.global.navigation}
+    >
+      <div class="overlay-header">
+        <a class="overlay-brand" href={routeFor('home', locale)} aria-label="Frekuence Club">
+          <Image src={symbol} width={64} height={64} alt="" loading="eager" />
+          <span>Frekuence Club</span>
+        </a>
+        <button
+          class="nav-close"
+          type="button"
+          aria-label={copy.global.closeMenu}
+          data-navigation-close
+        >
+          <X size={28} stroke-width={1.7} />
+        </button>
+      </div>
+
+      <nav class="dial-navigation" aria-label={copy.global.navigation}>
+        <div class="dial-track" aria-hidden="true"></div>
+        <ul>
+          {
+            destinations.map((destination) => (
+              <li
+                class:list={[
+                  'dial-station',
+                  { 'dial-station--active': destination.active },
+                  { 'dial-station--language': destination.key === 'language' },
+                ]}
+                data-dial-station={destination.key}
               >
-                {copy.global.nav[navPage]}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-      <a
-        class="language-switch"
-        href={alternateHref ?? routeFor(page, alternate)}
-        lang={t(alternate).documentLang}
-        hreflang={t(alternate).documentLang}
-        aria-label={`${alternate.toUpperCase()} — ${copy.global.languageSwitch}`}
-      >
-        {alternate.toUpperCase()}
-      </a>
-    </nav>
+                <a
+                  class="dial-link"
+                  href={destination.href}
+                  aria-current={destination.active ? 'page' : undefined}
+                  aria-label={destination.accessibleLabel}
+                  lang={destination.lang}
+                  hreflang={destination.hreflang}
+                  data-navigation-link
+                >
+                  <span class="dial-frequency" aria-hidden="true">
+                    {destination.active ? '7.83 Hz' : ''}
+                  </span>
+                  <span class="dial-marker" aria-hidden="true" />
+                  <span class="dial-label">{destination.label}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <p class="overlay-context">{copy.global.address}</p>
+    </div>
   </div>
 </header>
 
@@ -75,146 +147,574 @@ const navPages = ['events', 'about', 'policy', 'visit'] as const;
 
 <style>
   .site-header {
-    position: relative;
-    z-index: 20;
-    border-bottom: 1px solid var(--color-gray-dark);
+    position: sticky;
+    z-index: 80;
+    top: 0;
+    border-block: 1px solid var(--color-gray-dark);
     background: var(--color-black);
   }
 
   .header-frame {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: clamp(15.5rem, 22vw, 19rem) minmax(0, 1fr);
     align-items: stretch;
     min-height: var(--header-height);
-    margin-inline: auto;
     border-inline: 1px solid var(--color-gray-dark);
+    background: var(--color-black);
   }
 
-  .brand-mark {
-    display: grid;
-    place-items: center;
-    width: var(--header-height);
+  .brand-link,
+  .overlay-brand {
+    display: flex;
+    align-items: center;
+    color: var(--color-white);
+    font-weight: 750;
+    letter-spacing: 0.18em;
+    line-height: 1;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .brand-link {
+    gap: clamp(0.7rem, 1.4vw, 1.2rem);
+    min-width: 0;
+    min-height: var(--header-height);
+    padding-inline: clamp(0.8rem, 2vw, 1.5rem);
     border-right: 1px solid var(--color-gray-dark);
   }
 
-  .brand-mark img {
-    width: 2.8rem;
-    height: 2.8rem;
+  .brand-link:hover,
+  .brand-link[aria-current='page'] {
+    color: var(--color-white);
   }
 
-  .primary-navigation {
-    display: flex;
-    align-items: stretch;
-    justify-content: flex-end;
+  .brand-link img {
+    flex: 0 0 auto;
+    width: clamp(2.7rem, 4.5vw, 3.5rem);
+    height: clamp(2.7rem, 4.5vw, 3.5rem);
   }
 
-  .primary-navigation[hidden] {
+  .brand-wordmark {
+    overflow: hidden;
+    font-size: clamp(0.64rem, 0.85vw, 0.78rem);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .navigation-shell {
+    min-width: 0;
+  }
+
+  .navigation-shell[hidden] {
     display: none;
   }
 
-  .primary-navigation ul {
-    display: flex;
+  .dial-navigation {
+    --dial-line-y: 3.78rem;
+    position: relative;
+    height: 100%;
+    min-height: var(--header-height);
+    overflow: hidden;
+  }
+
+  .dial-track {
+    position: absolute;
+    z-index: 0;
+    top: var(--dial-line-y);
+    right: 10%;
+    left: 10%;
+    height: 1px;
+    background: var(--color-slate-dark);
+    pointer-events: none;
+  }
+
+  .dial-track::after {
+    position: absolute;
+    top: -0.32rem;
+    right: 0;
+    bottom: -0.32rem;
+    left: 0;
+    background: repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc(4.166% - 1px),
+      var(--color-slate-light) calc(4.166% - 1px),
+      var(--color-slate-light) 4.166%
+    );
+    content: '';
+    opacity: 0.72;
+  }
+
+  .dial-track::before {
+    position: absolute;
+    top: -0.55rem;
+    right: 0;
+    bottom: -0.55rem;
+    left: 0;
+    background: repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc(20% - 1px),
+      var(--color-white) calc(20% - 1px),
+      var(--color-white) 20%
+    );
+    content: '';
+    opacity: 0.82;
+  }
+
+  .dial-navigation ul {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    height: 100%;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .primary-navigation a {
-    display: flex;
-    align-items: center;
+  .dial-station {
+    min-width: 0;
+  }
+
+  .dial-link {
+    display: grid;
+    grid-template-rows: 1.6rem 1.6rem minmax(2.2rem, auto);
+    align-content: center;
+    justify-items: center;
+    width: 100%;
+    min-width: 2.75rem;
     min-height: var(--header-height);
-    padding-inline: clamp(1.1rem, 2.2vw, 2.4rem);
-    border-left: 1px solid var(--color-gray-dark);
+    padding: 0.65rem 0.3rem 0.45rem;
     color: var(--color-white);
-    font-size: var(--step--1);
-    font-weight: 700;
-    letter-spacing: 0.05em;
+    text-align: center;
     text-decoration: none;
-    text-transform: uppercase;
-  }
-
-  .primary-navigation a:hover,
-  .primary-navigation a[aria-current='page'] {
-    color: var(--color-signal-red);
-  }
-
-  .language-switch {
-    min-width: var(--header-height);
-    justify-content: center;
-  }
-
-  .nav-toggle {
-    position: relative;
-    justify-self: end;
-    width: var(--header-height);
-    min-height: var(--header-height);
-    padding: 0;
-    border: 0;
-    border-left: 1px solid var(--color-gray-dark);
-    border-radius: 0;
-    background: transparent;
-    color: var(--color-white);
-  }
-
-  .nav-toggle :global(.nav-toggle__icon) {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     transition:
-      opacity 180ms ease,
+      color 180ms ease,
+      background-color 180ms ease;
+  }
+
+  .dial-frequency {
+    align-self: end;
+    min-height: 1em;
+    color: var(--color-signal-red);
+    font-size: clamp(0.58rem, 0.72vw, 0.7rem);
+    font-weight: 800;
+    letter-spacing: 0.13em;
+    line-height: 1;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .dial-marker {
+    align-self: center;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--color-white);
+    border-radius: 50%;
+    background: var(--color-black);
+    transition:
+      background-color 180ms ease,
+      box-shadow 180ms ease,
       transform 180ms ease;
   }
 
-  .nav-toggle :global(.nav-toggle__close) {
-    opacity: 0;
-    transform: translate(-50%, -50%) rotate(-90deg) scale(0.8);
+  .dial-label {
+    align-self: start;
+    max-width: 100%;
+    padding-top: 0.28rem;
+    font-size: clamp(0.61rem, 0.78vw, 0.78rem);
+    font-weight: 750;
+    letter-spacing: clamp(0.06em, 0.12vw, 0.13em);
+    line-height: 1.18;
+    text-transform: uppercase;
   }
 
-  .nav-toggle[aria-expanded='true'] :global(.nav-toggle__menu) {
-    opacity: 0;
-    transform: translate(-50%, -50%) rotate(90deg) scale(0.8);
+  .dial-link:hover .dial-marker {
+    background: var(--color-white);
+    transform: scale(1.08);
   }
 
-  .nav-toggle[aria-expanded='true'] :global(.nav-toggle__close) {
-    opacity: 1;
-    transform: translate(-50%, -50%) rotate(0) scale(1);
+  .dial-link:focus-visible {
+    z-index: 2;
+    outline: none;
   }
 
-  @media (max-width: 47.99rem) {
+  .dial-link:focus-visible .dial-marker {
+    box-shadow:
+      0 0 0 3px var(--color-black),
+      0 0 0 6px var(--color-white);
+  }
+
+  .dial-link:focus-visible .dial-label {
+    text-decoration: underline;
+    text-decoration-thickness: 0.1em;
+    text-underline-offset: 0.32em;
+  }
+
+  .dial-station--active .dial-link,
+  .dial-station--active .dial-link:hover {
+    color: var(--color-signal-red);
+  }
+
+  .dial-station--active .dial-marker,
+  .dial-station--active .dial-link:hover .dial-marker {
+    border-color: var(--color-signal-red);
+    background: var(--color-signal-red);
+    box-shadow:
+      0 0 0 3px var(--color-black),
+      0 0 0 5px var(--color-signal-red),
+      0 0 0.7rem rgb(255 1 1 / 38%);
+    transform: none;
+  }
+
+  .dial-station--active .dial-link:focus-visible .dial-marker {
+    box-shadow:
+      0 0 0 3px var(--color-black),
+      0 0 0 5px var(--color-signal-red),
+      0 0 0 8px var(--color-black),
+      0 0 0 10px var(--color-white);
+  }
+
+  .overlay-header,
+  .overlay-context,
+  .compact-frequency,
+  .nav-toggle {
+    display: none;
+  }
+
+  @media (max-width: 63.999rem) {
+    .site-header:not([data-enhanced]) {
+      position: relative;
+    }
+
     .header-frame {
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: 4.75rem minmax(0, 1fr) 4.75rem;
+      min-height: var(--header-height);
+    }
+
+    .brand-link {
+      justify-content: center;
+      min-height: var(--header-height);
+      padding: 0;
+    }
+
+    .brand-link img {
+      width: 2.65rem;
+      height: 2.65rem;
+    }
+
+    .brand-wordmark {
+      display: none;
+    }
+
+    .compact-frequency {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      min-height: var(--header-height);
+      overflow: hidden;
+    }
+
+    .compact-frequency__track {
+      position: absolute;
+      top: 2.04rem;
+      right: clamp(0.45rem, 3vw, 1.5rem);
+      left: clamp(0.45rem, 3vw, 1.5rem);
+      height: 1px;
+      background: var(--color-slate-dark);
+    }
+
+    .compact-frequency__track::after {
+      position: absolute;
+      top: -0.26rem;
+      right: 0;
+      bottom: -0.26rem;
+      left: 0;
+      background: repeating-linear-gradient(
+        to right,
+        transparent 0,
+        transparent calc(10% - 1px),
+        var(--color-slate-light) calc(10% - 1px),
+        var(--color-slate-light) 10%
+      );
+      content: '';
+      opacity: 0.8;
+    }
+
+    .compact-frequency__station {
+      position: absolute;
+      z-index: 1;
+      top: 1.53rem;
+      left: 50%;
+      width: 1.05rem;
+      height: 1.05rem;
+      border: 2px solid var(--color-white);
+      border-radius: 50%;
+      background: var(--color-black);
+      transform: translateX(-50%);
+    }
+
+    .compact-frequency__label {
+      position: absolute;
+      top: 3.18rem;
+      left: 50%;
+      color: var(--color-signal-red);
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      line-height: 1;
+      text-transform: uppercase;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+
+    .compact-frequency--active .compact-frequency__station {
+      border-color: var(--color-signal-red);
+      background: var(--color-signal-red);
+      box-shadow:
+        0 0 0 3px var(--color-black),
+        0 0 0 5px var(--color-signal-red),
+        0 0 0.55rem rgb(255 1 1 / 32%);
     }
 
     .site-header[data-enhanced] .nav-toggle {
-      display: block;
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      min-width: 2.75rem;
+      min-height: var(--header-height);
+      padding: 0;
+      border: 0;
+      border-left: 1px solid var(--color-gray-dark);
+      border-radius: 0;
+      background: transparent;
+      color: var(--color-white);
+      cursor: pointer;
     }
 
-    .primary-navigation {
+    .nav-toggle :global(.nav-toggle__icon) {
+      position: absolute;
+      transition:
+        opacity 180ms ease,
+        transform 180ms ease;
+    }
+
+    .nav-toggle :global(.nav-toggle__close) {
+      opacity: 0;
+      transform: rotate(-90deg) scale(0.82);
+    }
+
+    .nav-toggle[aria-expanded='true'] :global(.nav-toggle__menu) {
+      opacity: 0;
+      transform: rotate(90deg) scale(0.82);
+    }
+
+    .nav-toggle[aria-expanded='true'] :global(.nav-toggle__close) {
+      opacity: 1;
+      transform: none;
+    }
+
+    .navigation-shell {
       grid-column: 1 / -1;
-      flex-direction: column;
-      align-items: stretch;
+      min-height: 28rem;
       border-top: 1px solid var(--color-gray-dark);
+      background: var(--color-black);
     }
 
-    .primary-navigation ul {
-      flex-direction: column;
+    .site-header[data-enhanced] .navigation-shell:not([hidden]) {
+      position: fixed;
+      z-index: 140;
+      inset: 0;
+      display: grid;
+      grid-template-rows: auto minmax(24rem, 1fr) auto;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      border: 0;
+      background: var(--color-black);
     }
 
-    .primary-navigation a {
-      min-height: 4rem;
+    .site-header[data-enhanced] .overlay-header {
+      position: sticky;
+      z-index: 3;
+      top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: calc(4.75rem + env(safe-area-inset-top));
+      padding: env(safe-area-inset-top) max(1rem, env(safe-area-inset-right)) 0
+        max(1rem, env(safe-area-inset-left));
       border-bottom: 1px solid var(--color-gray-dark);
-      border-left: 0;
+      background: var(--color-black);
     }
 
-    .language-switch {
-      justify-content: flex-start;
+    .overlay-brand {
+      gap: 0.75rem;
+      min-height: 2.75rem;
+      font-size: clamp(0.63rem, 2.8vw, 0.76rem);
+    }
+
+    .overlay-brand:hover {
+      color: var(--color-white);
+    }
+
+    .overlay-brand img {
+      width: 2.45rem;
+      height: 2.45rem;
+    }
+
+    .nav-close {
+      display: grid;
+      place-items: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      padding: 0;
+      border: 1px solid var(--color-gray-dark);
+      border-radius: 50%;
+      background: var(--color-black);
+      color: var(--color-white);
+      cursor: pointer;
+    }
+
+    .dial-navigation {
+      --dial-x: clamp(2.8rem, 17vw, 5.25rem);
+      height: auto;
+      min-height: 26rem;
+      overflow: visible;
+      padding: clamp(1rem, 3vh, 2rem) max(1rem, env(safe-area-inset-right)) clamp(1rem, 3vh, 2rem)
+        max(1rem, env(safe-area-inset-left));
+    }
+
+    .dial-track {
+      top: clamp(2.85rem, 10%, 4.1rem);
+      right: auto;
+      bottom: clamp(2.85rem, 10%, 4.1rem);
+      left: calc(max(1rem, env(safe-area-inset-left)) + var(--dial-x));
+      width: 1px;
+      height: auto;
+      background: var(--color-slate-dark);
+    }
+
+    .dial-track::after {
+      top: 0;
+      right: -0.38rem;
+      bottom: 0;
+      left: -0.38rem;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent calc(5% - 1px),
+        var(--color-slate-light) calc(5% - 1px),
+        var(--color-slate-light) 5%
+      );
+    }
+
+    .dial-track::before {
+      top: 0;
+      right: -0.55rem;
+      bottom: 0;
+      left: -0.55rem;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent calc(25% - 1px),
+        var(--color-white) calc(25% - 1px),
+        var(--color-white) 25%
+      );
+    }
+
+    .dial-navigation ul {
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(5, minmax(4.75rem, 1fr));
+      min-height: 100%;
+    }
+
+    .dial-link {
+      grid-template-rows: auto;
+      grid-template-columns: calc(var(--dial-x) * 2) minmax(0, 1fr);
+      align-content: center;
+      justify-items: start;
+      min-height: 4.75rem;
+      padding: 0.35rem 0.25rem;
+      text-align: left;
+    }
+
+    .dial-frequency {
+      grid-row: 1;
+      grid-column: 2;
+      align-self: end;
+      min-height: 0.9rem;
+      padding-bottom: 0.15rem;
+      font-size: 0.62rem;
+    }
+
+    .dial-marker {
+      z-index: 1;
+      grid-row: 1 / span 2;
+      grid-column: 1;
+      align-self: center;
+      justify-self: center;
+      width: 1.15rem;
+      height: 1.15rem;
+    }
+
+    .dial-label {
+      grid-row: 2;
+      grid-column: 2;
+      align-self: start;
+      padding: 0;
+      font-size: clamp(0.73rem, 3vw, 0.9rem);
+      letter-spacing: 0.14em;
+    }
+
+    .overlay-context {
+      display: block;
+      margin: 0;
+      padding: 1rem max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
+        max(1rem, env(safe-area-inset-left));
+      border-top: 1px solid var(--color-gray-dark);
+      color: var(--color-pale-slate);
+      font-size: 0.61rem;
+      font-weight: 650;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .navigation-shell {
+      display: block;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .dial-link,
+    .dial-marker,
     .nav-toggle :global(.nav-toggle__icon) {
       transition: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .dial-station--active .dial-marker,
+    .compact-frequency--active .compact-frequency__station {
+      border-color: Highlight;
+      background: Highlight;
+      box-shadow: 0 0 0 4px Canvas;
+    }
+
+    .dial-station--active .dial-link,
+    .dial-frequency,
+    .compact-frequency__label {
+      color: Highlight;
     }
   }
 </style>

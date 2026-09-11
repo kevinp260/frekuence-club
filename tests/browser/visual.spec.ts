@@ -112,7 +112,7 @@ for (const evidence of pullRequestEvidence) {
     await page.setViewportSize(evidence.viewport);
     await page.goto(evidence.url);
     await page.screenshot({
-      path: `docs/review/phase-2-astro-dynamic/${evidence.name}.png`,
+      path: `screenshots/regression-${evidence.name}.png`,
       fullPage: true,
     });
   });
@@ -122,7 +122,7 @@ test('capture checkpoint 8 event homepage at the minimum supported width', async
   await page.setViewportSize({ width: 320, height: 900 });
   await page.goto(`${fixtureOrigin}/`);
   await page.screenshot({
-    path: 'docs/review/phase-2-integrated-qa/homepage-events-320.png',
+    path: 'screenshots/regression-homepage-events-320.png',
     fullPage: true,
   });
 });
@@ -136,7 +136,7 @@ test('capture checkpoint 8 keyboard-focus event deck state', async ({ page }) =>
     .getByRole('link', { name: 'Shiko eventin' })
     .focus();
   await page.locator('[data-event-deck]').screenshot({
-    path: 'docs/review/phase-2-integrated-qa/event-deck-keyboard-focus-1440.png',
+    path: 'screenshots/regression-event-deck-keyboard-focus-1440.png',
   });
 });
 
@@ -145,7 +145,7 @@ test('capture checkpoint 8 explicit mobile card selection', async ({ page }) => 
   await page.goto(`${fixtureOrigin}/`);
   await page.locator('[data-event-card]').first().locator('[data-card-toggle]').click();
   await page.locator('[data-event-deck]').screenshot({
-    path: 'docs/review/phase-2-integrated-qa/event-deck-touch-selected-390.png',
+    path: 'screenshots/regression-event-deck-touch-selected-390.png',
   });
 });
 
@@ -182,7 +182,76 @@ test('capture checkpoint 8 no-JavaScript event fallback', async ({ browser }) =>
     ),
   ).toBeGreaterThan(0);
   await page.screenshot({
-    path: 'docs/review/phase-2-integrated-qa/event-deck-no-javascript-390.png',
+    path: 'screenshots/regression-event-deck-no-javascript-390.png',
+  });
+  await context.close();
+});
+
+test('capture frequency dial horizontal desktop navigation', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await page.locator('.site-header').screenshot({
+    path: 'docs/review/frequency-dial-navigation/horizontal-desktop-1440.png',
+  });
+});
+
+test('capture frequency dial horizontal navigation at its breakpoint', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.goto('/about/');
+  await page.locator('.site-header').screenshot({
+    path: 'docs/review/frequency-dial-navigation/horizontal-navigation-1024.png',
+  });
+});
+
+test('capture frequency dial compact closed navigation', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/policy/');
+  await page.locator('.site-header').screenshot({
+    path: 'docs/review/frequency-dial-navigation/compact-closed-390.png',
+  });
+});
+
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 320, height: 700 },
+]) {
+  test(`capture frequency dial mobile overlay at ${viewport.width}px`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto(viewport.width === 390 ? '/policy/' : '/en/about/');
+    await page.locator('.nav-toggle').click();
+    await page.screenshot({
+      path: `docs/review/frequency-dial-navigation/mobile-overlay-${viewport.width}.png`,
+    });
+  });
+}
+
+test('capture frequency dial keyboard focus state', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/policy/');
+  await page.locator('[data-dial-station="visit"] a').focus();
+  await page.locator('.site-header').screenshot({
+    path: 'docs/review/frequency-dial-navigation/keyboard-focus-1440.png',
+  });
+});
+
+test('capture frequency dial active page state', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/events/');
+  await page.locator('.site-header').screenshot({
+    path: 'docs/review/frequency-dial-navigation/active-page-1440.png',
+  });
+});
+
+test('capture frequency dial no-JavaScript fallback', async ({ browser }) => {
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  await page.goto('/');
+  await page.screenshot({
+    path: 'docs/review/frequency-dial-navigation/no-javascript-fallback-390.png',
+    fullPage: true,
   });
   await context.close();
 });

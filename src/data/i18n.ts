@@ -424,7 +424,7 @@ export const translations: Record<Locale, Dictionary> = {
       navigation: 'Primary navigation',
       openMenu: 'Open menu',
       closeMenu: 'Close menu',
-      nav: { events: 'Events', about: 'Who we are', policy: 'Policy', visit: 'Visit' },
+      nav: { events: 'Events', about: 'About', policy: 'Policy', visit: 'Visit' },
       footerNavigation: 'Footer navigation',
       privacy: 'Privacy',
       instagram: 'Frekuence Club on Instagram',
