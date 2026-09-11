@@ -1,3 +1,160 @@
+# Phase 2 checkpoint 8 integrated QA validation
+
+Validated on 2026-09-11 against `feat/phase-2-integrated-qa` from merged checkpoint 7 main
+baseline `233dca94201b2c13e802a011b92c17dd97776313`. Checkpoint 8 adds integrated validation,
+disposable backup/restore evidence, multi-route Lighthouse coverage, and useful synthetic review
+captures. It does not add or change public product behavior, event data, database schema, gateway
+routing, or deployment architecture. Checkpoint 9 was not implemented.
+
+### Review follow-up rerun (2026-09-11)
+
+The two checkpoint 8 review assertions were tightened without changing production behavior. The
+integrated smoke now parses headerless `ps` user/command columns, requires at least one command
+named exactly `postgres`, and rejects the result if any such process is not owned by `postgres`.
+The no-JavaScript capture now waits for at least one deck poster and for every intercepted poster
+to report both `complete` and a non-zero `naturalWidth` before it can become review evidence.
+
+The follow-up was subsequently validated in a local Chrome- and Docker-capable environment.
+`npm run check` passed with 0 Astro diagnostics and 34 unit tests. `npm run test:visual` passed
+all 30 captures. The no-JavaScript screenshot was regenerated only after every intercepted deck
+poster had decoded successfully with a non-zero `naturalWidth`; manual review confirmed that the
+synthetic poster, event information, and event link are visibly rendered.
+`npm run smoke:integrated-qa` passed the complete source-stack verification, PostgreSQL
+process-ownership audit, matched PostgreSQL/media backup, isolated restoration of eight synthetic
+event records, restored gateway verification, container restrictions, and service health checks.
+`git diff --check` passed.
+
+
+## Complete automated gates
+
+| Gate                                                             | Result                                                                                                                                                                                                                          |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docker compose config`                                          | Passed: the resolved production topology remains valid                                                                                                                                                                          |
+| `docker compose --profile tools run --rm --build backend-check`  | Passed: Ruff format/lint; no pending migrations; Django system/deployment checks; migrations; 69 tests in 8.822 s; pip-audit found no known vulnerabilities                                                                     |
+| `docker compose --profile tools run --rm --build frontend-check` | Passed: Prettier, ESLint, 0 Astro diagnostics, 33 unit tests, mixed Astro Node production build, 8-route/58-file output validation, and 43 browser/integration/accessibility tests; 30 opt-in visual tests skipped in this gate |
+| `npm run test:visual`                                            | Passed: 30 captures across 320, 390, 1024, and 1440 px, including four checkpoint 8 evidence captures                                                                                                                           |
+| `npm run smoke:production-integration`                           | Passed: production-equivalent Django HTTPS settings and five localized Astro routes using the synthetic empty-alt/empty-lineup fixture; direct untrusted HTTP redirected to HTTPS                                               |
+| `npm run smoke:production-topology`                              | Passed: gateway topology, routes, API validators, media isolation, security headers, distinct Axes client lockouts, health, and recreation persistence                                                                          |
+| `npm run smoke:integrated-qa`                                    | Passed: full synthetic event/security matrix through gateway plus matched database/media backup and isolated restore into a second disposable Compose project                                                                   |
+| `npm run audit:lighthouse`                                       | Passed empty programme: Performance 100, Accessibility 100, Best Practices 100, SEO 100; LCP 1,743 ms; CLS 0                                                                                                                    |
+| `npm run audit:lighthouse:fixtures`                              | Passed synthetic event homepage: Performance 99, Accessibility 100, Best Practices 96, SEO 100; LCP 1,842 ms; CLS 0.000127                                                                                                      |
+| `npm run audit:lighthouse:integrated`                            | Passed synthetic Albanian/English homepages and localized event details; every route met the 90/95/95/95 score floors, LCP below 2.5 s, and CLS below 0.1                                                                       |
+| Gateway and host-example Nginx `nginx -t`                        | Passed inside the exactly pinned unprivileged Nginx image; gateway validation also runs in both topology smokes                                                                                                                 |
+| `git diff --check`                                               | Passed with no whitespace errors                                                                                                                                                                                                |
+
+The integrated Lighthouse results were:
+
+| Route                                       | Performance | Accessibility | Best practices | SEO | LCP      | CLS      |
+| ------------------------------------------- | ----------- | ------------- | -------------- | --- | -------- | -------- |
+| `/`                                         | 99          | 100           | 96             | 100 | 1,803 ms | 0.000127 |
+| `/en/`                                      | 99          | 100           | 96             | 100 | 1,908 ms | 0        |
+| `/events/visual-fixture-featured-field/`    | 100         | 100           | 96             | 100 | 1,670 ms | 0.000127 |
+| `/en/events/visual-fixture-featured-field/` | 100         | 100           | 96             | 100 | 1,677 ms | 0.000127 |
+
+All Lighthouse fixture content was unmistakably synthetic and served only by the loopback mock
+API. Reports under `test-results/` are generated local evidence and remain ignored rather than
+being treated as production assets.
+
+## Integrated functional and security coverage
+
+The integrated smoke built one immutable tagged image set and used production Django HTTPS,
+secure-cookie, non-default secret, and non-default PostgreSQL settings. Through the container
+gateway it verified:
+
+- Albanian and English homepages, event indexes, About, Policy, Visit, Privacy, localized event
+  details, dynamic sitemap, staff login, public API, and a branded real 404;
+- published-only list/detail data; indistinguishable API 404 bodies for unknown, draft, and
+  intentionally unpublished slugs; no private fields or draft slugs in public HTML/API/sitemap;
+- current/postponed, earliest upcoming, cancelled, featured upcoming, later upcoming, and past
+  event ordering, homepage selection, separate index groups, lifecycle labels, and cancelled
+  `MusicEvent` status;
+- same-language canonical URLs, reciprocal `sq-AL`/`en` hreflang, localized Open Graph and Twitter
+  data, managed derivative images, `MusicEvent` JSON-LD without fabricated offers, and published
+  bilingual sitemap entries;
+- list/detail ETags and conditional 304s, GET/HEAD/OPTIONS behavior, write-method 405s, static Admin
+  CSS, processed WebP derivatives, and 404 isolation of the matching managed original;
+- one changing request-specific Astro nonce CSP with no `unsafe-inline`/`unsafe-eval`, one copy of
+  each gateway-owned security header, HSTS on trusted HTTPS, and Django HTTPS redirect behavior
+  when the trusted scheme is absent;
+- anonymous staff redirect/no-store, CSRF rejection, rejection of password-only staff login,
+  rejection of a fully OTP-authenticated non-staff account, and successful TOTP staff Admin access
+  after restoration. The backend gate and topology smoke retain detailed strong-password, MFA,
+  authorization, upload-attack, Axes throttle, and separated client-IP regression coverage;
+- only a loopback-bound gateway, no frontend/backend/database host ports, non-root gateway/Astro/
+  Django processes, PostgreSQL workers owned by `postgres`, application read-only roots, dropped
+  capabilities, and healthy gateway/frontend/backend/database services; and
+- final frontend/backend image exclusion of source/test trees, development fixtures, source maps,
+  environment files, Git metadata, PDFs/BrandBook, fixture identifiers, and runtime application or
+  database secrets. Checked responses contained no private service hostname, traceback, or
+  internal exception marker.
+
+## Isolated backup and restoration
+
+`npm run smoke:integrated-qa` used two PID-scoped Compose project names, `FREKUENCE_GATEWAY_PORT=0`,
+separate named volumes, and one compatible immutable image set. It created eight synthetic event
+records plus a generated red raster poster and TOTP test users in the source project, created a
+matched custom-format PostgreSQL dump and media archive inside a private mode-0700 temporary
+directory, and restored both into the distinct restore project. Migration compatibility and the
+explicit `backend-static` job completed before restored services started.
+
+The restored stack retained all eight records, randomized original metadata, processed
+derivatives, TOTP devices and staff authorization. Its public/API routes, real 404, and all four
+health checks passed. The source and restore gateway ports and database volumes were demonstrably
+different. Cleanup accepted only the two generated project-name prefixes and removed their
+containers, networks, volumes, and temporary backup directory; it did not touch development or
+production data. This is a disposable procedural exercise, not evidence for a real encrypted
+backup destination or production credentials.
+
+## Accessibility and visual review
+
+The browser gate passed 43 behavior, integration, metadata, and axe regressions. It covers 1440 px
+desktop, 390 px mobile, the supported 320 px minimum, keyboard-only navigation and visible focus,
+explicit touch/card selection, Escape behavior, reduced-motion presentation, JavaScript-disabled
+fallback, landmarks/headings, equivalent event links, tap controls, and page-level overflow.
+
+The 30-capture visual run was manually reviewed. Four useful checkpoint 8 captures are committed
+under [`docs/review/phase-2-integrated-qa/`](review/phase-2-integrated-qa/README.md): event-led
+homepage at 320 px, keyboard-focus deck at 1440 px, selected touch card at 390 px, and the no-script
+fallback at 390 px. Review found no clipped primary copy, page-level horizontal overflow,
+unreadable essential poster information, hidden focus, control overlap, insufficient tap access,
+or hover-only event destination. Contrast and landmark semantics remain covered by axe and
+Lighthouse. No candidate real poster or inferred event fact was used.
+
+## Defects and checkpoint boundary
+
+No material production behavior defect was found. Checkpoint 8 exposed evidence gaps rather than
+an architecture flaw: no single test previously exercised the complete bilingual event-state and
+security matrix, backup/restore stopped at persistence/recreation coverage, Lighthouse audited one
+route per run, and minimum-width/interaction fallback evidence was not committed. The new
+integrated smoke, verifier, regression tests, multi-route audit support, and captures close those
+QA gaps without redesigning the application.
+
+The initial integrated harness correctly stopped before restoration because its PostgreSQL
+identity assertion inspected the root-owned init wrapper instead of the actual server process; the
+test was corrected to require every PostgreSQL server process to run as `postgres`. A second test
+assertion used uppercase text against semantically equivalent mixed-case HTML and was corrected.
+Neither issue changed or weakened a production control.
+
+Checkpoint 9 handoff was not implemented. There is still no reservation, payment, public account,
+analytics, new event content, real publication, new gateway route, or database migration.
+
+## Operator-required validation and remaining risk
+
+These checks were not run and are not claimed: real production host access, public DNS, a real TLS
+certificate/renewal, installed host Nginx reload, encrypted production backup destination and
+retention, real production-data restoration, monitoring/alert delivery, owner staff credentials
+and recovery, final event publication, legal/contact inputs, and approved original brand assets.
+Exact safe commands and expected results are recorded in `docs/DEPLOYMENT.md` under “Operator-
+dependent production signoff.”
+
+Until those steps are completed, remaining launch risk is operational rather than a known local
+code failure: certificate/DNS correctness, backup confidentiality and recoverability, alert
+delivery, real staff MFA ownership/recovery, and content/asset approval are unproven in the target
+environment. Do not treat this local integrated QA report as authorization to publish a real
+event.
+
+---
+
 # Phase 2 checkpoint 7 validation
 
 Validated on 2026-09-10 against `feat/phase-2-container-topology`, including the PR #6 client-IP,

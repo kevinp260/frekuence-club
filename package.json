@@ -22,8 +22,10 @@
     "test:visual": "npm run build && CAPTURE_VISUALS=true playwright test tests/browser/visual.spec.ts",
     "smoke:production-integration": "./scripts/smoke-production-integration.sh",
     "smoke:production-topology": "./scripts/smoke-production-topology.sh",
+    "smoke:integrated-qa": "./scripts/smoke-integrated-qa.sh",
     "audit:lighthouse": "node scripts/run-lighthouse.mjs",
     "audit:lighthouse:fixtures": "npm run build && FREKUENCE_LIGHTHOUSE_FIXTURES=true node scripts/run-lighthouse.mjs",
+    "audit:lighthouse:integrated": "npm run build && FREKUENCE_LIGHTHOUSE_FIXTURES=true LIGHTHOUSE_ROUTES='/,/en/,/events/visual-fixture-featured-field/,/en/events/visual-fixture-featured-field/' node scripts/run-lighthouse.mjs",
     "validate:production": "node scripts/validate-production.mjs"
   },
   "dependencies": {

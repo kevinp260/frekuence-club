@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { get } from 'node:http';
+import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
@@ -15,6 +16,31 @@ const reportPath =
     ? './lighthouse-fixtures-report.json'
     : './lighthouse-report.json');
 const scenario = process.env.FREKUENCE_LIGHTHOUSE_FIXTURES === 'true' ? 'events' : 'empty';
+const routes = (process.env.LIGHTHOUSE_ROUTES || '/')
+  .split(',')
+  .map((route) => route.trim())
+  .filter(Boolean);
+
+if (
+  routes.length === 0 ||
+  routes.some((route) => !route.startsWith('/') || route.startsWith('//') || route.includes('..'))
+) {
+  throw new Error('LIGHTHOUSE_ROUTES must contain comma-separated same-origin absolute paths.');
+}
+
+function routeReportPath(route, index) {
+  if (routes.length === 1) return reportPath;
+  const directory = process.env.LIGHTHOUSE_REPORT_DIRECTORY || './test-results/lighthouse';
+  const label =
+    route === '/'
+      ? 'home-sq'
+      : route
+          .replace(/^\//, '')
+          .replace(/\/$/, '')
+          .replaceAll('/', '-')
+          .replace(/[^a-zA-Z0-9-]/g, '-');
+  return join(directory, `${String(index + 1).padStart(2, '0')}-${label}.json`);
+}
 
 function run(command, argumentsList, options = {}) {
   return new Promise((resolve, reject) => {
@@ -63,18 +89,30 @@ const server = spawn(process.execPath, [join(root, 'dist/server/entry.mjs')], {
 try {
   await waitFor(`http://${host}:${apiPort}/healthz/`, 'Mock events API', api);
   await waitFor(`${origin}/`, 'Astro preview', server);
-  await run(process.execPath, [
-    join(root, 'node_modules/lighthouse/cli/index.js'),
-    `${origin}/`,
-    `--chrome-path=${chromePath}`,
-    '--output=json',
-    `--output-path=${reportPath}`,
-    '--only-categories=performance,accessibility,best-practices,seo',
-    '--quiet',
-  ]);
-  await run(process.execPath, [join(root, 'scripts/validate-lighthouse.mjs')], {
-    env: { ...process.env, LIGHTHOUSE_REPORT_PATH: reportPath },
-  });
+  if (routes.length > 1) {
+    await mkdir(process.env.LIGHTHOUSE_REPORT_DIRECTORY || './test-results/lighthouse', {
+      recursive: true,
+    });
+  }
+  for (const [index, route] of routes.entries()) {
+    const currentReportPath = routeReportPath(route, index);
+    await run(process.execPath, [
+      join(root, 'node_modules/lighthouse/cli/index.js'),
+      new URL(route, origin).toString(),
+      `--chrome-path=${chromePath}`,
+      '--output=json',
+      `--output-path=${currentReportPath}`,
+      '--only-categories=performance,accessibility,best-practices,seo',
+      '--quiet',
+    ]);
+    await run(process.execPath, [join(root, 'scripts/validate-lighthouse.mjs')], {
+      env: {
+        ...process.env,
+        LIGHTHOUSE_REPORT_PATH: currentReportPath,
+        LIGHTHOUSE_ROUTE: route,
+      },
+    });
+  }
 } finally {
   if (server.exitCode === null) server.kill('SIGTERM');
   if (api.exitCode === null) api.kill('SIGTERM');

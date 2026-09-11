@@ -318,6 +318,8 @@ docker compose --profile tools run --rm --build backend-check
 docker compose --profile tools run --rm --build frontend-check
 docker compose run --rm --no-deps gateway nginx -t
 npm run smoke:production-topology
+npm run smoke:integrated-qa
+npm run audit:lighthouse:integrated
 git diff --check
 ```
 
@@ -325,6 +327,42 @@ git diff --check
 checkpoint 7 smoke creates an unmistakably synthetic event only inside disposable project-scoped
 volumes, verifies the full proxy and persistence boundary, and removes those resources afterward.
 
-Checkpoint 8 integrated QA is not complete. Lighthouse/security review, a real host-Nginx/TLS
-deployment, an operator-run encrypted backup/restore exercise, alerting/log integration, and owner
-inputs in `CONTENT_TODOS.md` and `BRAND_ASSET_TODOS.md` remain before public launch.
+The checkpoint 8 integrated smoke creates only synthetic records in a uniquely named source
+project, backs up its PostgreSQL and media volumes into a private temporary directory, and restores
+them into a second uniquely named project with separate volumes and a separate random loopback
+port. It verifies restored records, derivatives, TOTP staff access, public/API routes, a real 404,
+container restrictions, production-image exclusions, and health before deleting only those two
+validated disposable projects. This demonstrates the repository procedure; it does not prove the
+operator's encrypted production destination, retention, monitoring, or real credentials.
+
+## Operator-dependent production signoff
+
+Checkpoint 8 did not access the real host, DNS, TLS certificates, encrypted backup destination,
+monitoring, or owner credentials. An authorized operator must run these checks on the deployment
+host after replacing the example values:
+
+```sh
+dig +short A frekuence.club
+sudo nginx -t
+sudo certbot certificates
+sudo certbot renew --dry-run
+curl --fail --show-error --head https://frekuence.club/
+curl --fail --show-error --head https://frekuence.club/en/
+curl --silent --output /dev/null --write-out '%{http_code}\n' \
+  https://frekuence.club/operator-real-404-check/
+docker compose ps
+```
+
+DNS must return the approved public host, both localized requests must succeed over a valid TLS
+chain, the deliberate unknown path must print `404`, Nginx and renewal tests must succeed, and all
+four Compose services must report healthy. Then use the matched backup and isolated-restoration
+commands above with an access-controlled encrypted destination, record checksums and retention,
+and confirm restored staff TOTP login plus a published event/API pair without modifying live
+volumes. Monitoring must independently alert on gateway, frontend, backend, and database health;
+its provider, destinations, and test procedure remain owner/operator inputs.
+
+Owner staff must also complete a real two-factor login at `/staff/` using individually provisioned
+credentials and confirm only the intended event permissions. Do not place credentials, QR codes,
+session cookies, backup keys, or monitoring tokens in command history, repository files, reports,
+or logs. Final event publication, legal/contact inputs, and approved source brand assets remain in
+`CONTENT_TODOS.md` and `BRAND_ASSET_TODOS.md`. Checkpoint 9 handoff is not implemented.

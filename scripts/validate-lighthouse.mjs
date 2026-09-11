@@ -23,5 +23,5 @@ assert.ok(metrics.lcp < 2500, `LCP ${Math.round(metrics.lcp)} ms is not below 25
 assert.ok(metrics.cls < 0.1, `CLS ${metrics.cls} is not below 0.1.`);
 
 console.log(
-  `Lighthouse passed: performance ${scores.performance}, accessibility ${scores.accessibility}, best-practices ${scores['best-practices']}, SEO ${scores.seo}, LCP ${Math.round(metrics.lcp)} ms, CLS ${metrics.cls}.`,
+  `Lighthouse passed${process.env.LIGHTHOUSE_ROUTE ? ` for ${process.env.LIGHTHOUSE_ROUTE}` : ''}: performance ${scores.performance}, accessibility ${scores.accessibility}, best-practices ${scores['best-practices']}, SEO ${scores.seo}, LCP ${Math.round(metrics.lcp)} ms, CLS ${metrics.cls}.`,
 );

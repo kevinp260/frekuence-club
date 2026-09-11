@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { join } from 'node:path';
 
 const fixtureOrigin = 'http://127.0.0.1:4322';
@@ -117,3 +117,72 @@ for (const evidence of pullRequestEvidence) {
     });
   });
 }
+
+test('capture checkpoint 8 event homepage at the minimum supported width', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto(`${fixtureOrigin}/`);
+  await page.screenshot({
+    path: 'docs/review/phase-2-integrated-qa/homepage-events-320.png',
+    fullPage: true,
+  });
+});
+
+test('capture checkpoint 8 keyboard-focus event deck state', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(`${fixtureOrigin}/`);
+  await page
+    .locator('[data-event-card]')
+    .first()
+    .getByRole('link', { name: 'Shiko eventin' })
+    .focus();
+  await page.locator('[data-event-deck]').screenshot({
+    path: 'docs/review/phase-2-integrated-qa/event-deck-keyboard-focus-1440.png',
+  });
+});
+
+test('capture checkpoint 8 explicit mobile card selection', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${fixtureOrigin}/`);
+  await page.locator('[data-event-card]').first().locator('[data-card-toggle]').click();
+  await page.locator('[data-event-deck]').screenshot({
+    path: 'docs/review/phase-2-integrated-qa/event-deck-touch-selected-390.png',
+  });
+});
+
+test('capture checkpoint 8 no-JavaScript event fallback', async ({ browser }) => {
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  await page.route('**/media/events/derivatives/*.webp', (route) =>
+    route.fulfill({ path: fixturePoster, contentType: 'image/png' }),
+  );
+  await page.goto(`${fixtureOrigin}/`);
+  const deck = page.locator('[data-event-deck]');
+  await deck.evaluate((element) => {
+    document.documentElement.style.scrollBehavior = 'auto';
+    window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY);
+  });
+  const posters = deck.locator('img');
+  await expect.poll(() => posters.count()).toBeGreaterThan(0);
+  await expect
+    .poll(() =>
+      posters.evaluateAll((images) =>
+        images.every((image) => {
+          const poster = image as HTMLImageElement;
+          return poster.complete && poster.naturalWidth > 0;
+        }),
+      ),
+    )
+    .toBe(true);
+  expect(
+    await posters.evaluateAll(
+      (images) => images.filter((image) => (image as HTMLImageElement).naturalWidth > 0).length,
+    ),
+  ).toBeGreaterThan(0);
+  await page.screenshot({
+    path: 'docs/review/phase-2-integrated-qa/event-deck-no-javascript-390.png',
+  });
+  await context.close();
+});
