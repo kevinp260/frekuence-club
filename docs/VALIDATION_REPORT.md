@@ -14,13 +14,16 @@ named exactly `postgres`, and rejects the result if any such process is not owne
 The no-JavaScript capture now waits for at least one deck poster and for every intercepted poster
 to report both `complete` and a non-zero `naturalWidth` before it can become review evidence.
 
-In this follow-up environment, `npm run check` passed with 0 Astro diagnostics and 34 unit tests.
-`npm run test:visual` passed its complete build prerequisite but could not start its 30 captures
-because `/usr/bin/google-chrome` is not installed; downloading the Playwright browser was also
-blocked by the environment's HTTP 403 proxy response. Consequently, this environment did not
-regenerate or validate the no-JavaScript PNG, and the prior 30-capture result below remains the
-latest completed visual run rather than a claimed follow-up pass. `npm run smoke:integrated-qa`
-could not start because Docker is unavailable in this environment. `git diff --check` passed.
+The follow-up was subsequently validated in a local Chrome- and Docker-capable environment.
+`npm run check` passed with 0 Astro diagnostics and 34 unit tests. `npm run test:visual` passed
+all 30 captures. The no-JavaScript screenshot was regenerated only after every intercepted deck
+poster had decoded successfully with a non-zero `naturalWidth`; manual review confirmed that the
+synthetic poster, event information, and event link are visibly rendered.
+`npm run smoke:integrated-qa` passed the complete source-stack verification, PostgreSQL
+process-ownership audit, matched PostgreSQL/media backup, isolated restoration of eight synthetic
+event records, restored gateway verification, container restrictions, and service health checks.
+`git diff --check` passed.
+
 
 ## Complete automated gates
 
