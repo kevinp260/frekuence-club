@@ -62,14 +62,46 @@ if (header instanceof HTMLElement) {
       );
 
     let wasCompact = compactQuery.matches;
+    let lastFocusedNavigationControl = null;
+
+    document.addEventListener('focusin', (event) => {
+      const target = event.target;
+
+      if (target instanceof HTMLElement && (navigation.contains(target) || target === button)) {
+        lastFocusedNavigationControl = target;
+      } else {
+        lastFocusedNavigationControl = null;
+      }
+    });
+
+    document.addEventListener('focusout', (event) => {
+      const nextTarget = event.relatedTarget;
+      const focusMovedOutsideNavigation = !(
+        nextTarget instanceof HTMLElement &&
+        (navigation.contains(nextTarget) || nextTarget === button)
+      );
+      const breakpointTransitionIsPending = compactQuery.matches !== wasCompact;
+
+      // Chromium may move focus to the body before dispatching the media-query
+      // change that hides a navigation control. Keep the last legitimate control
+      // in that case, but discard it when focus deliberately moves elsewhere.
+      if (focusMovedOutsideNavigation && !breakpointTransitionIsPending) {
+        lastFocusedNavigationControl = null;
+      }
+    });
 
     const syncBreakpoint = () => {
       const isCompact = compactQuery.matches;
       const focusedElement = document.activeElement;
+      const focusCandidate =
+        focusedElement instanceof HTMLElement &&
+        (navigation.contains(focusedElement) || focusedElement === button)
+          ? focusedElement
+          : lastFocusedNavigationControl;
       const focusWasInNavigation =
-        focusedElement instanceof HTMLElement && navigation.contains(focusedElement);
+        focusCandidate instanceof HTMLElement && navigation.contains(focusCandidate);
       const focusWasInOverlayHeader =
-        focusedElement instanceof HTMLElement && overlayHeader?.contains(focusedElement);
+        focusCandidate instanceof HTMLElement && overlayHeader?.contains(focusCandidate);
 
       setOpen(false);
       button.hidden = !isCompact;
