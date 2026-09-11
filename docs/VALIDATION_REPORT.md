@@ -11,7 +11,7 @@ data, or post-Phase-2 feature changed.
 
 | Command                         | Result                                                                                                                                                       |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `npm run check`                 | Passed after the formatting correction below: Prettier, ESLint, 0 Astro errors, warnings, or hints, and 34/34 unit tests                          |
+| `npm run check`                 | Passed after the formatting correction below: Prettier, ESLint, 0 Astro errors, warnings, or hints, and 34/34 unit tests                                     |
 | `npm run build`                 | Passed: the complete check reran with 34/34 unit tests; Astro Node build completed; production validation found 8 prerendered routes and 58 production files |
 | `docker compose config`         | Passed: the resolved gateway, Astro, Django, PostgreSQL, application/database networks, health checks, restrictions, and named volumes remain valid          |
 | `git diff --check`              | Passed with no whitespace errors                                                                                                                             |
