@@ -3,12 +3,13 @@
 This repository contains the bilingual Astro frontend for Frekuence Club in Tirana. Albanian is
 served at the root and English under `/en/`.
 
-Phase 2 checkpoints 1–6 establish the approved signal-interference design system, event-led public
+Phase 2 checkpoints 1–7 establish the approved signal-interference design system, event-led public
 pages, the private Django/PostgreSQL event-management foundation, its published-only events API,
-and the Astro dynamic migration. The official Astro Node adapter renders only event-dependent
-routes on demand from the private API; stable editorial, policy, privacy, visit, About, and error
-routes remain prerendered. The checkpoint 7 production gateway is not implemented, so this branch
-is an integration-review checkpoint rather than the final public topology.
+the Astro dynamic migration, and the production container topology. A pinned unprivileged Nginx
+gateway is the only host-bound container and routes same-origin public pages, the API, staff Admin,
+collected static files, and processed poster derivatives. The Astro Node and Django services share
+only the application network; PostgreSQL is isolated on a separate internal database network.
+Event-dependent routes render on demand while stable editorial and error routes remain prerendered.
 Reservations, payments, public accounts, analytics, tracking, and third-party embeds remain out of
 scope.
 
@@ -49,19 +50,22 @@ Docker. Copy `.env.example` to an ignored `.env`, replace every relevant placeho
 docker compose --profile tools run --rm --build backend-check
 docker compose --profile tools run --rm --build backend-migrate
 docker compose --profile tools run --rm --build backend-static
-docker compose up -d --build backend
-docker compose up -d --build web
+docker compose up -d --build --wait db backend web gateway
 docker compose ps
 npm run smoke:production-integration
+npm run smoke:production-topology
 ```
 
-The Django service and PostgreSQL have no host port. Development fixtures require an explicit
-opt-in profile and runtime-only credentials; normal startup and the production backend image do not
-contain the fixture command. Staff account provisioning, TOTP enrollment, screenshots, backup, and
-restore procedures are documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Only `gateway` publishes a port, at
+`127.0.0.1:${FREKUENCE_GATEWAY_PORT:-3010}`. Astro, Django, and PostgreSQL have no host port, and the
+gateway is not connected to PostgreSQL's network. Migrations and `collectstatic` are explicit jobs;
+normal service startup performs neither. Development fixtures require an explicit opt-in profile
+and runtime-only credentials, and the production backend image contains no fixture command. Staff
+provisioning, TOTP enrollment, deployment, backup, restore, and rollback procedures are documented
+in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-The checkpoint 5 API remains JSON-only and read-only. Checkpoint 6 consumes it from Astro over the
-private Compose network:
+The checkpoint 5 API remains JSON-only and read-only. Astro consumes it privately, while the
+gateway exposes the same read-only contract under the public origin:
 
 - `GET /api/v1/events/?locale=sq&when=upcoming&limit=6&offset=0`
 - `GET /api/v1/events/?locale=en&when=recent&limit=5&offset=0`
@@ -79,9 +83,9 @@ misrepresenting an outage as an empty programme.
 
 ## Production signoff
 
-The implementation is deployable, but final public-launch approval remains blocked by the
-owner inputs listed in [docs/CONTENT_TODOS.md](docs/CONTENT_TODOS.md) and the original assets
-listed in [docs/BRAND_ASSET_TODOS.md](docs/BRAND_ASSET_TODOS.md).
+Checkpoint 7 is deployable but is not final launch signoff. Phase 2 checkpoint 8 integrated QA and
+the owner inputs in [docs/CONTENT_TODOS.md](docs/CONTENT_TODOS.md) plus the original assets in
+[docs/BRAND_ASSET_TODOS.md](docs/BRAND_ASSET_TODOS.md) remain outstanding.
 
 The latest local release evidence is recorded in
 [docs/VALIDATION_REPORT.md](docs/VALIDATION_REPORT.md).

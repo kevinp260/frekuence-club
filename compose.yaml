@@ -1,11 +1,45 @@
 services:
+  gateway:
+    image: frekuence-gateway:${FREKUENCE_GATEWAY_TAG:-local}
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    ports:
+      - '127.0.0.1:${FREKUENCE_GATEWAY_PORT:-3010}:8080'
+    depends_on:
+      web:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    networks:
+      - application
+    volumes:
+      - backend_media:/srv/media:ro
+      - backend_static:/srv/static:ro
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+      - /var/cache/nginx:size=16m,mode=0755
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/healthz']
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    stop_signal: SIGQUIT
+    stop_grace_period: 10s
+
   web:
     image: frekuence-website:${FREKUENCE_WEB_TAG:-local}
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - '127.0.0.1:${FREKUENCE_WEB_PORT:-3010}:8080'
     environment:
       FREKUENCE_EVENT_API_ORIGIN: ${FREKUENCE_EVENT_API_ORIGIN:-http://backend:8000}
       FREKUENCE_EVENT_API_TIMEOUT_MS: ${FREKUENCE_EVENT_API_TIMEOUT_MS:-2000}
@@ -15,6 +49,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    networks:
+      - application
     restart: unless-stopped
     init: true
     read_only: true
@@ -46,6 +82,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-development-only-not-a-secret}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - database
     restart: unless-stopped
     init: true
     security_opt:
@@ -79,6 +117,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - application
+      - database
     volumes:
       - backend_media:/vol/media
       - backend_static:/vol/static
@@ -124,6 +165,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - application
+      - database
     tmpfs:
       - /tmp:size=128m,mode=1777
       - /vol/media:size=128m,mode=1777
@@ -145,6 +189,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - database
     volumes:
       - backend_media:/vol/media
       - backend_static:/vol/static
@@ -164,6 +210,8 @@ services:
     environment: *backend-environment
     volumes:
       - backend_static:/vol/static
+    networks:
+      - database
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -186,6 +234,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - database
     volumes:
       - backend_media:/vol/media
     security_opt:
@@ -208,6 +258,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    networks:
+      - application
     user: '${FREKUENCE_HOST_UID:-1000}:${FREKUENCE_HOST_GID:-1000}'
     volumes:
       - ./docs/review/phase-2-backend-foundation:/output
@@ -228,6 +280,7 @@ services:
       dockerfile: Dockerfile.staff-visual
       target: frontend-check
     init: true
+    network_mode: none
     tmpfs:
       - /tmp:size=512m,mode=1777
     security_opt:
@@ -239,3 +292,8 @@ volumes:
   postgres_data:
   backend_media:
   backend_static:
+
+networks:
+  application:
+  database:
+    internal: true

@@ -214,3 +214,55 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   private Django service directly. This is the checkpoint 6 review topology only. No gateway,
   public Django/staff routing, host-Nginx change, reservation/payment path, or checkpoint 7 work is
   included.
+
+## Phase 2 checkpoint 7 — container topology
+
+- A dedicated gateway uses the exactly pinned
+  `nginxinc/nginx-unprivileged:1.30.4-alpine3.24` image digest and runs as UID/GID 101. It is the
+  only Compose service with a host binding:
+  `127.0.0.1:${FREKUENCE_GATEWAY_PORT:-3010}:8080`. The former Astro binding is removed; Django and
+  PostgreSQL remain unbound.
+- Compose has explicit `application` and internal `database` networks. Gateway and Astro use only
+  `application`; PostgreSQL uses only `database`; Django bridges both. Tool services receive only
+  the network they need, and the self-contained frontend gate has networking disabled at runtime.
+  This prevents gateway-to-PostgreSQL reachability without introducing another service.
+- Gateway proxies public pages and versioned frontend assets to Astro, and `/api/` plus `/staff/`
+  to Django. It serves the collected static volume and only
+  `/media/events/derivatives/` from read-only mounts. Every other `/media/` path returns 404, even
+  when the requested managed original exists.
+- The host Nginx template is the trusted public boundary. It replaces rather than appends the
+  client forwarding chain and overwrites host, scheme, port, and real-IP headers. Gateway accepts
+  only exact `http`/`https` scheme values from that loopback boundary, forwards only one
+  syntactically plausible client address without appending a chain, and falls back to the socket
+  peer for missing, multi-value, or malformed input. Django Axes 8.3.1 uses its supported
+  `AXES_CLIENT_IP_CALLABLE` hook to validate and canonicalize that value with Python `ipaddress`,
+  then falls back to a valid socket address or no address. This resolved value supplies Axes'
+  username/address lockout keys and access-attempt audit records. Gateway also clears generic
+  `Forwarded`, request CSP, and request nonce headers. Missing or malformed scheme input becomes
+  HTTP, preserving Django's production HTTPS redirect and secure cookies.
+- CSP ownership is refined from the checkpoint 1 plan: Astro itself emits the complete strict
+  per-response nonce policy for dynamic pages. Gateway and host Nginx pass that response header
+  unchanged and emit no CSP of their own, avoiding intersecting/obsolete policies. Gateway removes
+  duplicate upstream frame, MIME-sniffing, referrer, permissions, cross-origin-opener, and HSTS
+  headers before emitting one consistent set; HSTS is present only for a trusted original HTTPS
+  request.
+- The default request-body limit is 1 MiB and the staff route permits 16 MiB total, leaving bounded
+  multipart overhead above the independently enforced 15 MiB poster-file limit. Connect timeout is
+  5 seconds, normal proxy reads/sends are 35 seconds, and staff reads/sends are 60 seconds. Public
+  and static paths reject non-read methods at the gateway; the Django API retains its native
+  GET/HEAD/OPTIONS and 405 contract, while Admin retains its form/CSRF methods.
+- API caching and strong ETag/304 responses pass through without a proxy cache. Staff responses are
+  forced to `no-store`, unversioned collected static uses a conservative one-hour cache, and
+  randomized processed derivatives plus hashed Astro assets use a one-year immutable cache.
+- PostgreSQL, original/processed media, and collected static remain named volumes. The gateway
+  mounts media/static read-only. Migrations and `collectstatic` remain explicit `tools` profile jobs
+  and are absent from all normal startup commands; accounts and development fixtures likewise
+  remain explicit operations. Deployment documentation exports one immutable gateway/web/backend
+  tag set across build, migration, static collection, and startup. Isolated restoration likewise
+  exports a unique Compose project, random gateway port, and compatible immutable tag set across
+  its entire command sequence so it cannot reuse live ports or volumes; its explicit static
+  collection job populates the isolated static volume before the restored gateway starts.
+- Checkpoint 7 adds no model, migration, frontend behavior, event content, Redis, worker,
+  reservation, payment, or custom staff-application work. Checkpoint 8 integrated QA, a real
+  host/TLS deployment, an operator-run encrypted backup/restore exercise, monitoring, and the
+  documented owner inputs remain outstanding.

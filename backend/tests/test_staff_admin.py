@@ -151,6 +151,39 @@ class StaffAdminTests(TestCase):
             )
         self.assertEqual(response.status_code, 429)
 
+    @override_settings(AXES_FAILURE_LIMIT=2)
+    def test_forwarded_clients_have_independent_lockout_and_audit_keys(self):
+        login_url = reverse("frekuence_staff:login")
+        first_client = Client()
+        second_client = Client()
+
+        for _ in range(2):
+            first_response = first_client.post(
+                login_url,
+                {"username": self.user.username, "password": "wrong-password"},
+                secure=True,
+                REMOTE_ADDR="172.20.0.4",
+                HTTP_X_FORWARDED_FOR="198.51.100.24",
+            )
+        second_response = second_client.post(
+            login_url,
+            {"username": self.user.username, "password": "wrong-password"},
+            secure=True,
+            REMOTE_ADDR="172.20.0.4",
+            HTTP_X_FORWARDED_FOR="203.0.113.9",
+        )
+
+        self.assertEqual(first_response.status_code, 429)
+        self.assertEqual(second_response.status_code, 200)
+        attempts = {
+            attempt.ip_address: attempt.failures_since_start
+            for attempt in AccessAttempt.objects.filter(username=self.user.username)
+        }
+        self.assertEqual(
+            attempts,
+            {"198.51.100.24": 2, "203.0.113.9": 1},
+        )
+
     def test_admin_state_changes_enforce_csrf(self):
         client = self.verified_client(enforce_csrf_checks=True)
         response = client.post(

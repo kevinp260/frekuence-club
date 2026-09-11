@@ -9,7 +9,6 @@ compose=(docker compose --project-name "${smoke_project}")
 
 export FREKUENCE_WEB_TAG="checkpoint6-production-smoke"
 export FREKUENCE_BACKEND_TAG="checkpoint6-production-smoke"
-export FREKUENCE_WEB_PORT=0
 export FREKUENCE_EVENT_API_ORIGIN="http://backend:8000"
 export FREKUENCE_EVENT_API_TIMEOUT_MS=2000
 export DJANGO_ENVIRONMENT=production
