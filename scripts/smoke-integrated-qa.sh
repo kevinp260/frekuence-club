@@ -100,9 +100,17 @@ for service in gateway web backend; do
   [[ "$("${source_compose[@]}" exec --no-TTY "${service}" id -u)" != "0" ]] || \
     fail "${service} is running as root"
 done
-database_processes="$("${source_compose[@]}" exec --no-TTY db ps -o user,comm)"
-[[ "${database_processes}" == *$'postgres postgres'* ]] || fail "PostgreSQL is not running as postgres"
-[[ "${database_processes}" != *$'root     postgres'* ]] || fail "PostgreSQL is running as root"
+database_processes="$("${source_compose[@]}" exec --no-TTY db ps -o user=,comm=)"
+printf '%s\n' "${database_processes}" | awk '
+  $2 == "postgres" {
+    found = 1
+    if ($1 != "postgres") {
+      invalid_owner = 1
+      printf "PostgreSQL server process is owned by %s, expected postgres\n", $1 > "/dev/stderr"
+    }
+  }
+  END { exit !found || invalid_owner }
+' || fail "PostgreSQL server process ownership check failed"
 for service in gateway web backend; do
   container_id="$("${source_compose[@]}" ps --quiet "${service}")"
   [[ "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' "${container_id}")" == "true" ]] || \

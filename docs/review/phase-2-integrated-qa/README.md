@@ -7,7 +7,9 @@ they do not publish or infer a real event.
 - `homepage-events-320.png` verifies the event-led homepage at the minimum supported width.
 - `event-deck-keyboard-focus-1440.png` records the visible keyboard-focus/action state.
 - `event-deck-touch-selected-390.png` records the explicit mobile card-selection state.
-- `event-deck-no-javascript-390.png` records the readable linked-list fallback without JavaScript.
+- `event-deck-no-javascript-390.png` is intended to record the readable linked-list fallback
+  without JavaScript. The capture test now refuses to write this evidence until at least one
+  intercepted synthetic poster exists and every deck poster has decoded successfully.
 
 Reproduce all checkpoint visual captures with:
 
@@ -20,4 +22,6 @@ ignored `screenshots/` directory and the previously committed checkpoint 6 captu
 on 2026-09-11 found no page-level horizontal overflow, clipped primary content, overlapping
 controls, illegible event metadata, hidden focus, or hover-only access. The selected touch card
 uses a real labelled button and exposes a separate event link; the no-JavaScript layout keeps all
-event links visible.
+event links visible. The 2026-09-11 review follow-up environment did not have Chrome and could not
+download it through the environment proxy, so the no-JavaScript PNG still requires regeneration
+by the next Chrome-capable visual run; it is not claimed as refreshed evidence here.

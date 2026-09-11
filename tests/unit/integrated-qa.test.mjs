@@ -39,6 +39,15 @@ test('restored services start only after migration and static checks', () => {
   assert.match(smoke, /source_image}" == "\$\{restore_image/);
 });
 
+test('integrated QA checks every PostgreSQL server process owner from parsed ps columns', () => {
+  assert.match(smoke, /ps -o user=,comm=/);
+  assert.match(smoke, /\$2 == "postgres"/);
+  assert.match(smoke, /if \(\$1 != "postgres"\)/);
+  assert.match(smoke, /END \{ exit !found \|\| invalid_owner \}/);
+  assert.doesNotMatch(smoke, /postgres postgres/);
+  assert.doesNotMatch(smoke, /root {2,}postgres/);
+});
+
 test('integrated fixtures and assertions cover the approved event and security matrix', () => {
   for (const slug of [
     'checkpoint8-current-postponed',
