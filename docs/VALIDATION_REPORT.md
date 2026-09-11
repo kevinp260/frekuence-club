@@ -1,3 +1,67 @@
+# Post-Phase-2 frequency dial navigation validation
+
+Validated on 2026-09-11 on `feat/frequency-dial-navigation`, created from merged Phase 2 checkpoint
+9 baseline `3e995fe43d305a143b5b796b75e345ba2b6183e5`. This is a frontend creative refinement, not
+checkpoint 10. It changes only the shared navigation presentation and behavior, its focused
+frontend tests/evidence, the English primary About label, global header sizing/scroll containment,
+and these implementation/validation records. Django, PostgreSQL, migrations, API contracts, event
+behavior, public routes, metadata, sitemap behavior, proxy/CSP ownership, container topology,
+production event content, and the Phase 2 handoff did not change.
+
+## Frequency dial behavior and review
+
+- The horizontal dial starts at the selected `64rem` breakpoint. The compact bar and full-screen
+  vertical overlay cover 320, 390, and 768 px; 1024 and 1440 px use the horizontal presentation.
+- The destinations remain Events, About, Policy, Visit, and `SQ / EN` in order. Route helpers and
+  `alternateHref` preserve localized destinations. Event detail routes activate Events; the
+  homepage leaves every primary station neutral.
+- Active pages use one symbolic `7.83 Hz` value with textual and red station treatment. Keyboard
+  focus uses a separate white station ring and underlined label. No drag/scrub or hover-dependent
+  navigation exists.
+- The nonce-loaded script supplies modal semantics, first-link focus, Escape and close-button focus
+  restoration, Tab/Shift+Tab containment, inert background regions, body scroll locking, link
+  close, and breakpoint reset. Without JavaScript, the server-rendered vertical dial remains
+  visible and linked.
+- Eight focused captures in `docs/review/frequency-dial-navigation/` were manually inspected for
+  station/label alignment, active-frequency placement, the `Frekuence Club` spelling, focus
+  visibility, safe-area spacing, 320 px clipping, overflow, and content overlap. The first review
+  found a truncated 1024 px wordmark and overly broad focus outline; both were corrected before the
+  committed captures. A later 320 px regression found inert page text contributing 15 px to root
+  scroll width behind the overlay; clipping the inert background fixed it and the focused test
+  passed.
+
+## Commands actually run
+
+| Command                                                          | Result                                                                                                                                                                                                         |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run check`                                                  | Passed as a standalone final check: Prettier, ESLint, 0 Astro errors/warnings/hints across 67 host files, and 34/34 unit tests                                                                                 |
+| `npm run build`                                                  | Passed: Astro Node build completed; production validation found 8 prerendered routes and 59 production files                                                                                                   |
+| `npm run test:e2e`                                               | Passed: completed-source build plus 65/65 browser/integration/accessibility tests; 38 opt-in visual cases skipped as designed                                                                                  |
+| `npm run test:visual`                                            | Passed: 38/38 captures, including the eight focused frequency-dial review states                                                                                                                               |
+| `npm run audit:lighthouse:integrated`                            | Passed all four localized synthetic routes; exact results below                                                                                                                                                |
+| `docker compose config`                                          | Passed with the existing topology unchanged                                                                                                                                                                    |
+| `docker compose --profile tools run --rm --build frontend-check` | Passed: container formatting/lint, 0 Astro diagnostics across 65 container-visible files, 34/34 unit tests, 8-route/59-file build validation, and 65 browser tests; 38 opt-in visual cases skipped as designed |
+| `git diff --check`                                               | Passed with no whitespace errors after documentation formatting                                                                                                                                                |
+
+The integrated Lighthouse results were:
+
+| Route                                       | Performance | Accessibility | Best practices | SEO |      LCP | CLS |
+| ------------------------------------------- | ----------: | ------------: | -------------: | --: | -------: | --: |
+| `/`                                         |          99 |           100 |             96 | 100 | 1,988 ms |   0 |
+| `/en/`                                      |          99 |           100 |             96 | 100 | 1,967 ms |   0 |
+| `/events/visual-fixture-featured-field/`    |          99 |           100 |             96 | 100 | 1,821 ms |   0 |
+| `/en/events/visual-fixture-featured-field/` |         100 |           100 |             96 | 100 | 1,808 ms |   0 |
+
+The browser suite covers Albanian/English routes, real 404 behavior, localized/event-detail active
+state, destination order, alternate-language targets, 320/390/768/1024/1440 layouts, sticky
+behavior, minimum targets, short-height reachability, focus containment/restoration, scroll lock,
+breakpoint reset, reduced motion, no JavaScript, and page-level overflow. Automated browser and
+visual evidence uses the configured Chromium project. Physical iOS/Android safe areas, Safari,
+Firefox, and the real production host remain appropriate operator/device review; none was simulated
+or claimed.
+
+---
+
 # Phase 2 checkpoint 9 final handoff validation
 
 Validated on 2026-09-11 against exact merged checkpoint 8 application baseline

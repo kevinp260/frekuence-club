@@ -314,3 +314,31 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   preserve the validated accessibility, 320 px responsive floor, reduced-motion/no-script and
   keyboard/touch behavior, bilingual SEO/status semantics, proxy/CSP boundaries, production-output
   exclusions, and performance budgets, with validation proportional to the actual change.
+
+## Post-Phase-2 creative refinement — frequency dial navigation
+
+- This is a frontend-only creative refinement after the completed Phase 2 handoff; it is not a
+  checkpoint 10. It changes the shared header navigation and focused frontend coverage without
+  changing public routes, event behavior, metadata, the API/backend, container topology, security
+  ownership, production content, or the Phase 2 handoff.
+- `64rem` is the single navigation breakpoint. At and above it, the header presents one horizontal
+  frequency dial. Below it, the compact bar progressively enhances into an opaque, internally
+  scrollable modal navigation with focus containment, Escape/close-button restoration, scroll
+  locking, safe breakpoint reset, and reduced-motion behavior.
+- Events, About, Policy, and Visit remain the four primary content destinations, in that order,
+  followed by the `SQ / EN` alternate-language control. The symbol and `FREKUENCE CLUB` wordmark
+  remain one localized-home link; Privacy remains in the footer.
+- Every active content route uses the same symbolic `7.83 Hz` value, red station, and textual
+  active treatment. The homepage keeps the primary stations and compact indicator neutral; event
+  detail routes continue to activate Events. The language station is always neutral.
+- The scale is visual language, not an input model. Dragging, scrubbing, swiping, double-tap
+  behavior, per-route frequency values, continuous animation, canvas, and WebGL are deliberately
+  excluded; every destination remains an ordinary semantic link.
+- The compact toggle is progressive enhancement. Without JavaScript, the server-rendered vertical
+  dial remains visible and every destination is usable. With JavaScript, the existing nonce-loaded
+  navigation script applies modal semantics and focus/scroll behavior without introducing another
+  frontend runtime or inline executable code.
+- Validation results and focused captures are recorded in `docs/VALIDATION_REPORT.md` and
+  `docs/review/frequency-dial-navigation/`. Automated browser coverage uses the configured Chromium
+  project; physical iOS/Android safe-area behavior and other browser engines remain useful
+  pre-production device checks rather than claimed evidence.

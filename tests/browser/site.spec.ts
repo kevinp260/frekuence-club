@@ -59,14 +59,73 @@ test('unknown paths return the branded document with HTTP 404', async ({ page })
 
 test('language switches preserve equivalent routes', async ({ page }) => {
   await page.goto('/about/');
-  const toEnglish = page.getByRole('link', { name: 'EN — Shiko këtë faqe në anglisht' }).first();
+  const toEnglish = page
+    .getByRole('link', { name: 'SQ / EN — Shiko këtë faqe në anglisht' })
+    .first();
   await expect(toEnglish).toHaveAttribute('href', '/en/about/');
   await toEnglish.click();
   await expect(page).toHaveURL(/\/en\/about\/$/);
 
-  const toAlbanian = page.getByRole('link', { name: 'SQ — View this page in Albanian' }).first();
+  const toAlbanian = page
+    .getByRole('link', { name: 'SQ / EN — View this page in Albanian' })
+    .first();
   await expect(toAlbanian).toHaveAttribute('href', '/about/');
 });
+
+for (const navigation of [
+  {
+    locale: 'Albanian',
+    path: '/policy/',
+    labels: ['Evente', 'Rreth nesh', 'Politika', 'Na vizito', 'SQ / EN'],
+    hrefs: ['/events/', '/about/', '/policy/', '/visit/', '/en/policy/'],
+  },
+  {
+    locale: 'English',
+    path: '/en/policy/',
+    labels: ['Events', 'About', 'Policy', 'Visit', 'SQ / EN'],
+    hrefs: ['/en/events/', '/en/about/', '/en/policy/', '/en/visit/', '/policy/'],
+  },
+]) {
+  test(`${navigation.locale} frequency dial preserves destination order and localized routes`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(navigation.path);
+
+    const links = page.locator('.dial-navigation [data-navigation-link]');
+    await expect(links).toHaveCount(5);
+    expect(await links.locator('.dial-label').allTextContents()).toEqual(navigation.labels);
+    expect(
+      await links.evaluateAll((elements) =>
+        elements.map((element) => element.getAttribute('href')),
+      ),
+    ).toEqual(navigation.hrefs);
+
+    const brand = page.locator('.brand-link');
+    await expect(brand).toHaveAttribute('href', navigation.locale === 'English' ? '/en/' : '/');
+    await expect(brand).toHaveAccessibleName('Frekuence Club');
+  });
+}
+
+for (const width of [1024, 1440]) {
+  test(`horizontal frequency dial is visible at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/about/');
+    await expect(page.locator('.dial-navigation')).toBeVisible();
+    await expect(page.locator('[data-compact-frequency]')).toBeHidden();
+    await expect(page.locator('.nav-toggle')).toBeHidden();
+  });
+}
+
+for (const width of [320, 390, 768]) {
+  test(`compact frequency header is visible at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/about/');
+    await expect(page.locator('[data-compact-frequency]')).toBeVisible();
+    await expect(page.locator('.nav-toggle')).toBeVisible();
+    await expect(page.locator('[data-navigation-shell]')).toBeHidden();
+  });
+}
 
 test('homepage leads with the truthful event state and omits migrated summaries', async ({
   page,
@@ -184,7 +243,7 @@ test('localized fixture detail routes are real destinations with reciprocal lang
     'https://frekuence.club/media/events/derivatives/visual-fixture-featured-field-social.webp',
   );
   await expect(
-    page.getByRole('link', { name: 'EN — Shiko këtë faqe në anglisht' }),
+    page.getByRole('link', { name: 'SQ / EN — Shiko këtë faqe në anglisht' }),
   ).toHaveAttribute('href', '/en/events/visual-fixture-featured-field/');
 
   const detailResults = await new AxeBuilder({ page }).analyze();
@@ -197,10 +256,9 @@ test('localized fixture detail routes are real destinations with reciprocal lang
   await expect(
     page.getByRole('heading', { level: 1, name: 'Visual Fixture — Featured Field' }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'SQ — View this page in Albanian' })).toHaveAttribute(
-    'href',
-    '/events/visual-fixture-featured-field/',
-  );
+  await expect(
+    page.getByRole('link', { name: 'SQ / EN — View this page in Albanian' }),
+  ).toHaveAttribute('href', '/events/visual-fixture-featured-field/');
 });
 
 test('normal production output excludes visual fixtures and their detail routes', async ({
@@ -308,24 +366,214 @@ test('skip link and primary navigation work from the keyboard', async ({ page })
   await expect(page.locator('#main-content')).toBeFocused();
 });
 
-test('mobile navigation exposes state, moves focus, and closes with Escape', async ({ page }) => {
+test('mobile dial exposes localized state, moves focus, and closes with Escape', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   const menu = page.locator('.nav-toggle');
   const navigation = page.locator('#primary-navigation');
   await expect(menu).toBeVisible();
+  await expect(menu).toHaveAttribute('aria-controls', 'primary-navigation');
+  await expect(menu).toHaveAccessibleName('Hap menunë');
   await expect(navigation).toBeHidden();
   await menu.focus();
   await page.keyboard.press('Enter');
   await expect(menu).toHaveAttribute('aria-expanded', 'true');
+  await expect(menu).toHaveAccessibleName('Mbyll menunë');
   await expect(navigation).toBeVisible();
+  await expect(navigation).toHaveAttribute('role', 'dialog');
+  await expect(navigation).toHaveAttribute('aria-modal', 'true');
   await expect(page.getByRole('link', { name: 'Evente', exact: true }).first()).toBeFocused();
+  await expect(page.locator('body')).toHaveClass(/navigation-open/);
   await page.keyboard.press('Escape');
   await expect(menu).toHaveAttribute('aria-expanded', 'false');
+  await expect(menu).toHaveAccessibleName('Hap menunë');
   await expect(menu).toBeFocused();
+  await expect(page.locator('body')).not.toHaveClass(/navigation-open/);
+  await expect(page.locator('main')).not.toHaveAttribute('inert', '');
 });
 
-for (const width of [320, 390, 768, 1440]) {
+test('English compact menu exposes localized open and close labels', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/en/about/');
+  const menu = page.locator('.nav-toggle');
+  await expect(menu).toHaveAccessibleName('Open menu');
+  await menu.click();
+  await expect(menu).toHaveAccessibleName('Close menu');
+});
+
+test('mobile close button closes the overlay and restores trigger focus', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/about/');
+  const menu = page.locator('.nav-toggle');
+  await menu.click();
+  const close = page.locator('[data-navigation-close]');
+  await expect(close).toBeVisible();
+  await close.click();
+  await expect(menu).toHaveAttribute('aria-expanded', 'false');
+  await expect(menu).toBeFocused();
+  await expect(page.locator('body')).not.toHaveClass(/navigation-open/);
+});
+
+test('Tab and Shift+Tab remain contained in the open mobile overlay', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/policy/');
+  await page.locator('.nav-toggle').click();
+  const overlayBrand = page.locator('.overlay-brand');
+  const language = page.locator('[data-dial-station="language"] a');
+
+  await overlayBrand.focus();
+  await page.keyboard.press('Shift+Tab');
+  await expect(language).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(overlayBrand).toBeFocused();
+  await expect(page.locator('main')).toHaveAttribute('inert', '');
+});
+
+test('mobile navigation activation closes the overlay and restores scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.locator('.nav-toggle').click();
+  await page
+    .locator('#primary-navigation')
+    .getByRole('link', { name: 'Rreth nesh', exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/about\/$/);
+  await expect(page.locator('.nav-toggle')).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('body')).not.toHaveClass(/navigation-open/);
+});
+
+test('crossing the 64rem breakpoint safely resets the open menu', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 844 });
+  await page.goto('/about/');
+  const menu = page.locator('.nav-toggle');
+  await menu.click();
+  await expect(page.locator('body')).toHaveClass(/navigation-open/);
+
+  await page.setViewportSize({ width: 1024, height: 844 });
+  await expect(menu).toBeHidden();
+  await expect(menu).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('#primary-navigation')).toBeVisible();
+  await expect(page.locator('body')).not.toHaveClass(/navigation-open/);
+  await expect(page.locator('main')).not.toHaveAttribute('inert', '');
+});
+
+test('active route uses one symbolic frequency while homepage remains neutral', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/policy/');
+  const active = page.locator('[data-dial-station="policy"]');
+  await expect(active.getByRole('link')).toHaveAttribute('aria-current', 'page');
+  await expect(active.locator('.dial-frequency')).toHaveText('7.83 Hz');
+  await expect(page.locator('.dial-station--active')).toHaveCount(1);
+
+  await page.goto('/');
+  await expect(page.locator('.dial-station--active')).toHaveCount(0);
+  await expect(page.locator('.dial-navigation [aria-current="page"]')).toHaveCount(0);
+  await expect(page.locator('[data-compact-frequency]')).not.toHaveClass(/--active/);
+  await expect(page.locator('.brand-link')).toHaveAttribute('aria-current', 'page');
+});
+
+test('localized event detail routes activate the Events station', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${fixtureOrigin}/en/events/visual-fixture-featured-field/`);
+  const events = page.locator('[data-dial-station="events"]');
+  await expect(events.getByRole('link')).toHaveAttribute('aria-current', 'page');
+  await expect(events.locator('.dial-frequency')).toHaveText('7.83 Hz');
+});
+
+test('mobile overlay remains scrollable and the final station reachable on a short screen', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 480 });
+  await page.goto('/policy/');
+  await page.locator('.nav-toggle').click();
+  const navigation = page.locator('#primary-navigation');
+  const language = page.locator('[data-dial-station="language"] a');
+  await language.scrollIntoViewIfNeeded();
+  await expect(language).toBeVisible();
+  const layout = await navigation.evaluate((element) => ({
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight,
+    overflowY: getComputedStyle(element).overflowY,
+  }));
+  expect(layout.scrollHeight).toBeGreaterThan(layout.clientHeight);
+  expect(layout.overflowY).toBe('auto');
+  const finalBounds = await language.boundingBox();
+  expect(finalBounds).not.toBeNull();
+  expect(finalBounds?.y).toBeGreaterThanOrEqual(0);
+  expect((finalBounds?.y ?? 0) + (finalBounds?.height ?? 0)).toBeLessThanOrEqual(480);
+
+  const controls = await navigation.locator('a[href], button').evaluateAll((elements) =>
+    elements
+      .filter((element) => (element as HTMLElement).offsetParent !== null)
+      .map((element) => {
+        const bounds = element.getBoundingClientRect();
+        return { height: bounds.height, width: bounds.width };
+      }),
+  );
+  expect(controls.every(({ height, width }) => height >= 44 && width >= 44)).toBe(true);
+});
+
+for (const width of [320, 390, 768]) {
+  test(`open mobile dial has no horizontal overflow at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 700 });
+    await page.goto('/policy/');
+    await page.locator('.nav-toggle').click();
+    const dimensions = await page.evaluate(() => ({
+      client: document.documentElement.clientWidth,
+      scroll: document.documentElement.scrollWidth,
+      offenders: [...document.querySelectorAll('*')]
+        .map((element) => ({
+          className: element.className,
+          left: element.getBoundingClientRect().left,
+          right: element.getBoundingClientRect().right,
+          tag: element.tagName,
+        }))
+        .filter(
+          ({ left, right }) => left < -0.5 || right > document.documentElement.clientWidth + 0.5,
+        )
+        .slice(0, 10),
+    }));
+    expect(
+      dimensions.scroll,
+      `Overflowing elements: ${JSON.stringify(dimensions.offenders)}`,
+    ).toBeLessThanOrEqual(dimensions.client);
+  });
+}
+
+test('server-rendered mobile navigation remains usable without JavaScript', async ({ browser }) => {
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  await page.goto('/');
+  await expect(page.locator('.nav-toggle')).toBeHidden();
+  await expect(page.locator('#primary-navigation')).toBeVisible();
+  await expect(page.locator('.dial-navigation [data-navigation-link]')).toHaveCount(5);
+  await expect(
+    page.locator('#primary-navigation').getByRole('link', { name: 'Evente', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'SQ / EN — Shiko këtë faqe në anglisht' }),
+  ).toHaveAttribute('href', '/en/');
+  await context.close();
+});
+
+test('sticky desktop dial remains fixed while the document scrolls', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 700 });
+  await page.goto('/about/');
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(page.locator('.site-header')).toHaveCSS('position', 'sticky');
+  expect(
+    await page.locator('.site-header').evaluate((element) => element.getBoundingClientRect().top),
+  ).toBe(0);
+});
+
+for (const width of [320, 390, 768, 1024, 1440]) {
   test(`homepage has no horizontal overflow at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
@@ -375,6 +623,22 @@ test('reduced-motion mode keeps content available without animation', async ({ p
   });
   expect(motion.animationName).toBe('none');
   expect(motion.transitionDuration).toBeLessThanOrEqual(0.01);
+});
+
+test('reduced-motion frequency dial opens without meaningful transitions', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/policy/');
+  await page.locator('.nav-toggle').click();
+  await expect(page.locator('#primary-navigation')).toBeVisible();
+  const durations = await page
+    .locator('.dial-marker')
+    .first()
+    .evaluate((element) => {
+      const style = getComputedStyle(element);
+      return style.transitionDuration.split(',').map((duration) => Number.parseFloat(duration));
+    });
+  expect(Math.max(...durations)).toBeLessThanOrEqual(0.01);
 });
 
 test('reduced-motion event deck retains state changes without transitions', async ({ page }) => {
