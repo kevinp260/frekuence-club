@@ -295,3 +295,22 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   implemented. Real DNS/TLS, encrypted production backup storage/restoration, monitoring, owner
   staff credentials, final content, legal inputs, and approved source brand assets still require
   operator or owner validation.
+
+## Phase 2 checkpoint 9 — final handoff
+
+- Checkpoint 9 is documentation-only. It adds the concise final handoff, reconciles current-state
+  README/deployment/SEO wording, and records owner/operator responsibilities without changing
+  frontend behavior, creative direction, backend models or migrations, API contracts, container
+  topology, security policy, event content, or production data.
+- Checkpoint 8 remains the latest full integrated technical validation. Checkpoint 9 runs only its
+  documented formatting, diagnostics, unit/build, Compose-model, whitespace, and Markdown-link
+  checks; it does not restate those results as a new visual, Lighthouse, security, or integrated
+  smoke run.
+- Phase 2 implementation is complete when this checkpoint is merged. Production launch approval
+  remains conditional on the real-host, DNS/TLS, encrypted backup/restore, monitoring, named staff
+  MFA ownership/recovery, content/legal, event-publication, and original-brand-asset inputs listed
+  in `docs/PHASE_2_HANDOFF.md` and the existing TODO inventories.
+- Future creative UI refinement is outside Phase 2 and requires a separate branch. It must
+  preserve the validated accessibility, 320 px responsive floor, reduced-motion/no-script and
+  keyboard/touch behavior, bilingual SEO/status semantics, proxy/CSP boundaries, production-output
+  exclusions, and performance budgets, with validation proportional to the actual change.

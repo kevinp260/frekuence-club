@@ -1,8 +1,9 @@
 # Deployment and rollback
 
-## Current checkpoint topology
+## Completed Phase 2 production topology
 
-Phase 2 checkpoint 7 uses the production container topology specified in the active brief:
+The completed Phase 2 implementation uses the production container topology specified in the
+active brief:
 
 ```text
 Internet → host Nginx/TLS → 127.0.0.1:3010 → gateway Nginx:8080
@@ -286,13 +287,14 @@ so none of these restore-scoped values affect later production commands.
 Then verify event counts, managed derivative files, staff login with a designated test account,
 API/public routes, and a real 404 before recording the restore exercise. End the isolated exercise
 according to the operator's data-retention policy; this document intentionally provides no
-destructive volume-removal command. Checkpoint 7's automated smoke proves named-volume survival
-across recreation, not a production backup restoration.
+destructive volume-removal command. Checkpoint 8's integrated smoke proves a matched logical
+database/media restoration in disposable isolated volumes, but it does not prove the operator's
+encrypted destination or a restoration of production data.
 
 ## Rollback
 
-Checkpoint 7 adds no database migration. Roll it back by selecting the previous compatible
-gateway/frontend/backend image tags and proxy configuration while retaining named volumes:
+For an application release rollback, select the previous compatible gateway/frontend/backend
+image tags and proxy configuration while retaining named volumes:
 
 ```sh
 FREKUENCE_GATEWAY_TAG=PREVIOUS_GATEWAY_TAG \
@@ -337,9 +339,9 @@ operator's encrypted production destination, retention, monitoring, or real cred
 
 ## Operator-dependent production signoff
 
-Checkpoint 8 did not access the real host, DNS, TLS certificates, encrypted backup destination,
-monitoring, or owner credentials. An authorized operator must run these checks on the deployment
-host after replacing the example values:
+Repository validation did not access the real host, DNS, TLS certificates, encrypted backup
+destination, monitoring, or owner credentials. An authorized operator must run these checks on the
+deployment host after replacing the example values:
 
 ```sh
 dig +short A frekuence.club
@@ -365,4 +367,6 @@ Owner staff must also complete a real two-factor login at `/staff/` using indivi
 credentials and confirm only the intended event permissions. Do not place credentials, QR codes,
 session cookies, backup keys, or monitoring tokens in command history, repository files, reports,
 or logs. Final event publication, legal/contact inputs, and approved source brand assets remain in
-`CONTENT_TODOS.md` and `BRAND_ASSET_TODOS.md`. Checkpoint 9 handoff is not implemented.
+`CONTENT_TODOS.md` and `BRAND_ASSET_TODOS.md`. Phase 2 implementation handoff is complete, but
+production launch remains unsigned until these checks and owner inputs are resolved; see
+`PHASE_2_HANDOFF.md` for the concise responsibility and scope summary.

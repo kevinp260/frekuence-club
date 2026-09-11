@@ -1,3 +1,52 @@
+# Phase 2 checkpoint 9 final handoff validation
+
+Validated on 2026-09-11 against exact merged checkpoint 8 application baseline
+`e4ddbc3a3babe08381e1c4fe41b47bedf63e4209` on `feat/phase-2-handoff`. Checkpoint 9 changes
+documentation only: the final handoff, current README/deployment state, implementation decision,
+SEO launch boundary, and this evidence record. No frontend behavior, creative direction, Django
+model or migration, API contract, container topology, security policy, event content, production
+data, or post-Phase-2 feature changed.
+
+## Checkpoint 9 commands actually run
+
+| Command                         | Result                                                                                                                                                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `npm run check`                 | Passed after the formatting correction below: Prettier, ESLint, 0 Astro errors/warnings/hints across 67 files, and 34/34 unit tests                          |
+| `npm run build`                 | Passed: the complete check reran with 34/34 unit tests; Astro Node build completed; production validation found 8 prerendered routes and 58 production files |
+| `docker compose config`         | Passed: the resolved gateway, Astro, Django, PostgreSQL, application/database networks, health checks, restrictions, and named volumes remain valid          |
+| `git diff --check`              | Passed with no whitespace errors                                                                                                                             |
+| Relative Markdown link verifier | Passed: 23 relative links across README, handoff, deployment, decisions, validation, and SEO documents resolve to existing repository files                  |
+
+Preliminary `npm run check` attempts stopped at Prettier: first for one extra blank line inherited
+in the merged checkpoint 8 report, then for the newly inserted checkpoint 9 report section.
+`npx prettier --write docs/VALIDATION_REPORT.md` corrected only Markdown formatting. The successful
+`npm run check` and `npm run build` results above were obtained after those corrections. No
+application defect or behavior change was involved.
+
+## Authoritative evidence and completion boundary
+
+Checkpoint 8 remains the latest full integrated technical validation. Its final reviewed head is
+`9696c16776aa113100f37e525e61eb3b4b1f24c7`, merged by the exact `main` commit identified above.
+The checkpoint 8 section below remains authoritative for backend/frontend counts, browser and
+visual review, Lighthouse budgets, integration/topology smokes, security controls, production-
+image exclusions, and disposable matched database/media restoration. Checkpoint 9 did not rerun
+those full gates and does not claim otherwise.
+
+Phase 2 implementation checkpoints 1–9 are complete. Production launch is not signed off. Real
+host deployment, DNS and TLS/Certbot, encrypted backup storage/retention and real-data restoration,
+monitoring and alert delivery, owner staff credentials plus TOTP ownership/recovery, approved real
+event facts/copy/poster rights, legal/contact/accessibility inputs, and approved original brand
+assets remain owner/operator responsibilities. The exact boundary and responsibility map is in
+`docs/PHASE_2_HANDOFF.md`; source inputs remain preserved in `docs/CONTENT_TODOS.md` and
+`docs/BRAND_ASSET_TODOS.md`.
+
+Future creative UI work is outside Phase 2 and must use a separate branch with validation that
+preserves the established accessibility, responsive, localization/SEO, security, and performance
+behavior. Checkpoint 9 adds no reservation, guest list, payment, customer account, analytics,
+tracking, new event publication, or other post-Phase-2 capability.
+
+---
+
 # Phase 2 checkpoint 8 integrated QA validation
 
 Validated on 2026-09-11 against `feat/phase-2-integrated-qa` from merged checkpoint 7 main
@@ -23,7 +72,6 @@ synthetic poster, event information, and event link are visibly rendered.
 process-ownership audit, matched PostgreSQL/media backup, isolated restoration of eight synthetic
 event records, restored gateway verification, container restrictions, and service health checks.
 `git diff --check` passed.
-
 
 ## Complete automated gates
 
