@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { join } from 'node:path';
 
 const fixtureOrigin = 'http://127.0.0.1:4322';
@@ -164,6 +164,23 @@ test('capture checkpoint 8 no-JavaScript event fallback', async ({ browser }) =>
     document.documentElement.style.scrollBehavior = 'auto';
     window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY);
   });
+  const posters = deck.locator('img');
+  await expect.poll(() => posters.count()).toBeGreaterThan(0);
+  await expect
+    .poll(() =>
+      posters.evaluateAll((images) =>
+        images.every((image) => {
+          const poster = image as HTMLImageElement;
+          return poster.complete && poster.naturalWidth > 0;
+        }),
+      ),
+    )
+    .toBe(true);
+  expect(
+    await posters.evaluateAll(
+      (images) => images.filter((image) => (image as HTMLImageElement).naturalWidth > 0).length,
+    ),
+  ).toBeGreaterThan(0);
   await page.screenshot({
     path: 'docs/review/phase-2-integrated-qa/event-deck-no-javascript-390.png',
   });

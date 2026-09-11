@@ -6,6 +6,22 @@ disposable backup/restore evidence, multi-route Lighthouse coverage, and useful 
 captures. It does not add or change public product behavior, event data, database schema, gateway
 routing, or deployment architecture. Checkpoint 9 was not implemented.
 
+### Review follow-up rerun (2026-09-11)
+
+The two checkpoint 8 review assertions were tightened without changing production behavior. The
+integrated smoke now parses headerless `ps` user/command columns, requires at least one command
+named exactly `postgres`, and rejects the result if any such process is not owned by `postgres`.
+The no-JavaScript capture now waits for at least one deck poster and for every intercepted poster
+to report both `complete` and a non-zero `naturalWidth` before it can become review evidence.
+
+In this follow-up environment, `npm run check` passed with 0 Astro diagnostics and 34 unit tests.
+`npm run test:visual` passed its complete build prerequisite but could not start its 30 captures
+because `/usr/bin/google-chrome` is not installed; downloading the Playwright browser was also
+blocked by the environment's HTTP 403 proxy response. Consequently, this environment did not
+regenerate or validate the no-JavaScript PNG, and the prior 30-capture result below remains the
+latest completed visual run rather than a claimed follow-up pass. `npm run smoke:integrated-qa`
+could not start because Docker is unavailable in this environment. `git diff --check` passed.
+
 ## Complete automated gates
 
 | Gate                                                             | Result                                                                                                                                                                                                                          |
