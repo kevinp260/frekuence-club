@@ -263,6 +263,35 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   its entire command sequence so it cannot reuse live ports or volumes; its explicit static
   collection job populates the isolated static volume before the restored gateway starts.
 - Checkpoint 7 adds no model, migration, frontend behavior, event content, Redis, worker,
-  reservation, payment, or custom staff-application work. Checkpoint 8 integrated QA, a real
-  host/TLS deployment, an operator-run encrypted backup/restore exercise, monitoring, and the
-  documented owner inputs remain outstanding.
+  reservation, payment, or custom staff-application work. A real host/TLS deployment, an
+  operator-run encrypted backup/restore exercise, monitoring, and the documented owner inputs
+  remain outstanding.
+
+## Phase 2 checkpoint 8 — integrated QA
+
+- Integrated validation uses only synthetic records created at runtime in disposable, uniquely
+  named Compose projects. The matrix covers current/postponed, earliest upcoming, cancelled,
+  deliberately featured, later upcoming, past, draft, and intentionally unpublished states in
+  both locales. It never reads candidate posters or publishes a real event.
+- `npm run smoke:integrated-qa` builds one immutable production image set, deploys a disposable
+  source stack, exercises the complete public/API/staff/security matrix through the gateway,
+  creates a matched PostgreSQL/media backup in a mode-0700 temporary directory, and restores it
+  into a different Compose project with separate volumes and a different random loopback port.
+  It verifies restored records, derivatives, TOTP staff access, public/API routes, a real 404, and
+  all service health checks before deleting only its validated disposable resources.
+- The integrated smoke inspects final frontend and backend images for source trees, tests,
+  development fixtures, source maps, environment files, Git metadata, PDFs, fixture identifiers,
+  and runtime secrets. It also confirms non-root application processes, dropped capabilities,
+  read-only application filesystems, private internal services, and a loopback-only gateway.
+- Lighthouse can now audit a bounded comma-separated set of same-origin routes in one isolated
+  synthetic run. Checkpoint 8 covers Albanian/English homepages and both localized event details;
+  per-route reports are transient test output rather than committed generated artifacts.
+- Four useful synthetic screenshots record minimum-width layout, keyboard focus, explicit mobile
+  card selection, and the JavaScript-disabled event fallback. Existing browser tests remain the
+  authoritative interaction/accessibility regressions; screenshots are review evidence rather
+  than image snapshots used to approve content.
+- No production application behavior, model, migration, API contract, event content, reservation,
+  payment, public account, analytics, or handoff automation was added. Checkpoint 9 was not
+  implemented. Real DNS/TLS, encrypted production backup storage/restoration, monitoring, owner
+  staff credentials, final content, legal inputs, and approved source brand assets still require
+  operator or owner validation.

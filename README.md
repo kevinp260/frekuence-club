@@ -3,9 +3,9 @@
 This repository contains the bilingual Astro frontend for Frekuence Club in Tirana. Albanian is
 served at the root and English under `/en/`.
 
-Phase 2 checkpoints 1–7 establish the approved signal-interference design system, event-led public
+Phase 2 checkpoints 1–8 establish the approved signal-interference design system, event-led public
 pages, the private Django/PostgreSQL event-management foundation, its published-only events API,
-the Astro dynamic migration, and the production container topology. A pinned unprivileged Nginx
+the Astro dynamic migration, the production container topology, and integrated QA coverage. A pinned unprivileged Nginx
 gateway is the only host-bound container and routes same-origin public pages, the API, staff Admin,
 collected static files, and processed poster derivatives. The Astro Node and Django services share
 only the application network; PostgreSQL is isolated on a separate internal database network.
@@ -24,6 +24,7 @@ npm run test:e2e
 npm run test:visual
 npm run audit:lighthouse
 npm run audit:lighthouse:fixtures
+npm run audit:lighthouse:integrated
 ```
 
 `npm run build` runs formatting, linting, Astro diagnostics, unit checks, the mixed SSR/prerender
@@ -54,6 +55,7 @@ docker compose up -d --build --wait db backend web gateway
 docker compose ps
 npm run smoke:production-integration
 npm run smoke:production-topology
+npm run smoke:integrated-qa
 ```
 
 Only `gateway` publishes a port, at
@@ -83,9 +85,11 @@ misrepresenting an outage as an empty programme.
 
 ## Production signoff
 
-Checkpoint 7 is deployable but is not final launch signoff. Phase 2 checkpoint 8 integrated QA and
-the owner inputs in [docs/CONTENT_TODOS.md](docs/CONTENT_TODOS.md) plus the original assets in
-[docs/BRAND_ASSET_TODOS.md](docs/BRAND_ASSET_TODOS.md) remain outstanding.
+Checkpoint 8 provides integrated synthetic validation but is not final launch signoff. Production
+DNS/TLS, host deployment, encrypted backup storage, monitoring, owner staff credentials, and the
+owner inputs in [docs/CONTENT_TODOS.md](docs/CONTENT_TODOS.md) plus the original assets in
+[docs/BRAND_ASSET_TODOS.md](docs/BRAND_ASSET_TODOS.md) remain operator-dependent. Checkpoint 9
+handoff has not been implemented.
 
 The latest local release evidence is recorded in
 [docs/VALIDATION_REPORT.md](docs/VALIDATION_REPORT.md).

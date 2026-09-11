@@ -117,3 +117,55 @@ for (const evidence of pullRequestEvidence) {
     });
   });
 }
+
+test('capture checkpoint 8 event homepage at the minimum supported width', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto(`${fixtureOrigin}/`);
+  await page.screenshot({
+    path: 'docs/review/phase-2-integrated-qa/homepage-events-320.png',
+    fullPage: true,
+  });
+});
+
+test('capture checkpoint 8 keyboard-focus event deck state', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(`${fixtureOrigin}/`);
+  await page
+    .locator('[data-event-card]')
+    .first()
+    .getByRole('link', { name: 'Shiko eventin' })
+    .focus();
+  await page.locator('[data-event-deck]').screenshot({
+    path: 'docs/review/phase-2-integrated-qa/event-deck-keyboard-focus-1440.png',
+  });
+});
+
+test('capture checkpoint 8 explicit mobile card selection', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${fixtureOrigin}/`);
+  await page.locator('[data-event-card]').first().locator('[data-card-toggle]').click();
+  await page.locator('[data-event-deck]').screenshot({
+    path: 'docs/review/phase-2-integrated-qa/event-deck-touch-selected-390.png',
+  });
+});
+
+test('capture checkpoint 8 no-JavaScript event fallback', async ({ browser }) => {
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  await page.route('**/media/events/derivatives/*.webp', (route) =>
+    route.fulfill({ path: fixturePoster, contentType: 'image/png' }),
+  );
+  await page.goto(`${fixtureOrigin}/`);
+  const deck = page.locator('[data-event-deck]');
+  await deck.evaluate((element) => {
+    document.documentElement.style.scrollBehavior = 'auto';
+    window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY);
+  });
+  await page.screenshot({
+    path: 'docs/review/phase-2-integrated-qa/event-deck-no-javascript-390.png',
+  });
+  await context.close();
+});
