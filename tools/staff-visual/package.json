@@ -1,0 +1,12 @@
+{
+  "name": "@frekuence/staff-visual",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.14.0 <25"
+  },
+  "dependencies": {
+    "@playwright/test": "1.62.1"
+  }
+}

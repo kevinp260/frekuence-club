@@ -26,6 +26,10 @@ The pinned unprivileged gateway image runs as UID/GID 101. Named `postgres_data`
 and `backend_static` volumes persist independently of normal container recreation. Gateway mounts
 media and static read-only.
 
+The root `compose.yaml` orchestrates first-party images from `services/frontend/`,
+`services/backend/`, and `services/gateway/`. The host-managed Nginx example remains under
+`deploy/nginx/`; cross-service deployment and smoke scripts remain under root `scripts/`.
+
 ## Environment and secrets
 
 Copy `.env.example` to ignored `.env` for local development and replace its placeholders.

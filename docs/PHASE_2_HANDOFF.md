@@ -71,10 +71,15 @@ For ordinary frontend/documentation work:
 
 ```sh
 npm ci
+npm run setup
 npm run check
 npm run build
 git diff --check
 ```
+
+The root npm package is a command façade. `npm run setup` installs the independently locked Astro
+package under `services/frontend/`; application services live under `services/`, while Compose,
+deployment documentation, shared assets, and cross-service smoke tooling remain at repository root.
 
 For backend, integration, security, or release work, use the container gates and production
 smokes:

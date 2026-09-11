@@ -342,3 +342,23 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   `docs/review/frequency-dial-navigation/`. Automated browser coverage uses the configured Chromium
   project; physical iOS/Android safe-area behavior and other browser engines remain useful
   pre-production device checks rather than claimed evidence.
+
+## Post-Phase-2 repository organization — service directories
+
+- First-party runtime code is organized under `services/`: Astro in `services/frontend/`, Django
+  in `services/backend/`, and the private container gateway in `services/gateway/`. PostgreSQL
+  remains a pinned upstream Compose image and does not receive an empty source directory.
+- Root owns shared concerns: Compose and environment placeholders, documentation, candidate and
+  reference assets, host deployment configuration, cross-service smoke scripts, and architecture
+  contract tests. Browser-based staff review and the containerized frontend gate live under
+  `tools/` rather than pretending to be runtime services.
+- The root npm package is a dependency-free command façade. Astro dependencies and their lockfile
+  belong to the frontend service; the staff visual tool has its own minimal exact pin and lockfile.
+  Existing root command names remain available, with `npm run setup` as the explicit service
+  bootstrap step.
+- Compose service names, image tags, internal DNS names, ports, networks, named volumes, security
+  restrictions, health checks, deployment order, public routes, and application behavior are
+  intentionally unchanged. Production build contexts are narrowed to the owning service; the
+  repository-wide frontend-check tool alone uses a filtered root build context.
+- Historical checkpoint path statements remain unchanged because they accurately describe the
+  repository when those decisions landed. This section is the authoritative current path map.

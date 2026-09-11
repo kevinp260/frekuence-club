@@ -2,13 +2,27 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [packageJson, smoke, verifier, fixture, lighthouse] = await Promise.all([
+const [packageJson, frontendPackageJson, smoke, verifier, fixture, lighthouse] = await Promise.all([
   readFile(new URL('../../package.json', import.meta.url), 'utf8').then(JSON.parse),
+  readFile(new URL('../../services/frontend/package.json', import.meta.url), 'utf8').then(
+    JSON.parse,
+  ),
   readFile(new URL('../../scripts/smoke-integrated-qa.sh', import.meta.url), 'utf8'),
   readFile(new URL('../../scripts/verify-integrated-gateway.mjs', import.meta.url), 'utf8'),
   readFile(new URL('../../scripts/seed-integrated-qa.py', import.meta.url), 'utf8'),
-  readFile(new URL('../../scripts/run-lighthouse.mjs', import.meta.url), 'utf8'),
+  readFile(new URL('../../services/frontend/scripts/run-lighthouse.mjs', import.meta.url), 'utf8'),
 ]);
+
+test('root commands delegate to the independently locked frontend package', () => {
+  assert.equal(packageJson.scripts.setup, 'npm ci --prefix services/frontend');
+  for (const command of ['dev', 'build', 'check', 'test:e2e', 'test:visual', 'audit:lighthouse']) {
+    assert.match(packageJson.scripts[command], /services\/frontend/);
+  }
+  assert.equal(packageJson.dependencies, undefined);
+  assert.equal(packageJson.devDependencies, undefined);
+  assert.equal(frontendPackageJson.name, '@frekuence/frontend');
+  assert.equal(frontendPackageJson.dependencies.astro, '7.2.8');
+});
 
 test('integrated QA backup and restore stay in distinct disposable projects', () => {
   assert.match(smoke, /source_project="frekuence-checkpoint8-source-\$\{\$\}"/);
@@ -71,7 +85,7 @@ test('integrated fixtures and assertions cover the approved event and security m
 });
 
 test('integrated Lighthouse audits both locales and a localized event detail', () => {
-  const command = packageJson.scripts['audit:lighthouse:integrated'];
+  const command = frontendPackageJson.scripts['audit:lighthouse:integrated'];
   assert.match(command, /LIGHTHOUSE_ROUTES=/);
   assert.match(command, /\/en\//);
   assert.match(command, /\/events\/visual-fixture-featured-field\//);

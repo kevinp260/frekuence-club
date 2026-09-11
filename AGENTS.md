@@ -81,9 +81,11 @@
 
 ## Brand and interface
 
-- Treat `BrandBook_FREKUENCE_Compressed.pdf` as the authority for the logo and core identity.
+- Treat `assets/brand/BrandBook_FREKUENCE_Compressed.pdf` as the authority for the logo and core
+  identity.
   Never redraw, trace, distort, recolor, rotate, outline, animate, or rearrange the logo.
-- The current files under `src/assets/brand/temporary/` remain approved temporary bitmap exports.
+- The current files under `services/frontend/src/assets/brand/temporary/` remain approved
+  temporary bitmap exports.
   Keep them isolated and replace them only with owner-approved originals. Regenerate dependent
   favicon/social derivatives through the documented asset command rather than editing generated
   files manually.
