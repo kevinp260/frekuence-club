@@ -3,15 +3,15 @@
 This repository contains the bilingual Astro frontend for Frekuence Club in Tirana. Albanian is
 served at the root and English under `/en/`.
 
-Phase 2 checkpoints 1–8 establish the approved signal-interference design system, event-led public
+Phase 2 checkpoints 1–9 implement the approved signal-interference design system, event-led public
 pages, the private Django/PostgreSQL event-management foundation, its published-only events API,
-the Astro dynamic migration, the production container topology, and integrated QA coverage. A pinned unprivileged Nginx
-gateway is the only host-bound container and routes same-origin public pages, the API, staff Admin,
-collected static files, and processed poster derivatives. The Astro Node and Django services share
-only the application network; PostgreSQL is isolated on a separate internal database network.
-Event-dependent routes render on demand while stable editorial and error routes remain prerendered.
-Reservations, payments, public accounts, analytics, tracking, and third-party embeds remain out of
-scope.
+the Astro dynamic migration, the production container topology, integrated QA coverage, and the
+final handoff. A pinned unprivileged Nginx gateway is the only host-bound container and routes
+same-origin public pages, the API, staff Admin, collected static files, and processed poster
+derivatives. The Astro Node and Django services share only the application network; PostgreSQL is
+isolated on a separate internal database network. Event-dependent routes render on demand while
+stable editorial and error routes remain prerendered. Reservations, payments, public accounts,
+analytics, tracking, and third-party embeds remain out of scope.
 
 ## Local commands
 
@@ -85,11 +85,13 @@ misrepresenting an outage as an empty programme.
 
 ## Production signoff
 
-Checkpoint 8 provides integrated synthetic validation but is not final launch signoff. Production
-DNS/TLS, host deployment, encrypted backup storage, monitoring, owner staff credentials, and the
-owner inputs in [docs/CONTENT_TODOS.md](docs/CONTENT_TODOS.md) plus the original assets in
-[docs/BRAND_ASSET_TODOS.md](docs/BRAND_ASSET_TODOS.md) remain operator-dependent. Checkpoint 9
-handoff has not been implemented.
+Phase 2 implementation and its nine checkpoints are complete, but production launch is not signed
+off. Production DNS/TLS, host deployment, encrypted backup storage/restoration, monitoring, owner
+staff credentials and MFA ownership/recovery, real event content, legal details, and approved
+original brand assets remain operator- or owner-dependent. The concise status, scope boundary, and
+responsibility map are in [docs/PHASE_2_HANDOFF.md](docs/PHASE_2_HANDOFF.md); unresolved source
+inputs remain in [docs/CONTENT_TODOS.md](docs/CONTENT_TODOS.md) and
+[docs/BRAND_ASSET_TODOS.md](docs/BRAND_ASSET_TODOS.md).
 
 The latest local release evidence is recorded in
 [docs/VALIDATION_REPORT.md](docs/VALIDATION_REPORT.md).
