@@ -5,6 +5,7 @@ if (header instanceof HTMLElement) {
   const button = header.querySelector('.nav-toggle');
   const closeButton = header.querySelector('[data-navigation-close]');
   const navigation = header.querySelector('[data-navigation-shell]');
+  const overlayHeader = header.querySelector('.overlay-header');
   const firstDestination = header.querySelector('[data-navigation-link]');
   const backgroundRegions = () =>
     [
@@ -60,18 +61,27 @@ if (header instanceof HTMLElement) {
         (element) => element instanceof HTMLElement && element.offsetParent !== null,
       );
 
+    let wasCompact = compactQuery.matches;
+
     const syncBreakpoint = () => {
+      const isCompact = compactQuery.matches;
       const focusedElement = document.activeElement;
       const focusWasInNavigation =
         focusedElement instanceof HTMLElement && navigation.contains(focusedElement);
+      const focusWasInOverlayHeader =
+        focusedElement instanceof HTMLElement && overlayHeader?.contains(focusedElement);
 
       setOpen(false);
-      button.hidden = !compactQuery.matches;
-      navigation.hidden = compactQuery.matches;
+      button.hidden = !isCompact;
+      navigation.hidden = isCompact;
 
-      if (!compactQuery.matches && focusWasInNavigation && focusedElement === closeButton) {
+      if (isCompact && !wasCompact && focusWasInNavigation) {
+        button.focus();
+      } else if (!isCompact && wasCompact && focusWasInOverlayHeader) {
         if (firstDestination instanceof HTMLAnchorElement) firstDestination.focus();
       }
+
+      wasCompact = isCompact;
     };
 
     header.dataset.enhanced = 'true';

@@ -459,6 +459,55 @@ test('crossing the 64rem breakpoint safely resets the open menu', async ({ page 
   await expect(page.locator('main')).not.toHaveAttribute('inert', '');
 });
 
+test('resizing to compact navigation moves desktop destination focus to the menu button', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1024, height: 844 });
+  await page.goto('/about/');
+  const destination = page.locator('[data-dial-station="about"] a');
+  const menu = page.locator('.nav-toggle');
+  await destination.focus();
+  await expect(destination).toBeFocused();
+
+  await page.setViewportSize({ width: 768, height: 844 });
+  await expect(menu).toBeVisible();
+  await expect(menu).toBeFocused();
+  expect(
+    await page.evaluate(() => (document.activeElement as HTMLElement).offsetParent !== null),
+  ).toBe(true);
+  await expect(menu).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('body')).not.toHaveClass(/navigation-open/);
+  await expect(page.locator('main')).not.toHaveAttribute('inert', '');
+});
+
+for (const overlayControl of ['brand', 'close'] as const) {
+  test(`resizing to desktop navigation restores visible focus from the overlay ${overlayControl}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 768, height: 844 });
+    await page.goto('/about/');
+    const menu = page.locator('.nav-toggle');
+    await menu.click();
+    const control =
+      overlayControl === 'brand'
+        ? page.locator('.overlay-brand')
+        : page.locator('[data-navigation-close]');
+    await control.focus();
+    await expect(control).toBeFocused();
+
+    await page.setViewportSize({ width: 1024, height: 844 });
+    const firstDestination = page.locator('[data-navigation-link]').first();
+    await expect(firstDestination).toBeVisible();
+    await expect(firstDestination).toBeFocused();
+    expect(
+      await page.evaluate(() => (document.activeElement as HTMLElement).offsetParent !== null),
+    ).toBe(true);
+    await expect(menu).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('body')).not.toHaveClass(/navigation-open/);
+    await expect(page.locator('main')).not.toHaveAttribute('inert', '');
+  });
+}
+
 test('active route uses one symbolic frequency while homepage remains neutral', async ({
   page,
 }) => {
