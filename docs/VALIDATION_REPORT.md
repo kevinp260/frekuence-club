@@ -1,3 +1,101 @@
+# Post-Phase-2 animated segmented frequency dial validation
+
+Validated on 2026-09-12 in the local `main` worktree based on
+`cc7c4c5d9bb7731b0d359ae64683f375b91090e8`. This frontend-only refinement replaces the frequency
+dial's continuous baseline with repeated rounded separator groups in the horizontal desktop dial,
+compact header indicator, and vertical mobile overlay. It removes the long horizontal header and
+overlay edge lines and adds one short-lived cursor that travels to a selected station before normal
+same-origin navigation. Routes, translations, active-route semantics, event/API behavior,
+Django/PostgreSQL, container topology, production content, and the Phase 2 handoff did not change.
+
+## Segmented dial behavior and review
+
+- Every navigation interval has two rounded major boundary separators, exactly two shorter ticks
+  on each side, and a centered station. Neighboring desktop intervals meet at a shared boundary;
+  exact sixth-based positions keep every consecutive gap equal as the available width changes.
+- The complete dial leaves one equal gap at each edge, then shows a faded short tick and a normal
+  short tick before reaching its first or final major separator. The compact indicator uses the
+  same mirrored termini.
+- The active red station, restrained ring, text label, and one symbolic `7.83 Hz` value remain
+  intact. Keyboard focus remains a separate high-contrast state, and homepage stations remain
+  neutral.
+- One decorative cursor now moves horizontally on the desktop dial and vertically in the mobile
+  overlay over `200ms`. It begins from the current active station, or the hidden leading terminus
+  on the homepage, and lands on the selected content destination before the ordinary document
+  navigation.
+- The dial contains only Events, About, Policy, and Visit. `SQ / EN` is now a separate segmented
+  alternate-language link at the desktop edge and below the mobile dial. It visibly identifies the
+  current locale, retains the equivalent localized route and accessible name, and bypasses tuning
+  interception entirely.
+- Reduced motion and no-JavaScript navigation remain immediate. Modified/non-primary activation,
+  external destinations, downloads, targeted links, and the current station retain native link
+  behavior. No router, animation library, frontend framework, or third-party runtime was added.
+- The compact header uses the same horizontal segment and the mobile overlay rotates the complete
+  equal-gap pattern vertically. Mobile links fill their entire allocated rows so all four minor
+  ticks remain visibly distributed between shared major separators. Normal links, no-JavaScript
+  access, focus containment, Escape/close behavior, body-scroll restoration, breakpoint reset,
+  and reduced-motion behavior are unchanged.
+- The eight refreshed captures in `docs/review/frequency-dial-navigation/` were manually inspected
+  at 1440, 1024, 390, and 320 px for shared-boundary spacing, station centering, label alignment,
+  active/focus distinction, clipping, and page-level overflow. The 320 px overlay keeps the final
+  language link reachable.
+
+## Commands actually run
+
+| Command                                                          | Result                                                                                                                                                                                                  |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pre-change `npm run check`                                       | Passed: 14/14 architecture tests, 22/22 frontend unit tests, and 0 Astro errors, warnings, or hints across 61 files                                                                                     |
+| Pre-change `npm run build`                                       | Passed: the complete check reran; Astro Node built successfully; production validation found 8 prerendered routes and 59 production files                                                               |
+| Final `npm run check`                                            | Passed: repository/frontend formatting and lint, 14/14 architecture tests, 22/22 frontend unit tests, and 0 Astro errors, warnings, or hints across 61 files                                            |
+| Final `npm run build`                                            | Passed: the complete check reran; Astro Node built successfully; production validation found 8 prerendered routes and 59 production files                                                               |
+| Focused cursor regression run                                    | Passed: 5/5 Chromium cases covering desktop/mobile mid-travel positions, history restoration, active/home cursor state, homepage origin, separate language navigation, and reduced motion               |
+| Focused language-separation regression run                       | Passed: 11/11 Chromium cases covering localized routes, four dial stations, separate selector state, cursor bypass, focus containment, short-height reachability, and no-JavaScript access              |
+| Focused mobile terminal-alignment regression                     | Passed: 1/1 Chromium case; all four terminal ticks share the station markers' vertical axis within one CSS pixel                                                                                        |
+| Focused mobile overlay recapture                                 | Passed: 2/2 Chromium captures at 390 px and 320 px after the terminal-alignment correction                                                                                                              |
+| `npm run test:e2e`                                               | Passed after the corrections below: 14/14 architecture tests and 72/72 browser/integration/accessibility tests; 38 opt-in visual cases skipped as designed                                              |
+| `npm run test:visual`                                            | Passed: 14/14 architecture tests and 38/38 visual captures, including all eight refreshed frequency-dial review states                                                                                  |
+| `npm run audit:lighthouse:integrated`                            | Passed all four localized synthetic routes after the sandbox limitation noted below; exact results follow                                                                                               |
+| `docker compose config`                                          | Passed: the Compose model rendered successfully without changing the established service topology                                                                                                       |
+| `docker compose --profile tools run --rm --build frontend-check` | Passed: formatting/lint, 14/14 architecture tests, 22/22 frontend unit tests, 0 Astro diagnostics across 61 files, 8-route/59-file production validation, and 72 browser tests; 38 visual cases skipped |
+| `git diff --check`                                               | Passed with no whitespace errors after documentation formatting                                                                                                                                         |
+
+The integrated Lighthouse results were:
+
+| Route                                       | Performance | Accessibility | Best practices | SEO |      LCP | CLS |
+| ------------------------------------------- | ----------: | ------------: | -------------: | --: | -------: | --: |
+| `/`                                         |          99 |           100 |             96 | 100 | 1,984 ms |   0 |
+| `/en/`                                      |          99 |           100 |             96 | 100 | 2,144 ms |   0 |
+| `/events/visual-fixture-featured-field/`    |          99 |           100 |             96 | 100 | 1,922 ms |   0 |
+| `/en/events/visual-fixture-featured-field/` |          99 |           100 |             96 | 100 | 1,899 ms |   0 |
+
+The first browser run exposed gaps between desktop intervals and a sub-pixel short-height overlay
+overflow; removing link-owned spacing fixed both while preserving touch targets. A later complete
+run caught a one-pixel desktop page overflow caused by the final boundary separator; a one-pixel
+dial inset fixed it. The successful earlier 69-test result was obtained after both corrections, and
+the first follow-up review then identified unequal tick spacing, edge-touching separators, and
+compressed mobile marks. The equal-unit grid and explicit termini corrected the desktop and compact
+geometry. A focused regression initially showed that percentage-height mobile segments still used
+their minimum-height link rather than the stretched grid row; full-row positioning corrected that
+defect. During the cursor work, focused tests also found that the transient tuning attribute was
+set on the overlay shell while its CSS state selectors belonged to the inner dial. Moving that
+state to the dial restored the intended outgoing/target label treatment, and the regression now
+samples the cursor between its source and destination on both axes. The first capture after
+separating the language selector also exposed a desktop shell falling back to block flow and
+doubling the header height; retaining the desktop grid flow restored the intended compact header.
+The final mobile review found that padding on the two terminal containers shifted their short
+ticks four pixels to the right; removing that mobile-only padding aligned the terminus and station
+centers, with a focused geometry assertion preventing regression. The complete browser, visual,
+Lighthouse, and Docker results above cover the preceding navigation state; this final CSS-only
+alignment adjustment was subsequently covered by a successful production build, the focused
+geometry regression, and refreshed 390 px and 320 px captures.
+
+The first Lighthouse attempt built successfully but the restricted sandbox denied the local mock
+API's loopback bind with `EPERM`. The identical command was rerun with local-network permission and
+produced the passing scores above; the initial environment restriction is not recorded as an
+application pass.
+
+---
+
 # Post-Phase-2 service-layout validation
 
 Validated on 2026-09-12 on `chore/services-layout`, created from merged creative-navigation

@@ -325,12 +325,14 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   frequency dial. Below it, the compact bar progressively enhances into an opaque, internally
   scrollable modal navigation with focus containment, Escape/close-button restoration, scroll
   locking, safe breakpoint reset, and reduced-motion behavior.
-- Events, About, Policy, and Visit remain the four primary content destinations, in that order,
-  followed by the `SQ / EN` alternate-language control. The symbol and `FREKUENCE CLUB` wordmark
-  remain one localized-home link; Privacy remains in the footer.
+- Events, About, Policy, and Visit remain the four primary content destinations, in that order.
+  The `SQ / EN` alternate-language link is a separate two-position selector outside the dial. The
+  symbol and `FREKUENCE CLUB` wordmark remain one localized-home link; Privacy remains in the
+  footer.
 - Every active content route uses the same symbolic `7.83 Hz` value, red station, and textual
   active treatment. The homepage keeps the primary stations and compact indicator neutral; event
-  detail routes continue to activate Events. The language station is always neutral.
+  detail routes continue to activate Events. Language selection is not represented as a tuning
+  station or active frequency.
 - The scale is visual language, not an input model. Dragging, scrubbing, swiping, double-tap
   behavior, per-route frequency values, continuous animation, canvas, and WebGL are deliberately
   excluded; every destination remains an ordinary semantic link.
@@ -342,6 +344,57 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   `docs/review/frequency-dial-navigation/`. Automated browser coverage uses the configured Chromium
   project; physical iOS/Android safe-area behavior and other browser engines remain useful
   pre-production device checks rather than claimed evidence.
+
+## Post-Phase-2 creative refinement follow-up — segmented frequency scale
+
+- The frequency dial no longer uses a continuous baseline. Each desktop destination and the
+  compact indicator instead owns one repeated interval: a shared rounded `2px` major separator at
+  each boundary, exactly two shorter rounded ticks on either side, and the station centered between
+  them. Each interval is divided into six equal gaps, so the spacing remains uniform as the
+  available width changes.
+- The complete scale starts and ends with a three-gap terminus: one empty edge gap, one deliberately
+  faded short tick, one normal short tick, and only then the first shared major separator. The order
+  is mirrored after the final separator, so neither major line touches a navigation edge.
+- The full-screen compact menu rotates the same equal-gap interval and termini vertically. Each
+  mobile link fills its allocated grid row so the marks do not collapse around the station.
+  Adjacent destinations share their major boundary, while each ordinary link, active route, focus
+  state, and symbolic `7.83 Hz` label retains the previously validated semantics and behavior.
+- Long horizontal header and overlay chrome was removed with the baseline. Purposeful vertical
+  dividers between the brand, dial, and compact menu control remain because they communicate
+  control grouping rather than frequency continuity.
+- The `64rem` breakpoint, semantic-link interaction model, progressive-enhancement fallback,
+  reduced-motion treatment, active-route rules, routes, localization, and navigation script remain
+  unchanged. Dragging and scrubbing remain deliberately out of scope.
+- Browser regression coverage asserts equal consecutive gaps, the segment count, four minor ticks
+  per destination, faded outer termini, rounded major separators, shared boundaries, full-height
+  mobile intervals, compact/overlay parity, removed header edge lines, and layout safety. Updated
+  captures remain in
+  `docs/review/frequency-dial-navigation/`.
+
+## Post-Phase-2 creative refinement follow-up — travelling dial cursor
+
+- Normal same-origin navigation uses one decorative cursor that travels from the current station
+  to the selected station over `200ms` before the browser follows the ordinary link. The outgoing
+  route remains a normal multi-page Astro document; no client router, animation package, state
+  library, or third-party runtime was added.
+- Desktop movement transitions the cursor's horizontal position. The enhanced mobile overlay uses
+  the same element and timing on its vertical axis. On the homepage, the initially hidden cursor
+  begins at the inner leading terminus so selecting a destination still reads as tuning into the
+  dial rather than a station appearing from nowhere.
+- The cursor and target label use signal-red for content destinations. The alternate-language link
+  sits outside the dial as a compact segmented selector, visually identifies the current locale,
+  and retains its localized alternate-page accessible name and route. It is deliberately excluded
+  from cursor movement and follows native link navigation immediately.
+- Only unmodified primary-button activations to another same-origin station receive the short
+  visual delay. Current-page, modified, non-primary, external, download, and targeted navigation
+  retains native browser behavior. Repeated activation is suppressed only while the single
+  `200ms` tuning movement is already in progress.
+- Reduced-motion preference bypasses interception and navigation proceeds immediately. Without
+  JavaScript, links also follow their native behavior. The cursor is decorative and hidden from
+  assistive technology; link semantics, focus treatment, mobile focus containment, and the
+  progressive-enhancement fallback are unchanged. Page lifecycle handling clears transient tuning
+  state so browser back/forward restoration returns the cursor to the server-rendered active
+  station.
 
 ## Post-Phase-2 repository organization — service directories
 

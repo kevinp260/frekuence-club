@@ -76,14 +76,18 @@ for (const navigation of [
   {
     locale: 'Albanian',
     path: '/policy/',
-    labels: ['Evente', 'Rreth nesh', 'Politika', 'Na vizito', 'SQ / EN'],
-    hrefs: ['/events/', '/about/', '/policy/', '/visit/', '/en/policy/'],
+    labels: ['Evente', 'Rreth nesh', 'Politika', 'Na vizito'],
+    hrefs: ['/events/', '/about/', '/policy/', '/visit/'],
+    languageHref: '/en/policy/',
+    selectedLanguage: 'SQ',
   },
   {
     locale: 'English',
     path: '/en/policy/',
-    labels: ['Events', 'About', 'Policy', 'Visit', 'SQ / EN'],
-    hrefs: ['/en/events/', '/en/about/', '/en/policy/', '/en/visit/', '/policy/'],
+    labels: ['Events', 'About', 'Policy', 'Visit'],
+    hrefs: ['/en/events/', '/en/about/', '/en/policy/', '/en/visit/'],
+    languageHref: '/policy/',
+    selectedLanguage: 'EN',
   },
 ]) {
   test(`${navigation.locale} frequency dial preserves destination order and localized routes`, async ({
@@ -93,13 +97,21 @@ for (const navigation of [
     await page.goto(navigation.path);
 
     const links = page.locator('.dial-navigation [data-navigation-link]');
-    await expect(links).toHaveCount(5);
+    await expect(links).toHaveCount(4);
     expect(await links.locator('.dial-label').allTextContents()).toEqual(navigation.labels);
     expect(
       await links.evaluateAll((elements) =>
         elements.map((element) => element.getAttribute('href')),
       ),
     ).toEqual(navigation.hrefs);
+
+    const language = page.locator('[data-language-switch]');
+    await expect(language).toBeVisible();
+    await expect(language).toHaveAttribute('href', navigation.languageHref);
+    await expect(language.locator('.is-selected')).toHaveText(navigation.selectedLanguage);
+    expect(await language.evaluate((element) => element.closest('.dial-navigation') === null)).toBe(
+      true,
+    );
 
     const brand = page.locator('.brand-link');
     await expect(brand).toHaveAttribute('href', navigation.locale === 'English' ? '/en/' : '/');
@@ -112,8 +124,14 @@ for (const width of [1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/about/');
     await expect(page.locator('.dial-navigation')).toBeVisible();
+    await expect(page.locator('[data-language-switch]')).toBeVisible();
     await expect(page.locator('[data-compact-frequency]')).toBeHidden();
     await expect(page.locator('.nav-toggle')).toBeHidden();
+    expect(
+      await page
+        .locator('.site-header')
+        .evaluate((element) => element.getBoundingClientRect().height),
+    ).toBeLessThanOrEqual(121);
   });
 }
 
@@ -126,6 +144,133 @@ for (const width of [320, 390, 768]) {
     await expect(page.locator('[data-navigation-shell]')).toBeHidden();
   });
 }
+
+test('frequency dial uses isolated rounded separator groups in every responsive variant', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/about/');
+
+  await expect(page.locator('.dial-track')).toHaveCount(0);
+  const desktopSegments = page.locator('.dial-navigation .frequency-segment--station');
+  await expect(desktopSegments).toHaveCount(4);
+  expect(
+    await desktopSegments.evaluateAll((segments) =>
+      segments.map((segment) => segment.querySelectorAll('.frequency-tick').length),
+    ),
+  ).toEqual([4, 4, 4, 4]);
+
+  const desktopGeometry = await desktopSegments.evaluateAll((segments) =>
+    segments.map((segment) => {
+      const bounds = segment.getBoundingClientRect();
+      const markerBounds = segment.querySelector('.frequency-marker')?.getBoundingClientRect();
+      const positions = [
+        bounds.left,
+        ...[...segment.querySelectorAll('.frequency-tick')].map((tick) => {
+          const tickBounds = tick.getBoundingClientRect();
+          return tickBounds.left + tickBounds.width / 2;
+        }),
+        markerBounds === undefined ? Number.NaN : markerBounds.left + markerBounds.width / 2,
+        bounds.right,
+      ].sort((left, right) => left - right);
+      const gaps = positions.slice(1).map((position, index) => position - positions[index]!);
+      const major = getComputedStyle(segment, '::before');
+      return {
+        borderRadius: major.borderRadius,
+        evenlySpaced: Math.max(...gaps) - Math.min(...gaps) < 1,
+        left: bounds.left,
+        majorWidth: major.width,
+        right: bounds.right,
+      };
+    }),
+  );
+  expect(desktopGeometry.every(({ evenlySpaced }) => evenlySpaced)).toBe(true);
+  expect(desktopGeometry.every(({ majorWidth }) => majorWidth === '2px')).toBe(true);
+  expect(desktopGeometry.every(({ borderRadius }) => borderRadius !== '0px')).toBe(true);
+  expect(
+    desktopGeometry
+      .slice(1)
+      .every(
+        ({ left }, index) => Math.abs(left - (desktopGeometry[index]?.right ?? Number.NaN)) < 1,
+      ),
+  ).toBe(true);
+  const desktopTermini = page.locator('.dial-navigation > .dial-terminus');
+  await expect(desktopTermini).toHaveCount(2);
+  await expect(desktopTermini.locator('.frequency-terminus__tick')).toHaveCount(4);
+  expect(
+    await desktopTermini.evaluateAll((termini) =>
+      termini.every((terminus) => {
+        const ticks = [...terminus.querySelectorAll('.frequency-terminus__tick')];
+        const edge = ticks.find((tick) =>
+          tick.classList.contains('frequency-terminus__tick--edge'),
+        );
+        const inner = ticks.find((tick) =>
+          tick.classList.contains('frequency-terminus__tick--inner'),
+        );
+        return (
+          edge !== undefined &&
+          inner !== undefined &&
+          Number.parseFloat(getComputedStyle(edge).opacity) <
+            Number.parseFloat(getComputedStyle(inner).opacity)
+        );
+      }),
+    ),
+  ).toBe(true);
+  await expect(page.locator('.site-header')).toHaveCSS('border-top-width', '0px');
+  await expect(page.locator('.site-header')).toHaveCSS('border-bottom-width', '0px');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const compactScale = page.locator('[data-compact-frequency] .compact-frequency__scale');
+  const compactSegment = compactScale.locator('.frequency-segment--compact');
+  await expect(compactSegment).toBeVisible();
+  await expect(compactSegment.locator('.frequency-tick')).toHaveCount(4);
+  await expect(compactScale.locator('.frequency-terminus')).toHaveCount(2);
+
+  await page.locator('.nav-toggle').click();
+  const overlaySegments = page.locator('.dial-navigation .frequency-segment--station');
+  await expect(overlaySegments).toHaveCount(4);
+  expect(
+    await overlaySegments.evaluateAll((segments) =>
+      segments.every((segment) => {
+        const bounds = segment.getBoundingClientRect();
+        const markerBounds = segment.querySelector('.frequency-marker')?.getBoundingClientRect();
+        const positions = [
+          bounds.top,
+          ...[...segment.querySelectorAll('.frequency-tick')].map((tick) => {
+            const tickBounds = tick.getBoundingClientRect();
+            return tickBounds.top + tickBounds.height / 2;
+          }),
+          markerBounds === undefined ? Number.NaN : markerBounds.top + markerBounds.height / 2,
+          bounds.bottom,
+        ].sort((top, bottom) => top - bottom);
+        const gaps = positions.slice(1).map((position, index) => position - positions[index]!);
+        const stationBounds = segment.closest('.dial-station')?.getBoundingClientRect();
+        return (
+          segment.querySelectorAll('.frequency-tick').length === 4 &&
+          Math.max(...gaps) - Math.min(...gaps) < 1 &&
+          stationBounds !== undefined &&
+          Math.abs(bounds.height - stationBounds.height) < 1
+        );
+      }),
+    ),
+  ).toBe(true);
+  const overlayTermini = page.locator('.dial-navigation > .dial-terminus');
+  await expect(overlayTermini).toHaveCount(2);
+  const overlayAxisAlignment = await page.locator('.dial-navigation').evaluate((navigation) => {
+    const marker = navigation.querySelector('.frequency-marker');
+    const ticks = [...navigation.querySelectorAll('.dial-terminus .frequency-terminus__tick')];
+    const markerBounds = marker?.getBoundingClientRect();
+    if (markerBounds === undefined) return [];
+
+    const markerCenter = markerBounds.left + markerBounds.width / 2;
+    return ticks.map((tick) => {
+      const tickBounds = tick.getBoundingClientRect();
+      return Math.abs(tickBounds.left + tickBounds.width / 2 - markerCenter);
+    });
+  });
+  expect(overlayAxisAlignment).toHaveLength(4);
+  expect(overlayAxisAlignment.every((offset) => offset < 1)).toBe(true);
+});
 
 test('homepage leads with the truthful event state and omits migrated summaries', async ({
   page,
@@ -421,7 +566,7 @@ test('Tab and Shift+Tab remain contained in the open mobile overlay', async ({ p
   await page.goto('/policy/');
   await page.locator('.nav-toggle').click();
   const overlayBrand = page.locator('.overlay-brand');
-  const language = page.locator('[data-dial-station="language"] a');
+  const language = page.locator('[data-language-switch]');
 
   await overlayBrand.focus();
   await page.keyboard.press('Shift+Tab');
@@ -513,16 +658,183 @@ test('active route uses one symbolic frequency while homepage remains neutral', 
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/policy/');
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(
+    false,
+  );
   const active = page.locator('[data-dial-station="policy"]');
   await expect(active.getByRole('link')).toHaveAttribute('aria-current', 'page');
   await expect(active.locator('.dial-frequency')).toHaveText('7.83 Hz');
   await expect(page.locator('.dial-station--active')).toHaveCount(1);
+  const activeCenters = await page.evaluate(() => {
+    const cursor = document.querySelector('[data-dial-cursor]')?.getBoundingClientRect();
+    const marker = document
+      .querySelector('.dial-station--active .dial-marker')
+      ?.getBoundingClientRect();
+    return {
+      cursor: cursor && { x: cursor.left + cursor.width / 2, y: cursor.top + cursor.height / 2 },
+      marker: marker && { x: marker.left + marker.width / 2, y: marker.top + marker.height / 2 },
+    };
+  });
+  expect(Math.abs((activeCenters.cursor?.x ?? 0) - (activeCenters.marker?.x ?? 1))).toBeLessThan(1);
+  expect(Math.abs((activeCenters.cursor?.y ?? 0) - (activeCenters.marker?.y ?? 1))).toBeLessThan(1);
 
   await page.goto('/');
   await expect(page.locator('.dial-station--active')).toHaveCount(0);
   await expect(page.locator('.dial-navigation [aria-current="page"]')).toHaveCount(0);
   await expect(page.locator('[data-compact-frequency]')).not.toHaveClass(/--active/);
   await expect(page.locator('.brand-link')).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('[data-dial-cursor]')).not.toHaveClass(/dial-cursor--visible/);
+});
+
+test('desktop tuning cursor travels to the activated station before navigation', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/policy/');
+
+  const cursor = page.locator('[data-dial-cursor]');
+  const destination = page.locator('[data-dial-station="events"]');
+  const start = await cursor.boundingBox();
+  const target = await destination.locator('.dial-marker').boundingBox();
+  expect(start).not.toBeNull();
+  expect(target).not.toBeNull();
+
+  const navigation = page.waitForURL(/\/events\/$/);
+  const tuningState = await destination.getByRole('link').evaluate(async (link) => {
+    (link as HTMLAnchorElement).click();
+    await new Promise((resolve) => window.setTimeout(resolve, 70));
+    const dial = document.querySelector('.dial-navigation');
+    const station = link.closest('[data-dial-station]');
+    const cursorElement = document.querySelector('[data-dial-cursor]');
+    const cursorRect = cursorElement?.getBoundingClientRect();
+    return {
+      tuning: dial?.getAttribute('data-tuning'),
+      target: station?.classList.contains('dial-station--tuning-target'),
+      cursor: cursorRect && {
+        x: cursorRect.x,
+        y: cursorRect.y,
+        width: cursorRect.width,
+        height: cursorRect.height,
+      },
+    };
+  });
+  expect(tuningState.tuning).toBe('true');
+  expect(tuningState.target).toBe(true);
+
+  const moving = tuningState.cursor;
+  expect(moving).not.toBeNull();
+  const startCenter = (start?.x ?? 0) + (start?.width ?? 0) / 2;
+  const targetCenter = (target?.x ?? 0) + (target?.width ?? 0) / 2;
+  const movingCenter = (moving?.x ?? 0) + (moving?.width ?? 0) / 2;
+  expect(movingCenter).toBeGreaterThan(Math.min(startCenter, targetCenter) + 2);
+  expect(movingCenter).toBeLessThan(Math.max(startCenter, targetCenter) - 2);
+
+  await navigation;
+  await expect(page.locator('[data-dial-station="events"] a')).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+
+  await page.goBack();
+  await expect(page.locator('[data-dial-station="policy"] a')).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(page.locator('.dial-navigation')).not.toHaveAttribute('data-tuning', 'true');
+  await expect(page.locator('.dial-station--tuning-target')).toHaveCount(0);
+  await expect(page.locator('[data-dial-cursor]')).toHaveClass(/dial-cursor--station-2/);
+});
+
+test('mobile tuning cursor traverses the open vertical dial before it closes', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/about/');
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(
+    false,
+  );
+  await page.locator('.nav-toggle').click();
+
+  const cursor = page.locator('[data-dial-cursor]');
+  const destination = page.locator('[data-dial-station="visit"]');
+  const start = await cursor.boundingBox();
+  const target = await destination.locator('.dial-marker').boundingBox();
+  expect(start).not.toBeNull();
+  expect(target).not.toBeNull();
+
+  const navigation = page.waitForURL(/\/visit\/$/);
+  const tuningState = await destination.getByRole('link').evaluate(async (link) => {
+    (link as HTMLAnchorElement).click();
+    await new Promise((resolve) => window.setTimeout(resolve, 70));
+    const dial = document.querySelector('.dial-navigation');
+    const shell = document.querySelector('#primary-navigation');
+    const cursorElement = document.querySelector('[data-dial-cursor]');
+    const cursorRect = cursorElement?.getBoundingClientRect();
+    return {
+      tuning: dial?.getAttribute('data-tuning'),
+      menuVisible: shell instanceof HTMLElement && !shell.hidden,
+      cursor: cursorRect && {
+        x: cursorRect.x,
+        y: cursorRect.y,
+        width: cursorRect.width,
+        height: cursorRect.height,
+      },
+    };
+  });
+  expect(tuningState.menuVisible).toBe(true);
+  expect(tuningState.tuning).toBe('true');
+
+  const moving = tuningState.cursor;
+  expect(moving).not.toBeNull();
+  const startCenter = (start?.y ?? 0) + (start?.height ?? 0) / 2;
+  const targetCenter = (target?.y ?? 0) + (target?.height ?? 0) / 2;
+  const movingCenter = (moving?.y ?? 0) + (moving?.height ?? 0) / 2;
+  expect(movingCenter).toBeGreaterThan(Math.min(startCenter, targetCenter) + 2);
+  expect(movingCenter).toBeLessThan(Math.max(startCenter, targetCenter) - 2);
+
+  await navigation;
+  await expect(page.locator('.nav-toggle')).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('language switch bypasses tuning while homepage tuning begins from the leading terminus', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const cursor = page.locator('[data-dial-cursor]');
+  await expect(cursor).toHaveClass(/dial-cursor--origin/);
+  await expect(cursor).not.toHaveClass(/dial-cursor--visible/);
+
+  let navigation = page.waitForURL(/\/about\/$/);
+  await page
+    .locator('[data-dial-station="about"] a')
+    .evaluate((link) => (link as HTMLAnchorElement).click());
+  await expect(cursor).toHaveClass(/dial-cursor--visible/);
+  await navigation;
+
+  const language = page.locator('[data-language-switch]');
+  await expect(language).toHaveAttribute('href', '/en/about/');
+  await expect(language.locator('.is-selected')).toHaveText('SQ');
+  expect(await language.evaluate((element) => element.closest('.dial-navigation') === null)).toBe(
+    true,
+  );
+
+  navigation = page.waitForURL(/\/en\/about\/$/);
+  await language.evaluate((link) => {
+    document.addEventListener(
+      'click',
+      (event) => {
+        sessionStorage.setItem('language-navigation-prevented', String(event.defaultPrevented));
+      },
+      { once: true },
+    );
+    (link as HTMLAnchorElement).click();
+  });
+  await navigation;
+  expect(await page.evaluate(() => sessionStorage.getItem('language-navigation-prevented'))).toBe(
+    'false',
+  );
+  await expect(page.locator('.dial-navigation')).not.toHaveAttribute('data-tuning', 'true');
+  await expect(page.locator('[data-dial-cursor]')).toHaveClass(/dial-cursor--station-1/);
+  await expect(page.locator('[data-language-switch] .is-selected')).toHaveText('EN');
 });
 
 test('localized event detail routes activate the Events station', async ({ page }) => {
@@ -540,7 +852,7 @@ test('mobile overlay remains scrollable and the final station reachable on a sho
   await page.goto('/policy/');
   await page.locator('.nav-toggle').click();
   const navigation = page.locator('#primary-navigation');
-  const language = page.locator('[data-dial-station="language"] a');
+  const language = page.locator('[data-language-switch]');
   await language.scrollIntoViewIfNeeded();
   await expect(language).toBeVisible();
   const layout = await navigation.evaluate((element) => ({
@@ -602,7 +914,7 @@ test('server-rendered mobile navigation remains usable without JavaScript', asyn
   await page.goto('/');
   await expect(page.locator('.nav-toggle')).toBeHidden();
   await expect(page.locator('#primary-navigation')).toBeVisible();
-  await expect(page.locator('.dial-navigation [data-navigation-link]')).toHaveCount(5);
+  await expect(page.locator('.dial-navigation [data-navigation-link]')).toHaveCount(4);
   await expect(
     page.locator('#primary-navigation').getByRole('link', { name: 'Evente', exact: true }),
   ).toBeVisible();
@@ -681,13 +993,34 @@ test('reduced-motion frequency dial opens without meaningful transitions', async
   await page.locator('.nav-toggle').click();
   await expect(page.locator('#primary-navigation')).toBeVisible();
   const durations = await page
-    .locator('.dial-marker')
-    .first()
-    .evaluate((element) => {
-      const style = getComputedStyle(element);
-      return style.transitionDuration.split(',').map((duration) => Number.parseFloat(duration));
+    .locator('.dial-marker, [data-dial-cursor], .language-switch__control')
+    .evaluateAll((elements) => {
+      return elements.flatMap((element) =>
+        getComputedStyle(element)
+          .transitionDuration.split(',')
+          .map((duration) => Number.parseFloat(duration)),
+      );
     });
   expect(Math.max(...durations)).toBeLessThanOrEqual(0.01);
+
+  const navigation = page.waitForURL(/\/about\/$/);
+  await page.locator('[data-dial-station="about"] a').evaluate((link) => {
+    document.addEventListener(
+      'click',
+      (event) => {
+        sessionStorage.setItem(
+          'reduced-motion-navigation-prevented',
+          String(event.defaultPrevented),
+        );
+      },
+      { once: true },
+    );
+    (link as HTMLAnchorElement).click();
+  });
+  await navigation;
+  expect(
+    await page.evaluate(() => sessionStorage.getItem('reduced-motion-navigation-prevented')),
+  ).toBe('false');
 });
 
 test('reduced-motion event deck retains state changes without transitions', async ({ page }) => {

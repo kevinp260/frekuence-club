@@ -1,12 +1,15 @@
 const compactQuery = window.matchMedia('(max-width: 63.999rem)');
+const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 const header = document.querySelector('[data-site-header]');
 
 if (header instanceof HTMLElement) {
   const button = header.querySelector('.nav-toggle');
   const closeButton = header.querySelector('[data-navigation-close]');
   const navigation = header.querySelector('[data-navigation-shell]');
+  const dialNavigation = header.querySelector('.dial-navigation');
   const overlayHeader = header.querySelector('.overlay-header');
   const firstDestination = header.querySelector('[data-navigation-link]');
+  const dialCursor = header.querySelector('[data-dial-cursor]');
   const backgroundRegions = () =>
     [
       document.querySelector('.skip-link'),
@@ -17,7 +20,8 @@ if (header instanceof HTMLElement) {
   if (
     button instanceof HTMLButtonElement &&
     closeButton instanceof HTMLButtonElement &&
-    navigation instanceof HTMLElement
+    navigation instanceof HTMLElement &&
+    dialNavigation instanceof HTMLElement
   ) {
     const isOpen = () => compactQuery.matches && button.getAttribute('aria-expanded') === 'true';
 
@@ -60,6 +64,121 @@ if (header instanceof HTMLElement) {
       [...navigation.querySelectorAll('a[href], button:not([disabled])')].filter(
         (element) => element instanceof HTMLElement && element.offsetParent !== null,
       );
+
+    const cursorPositionClasses = [
+      'dial-cursor--origin',
+      'dial-cursor--station-0',
+      'dial-cursor--station-1',
+      'dial-cursor--station-2',
+      'dial-cursor--station-3',
+    ];
+    let isTuning = false;
+
+    const resetTuning = (resumeMotion = true) => {
+      isTuning = false;
+      delete dialNavigation.dataset.tuning;
+
+      for (const station of navigation.querySelectorAll('.dial-station--tuning-target')) {
+        station.classList.remove('dial-station--tuning-target');
+      }
+
+      if (!(dialCursor instanceof HTMLElement)) return;
+
+      dialCursor.classList.add('dial-cursor--resetting');
+      const stations = [...navigation.querySelectorAll('[data-dial-station]')];
+      const activeIndex = stations.findIndex((station) =>
+        station.classList.contains('dial-station--active'),
+      );
+      dialCursor.classList.remove(...cursorPositionClasses);
+      dialCursor.classList.add(
+        activeIndex >= 0 ? `dial-cursor--station-${activeIndex}` : 'dial-cursor--origin',
+      );
+      dialCursor.classList.toggle('dial-cursor--visible', activeIndex >= 0);
+
+      if (resumeMotion) {
+        window.requestAnimationFrame(() => dialCursor.classList.remove('dial-cursor--resetting'));
+      }
+    };
+
+    const tuneToDestination = (event, link) => {
+      if (
+        !(link instanceof HTMLAnchorElement) ||
+        !(dialCursor instanceof HTMLElement) ||
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        link.hasAttribute('download') ||
+        (link.target !== '' && link.target !== '_self') ||
+        reducedMotionQuery.matches
+      ) {
+        return false;
+      }
+
+      const destination = link.closest('[data-dial-station]');
+      if (!(destination instanceof HTMLElement)) return false;
+
+      const stations = [...navigation.querySelectorAll('[data-dial-station]')];
+      const targetIndex = stations.indexOf(destination);
+      const activeIndex = stations.findIndex((station) =>
+        station.classList.contains('dial-station--active'),
+      );
+      const url = new window.URL(link.href, window.location.href);
+      const isCurrentDocument =
+        url.origin === window.location.origin &&
+        url.pathname === window.location.pathname &&
+        url.search === window.location.search &&
+        url.hash === window.location.hash;
+
+      if (url.origin !== window.location.origin || targetIndex < 0 || targetIndex === activeIndex) {
+        return false;
+      }
+
+      if (isCurrentDocument || isTuning) {
+        event.preventDefault();
+        return true;
+      }
+
+      event.preventDefault();
+      isTuning = true;
+      dialNavigation.dataset.tuning = 'true';
+      destination.classList.add('dial-station--tuning-target');
+      dialCursor.classList.add('dial-cursor--visible');
+
+      const transitionProperty = compactQuery.matches ? 'top' : 'left';
+      let fallbackTimer;
+      let navigationStarted = false;
+
+      const navigate = () => {
+        if (navigationStarted) return;
+        navigationStarted = true;
+        window.clearTimeout(fallbackTimer);
+        dialCursor.removeEventListener('transitionend', handleTransitionEnd);
+        window.location.assign(url.href);
+      };
+
+      const handleTransitionEnd = (transitionEvent) => {
+        if (
+          transitionEvent.target === dialCursor &&
+          transitionEvent.propertyName === transitionProperty
+        ) {
+          navigate();
+        }
+      };
+
+      dialCursor.addEventListener('transitionend', handleTransitionEnd);
+      dialCursor.getBoundingClientRect();
+
+      window.requestAnimationFrame(() => {
+        dialCursor.classList.remove(...cursorPositionClasses);
+        dialCursor.classList.add(`dial-cursor--station-${targetIndex}`);
+        fallbackTimer = window.setTimeout(navigate, 280);
+      });
+
+      return true;
+    };
 
     let wasCompact = compactQuery.matches;
     let lastFocusedNavigationControl = null;
@@ -129,7 +248,11 @@ if (header instanceof HTMLElement) {
 
     navigation.addEventListener('click', (event) => {
       const target = event.target;
-      if (target instanceof HTMLElement && target.closest('a[href]') && compactQuery.matches) {
+      const link = target instanceof HTMLElement ? target.closest('[data-navigation-link]') : null;
+
+      if (link instanceof HTMLAnchorElement && tuneToDestination(event, link)) return;
+
+      if (link instanceof HTMLAnchorElement && compactQuery.matches) {
         setOpen(false);
       }
     });
@@ -165,7 +288,13 @@ if (header instanceof HTMLElement) {
     });
 
     compactQuery.addEventListener('change', syncBreakpoint);
-    window.addEventListener('pagehide', () => setOpen(false));
-    window.addEventListener('pageshow', syncBreakpoint);
+    window.addEventListener('pagehide', () => {
+      setOpen(false);
+      resetTuning(false);
+    });
+    window.addEventListener('pageshow', () => {
+      resetTuning();
+      syncBreakpoint();
+    });
   }
 }

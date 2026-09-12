@@ -13,13 +13,10 @@ interface Props {
 }
 
 type DialDestination = {
-  key: 'events' | 'about' | 'policy' | 'visit' | 'language';
+  key: 'events' | 'about' | 'policy' | 'visit';
   label: string;
   href: string;
   active: boolean;
-  accessibleLabel?: string;
-  lang?: string;
-  hreflang?: string;
 };
 
 const { locale, page, alternateHref } = Astro.props;
@@ -27,23 +24,18 @@ const copy = t(locale);
 const alternate = alternateLocale(locale);
 const navPages = ['events', 'about', 'policy', 'visit'] as const;
 const languageLabel = 'SQ / EN';
-const destinations: DialDestination[] = [
-  ...navPages.map((navPage) => ({
-    key: navPage,
-    label: copy.global.nav[navPage],
-    href: routeFor(navPage, locale),
-    active: page === navPage,
-  })),
-  {
-    key: 'language',
-    label: languageLabel,
-    href: alternateHref ?? routeFor(page, alternate),
-    active: false,
-    accessibleLabel: `${languageLabel} — ${copy.global.languageSwitch}`,
-    lang: t(alternate).documentLang,
-    hreflang: t(alternate).documentLang,
-  },
-];
+const frequencyTicks = ['outer-start', 'inner-start', 'inner-end', 'outer-end'] as const;
+const terminusTicks = ['edge', 'inner'] as const;
+const destinations: DialDestination[] = navPages.map((navPage) => ({
+  key: navPage,
+  label: copy.global.nav[navPage],
+  href: routeFor(navPage, locale),
+  active: page === navPage,
+}));
+const languageHref = alternateHref ?? routeFor(page, alternate);
+const languageAccessibleLabel = `${languageLabel} — ${copy.global.languageSwitch}`;
+const alternateDocumentLang = t(alternate).documentLang;
+const activeDestinationIndex = destinations.findIndex((destination) => destination.active);
 const hasCompactFrequency = page !== 'home';
 ---
 
@@ -64,8 +56,26 @@ const hasCompactFrequency = page !== 'home';
       aria-hidden="true"
       data-compact-frequency
     >
-      <span class="compact-frequency__track"></span>
-      <span class="compact-frequency__station"></span>
+      <span class="compact-frequency__scale">
+        <span class="frequency-terminus frequency-terminus--start">
+          {
+            terminusTicks.map((tick) => (
+              <span class={`frequency-terminus__tick frequency-terminus__tick--${tick}`} />
+            ))
+          }
+        </span>
+        <span class="frequency-segment frequency-segment--compact">
+          {frequencyTicks.map((tick) => <span class={`frequency-tick frequency-tick--${tick}`} />)}
+          <span class="compact-frequency__station frequency-marker"></span>
+        </span>
+        <span class="frequency-terminus frequency-terminus--end">
+          {
+            terminusTicks.map((tick) => (
+              <span class={`frequency-terminus__tick frequency-terminus__tick--${tick}`} />
+            ))
+          }
+        </span>
+      </span>
       {hasCompactFrequency && <span class="compact-frequency__label">7.83 Hz</span>}
     </div>
 
@@ -105,38 +115,84 @@ const hasCompactFrequency = page !== 'home';
       </div>
 
       <nav class="dial-navigation" aria-label={copy.global.navigation}>
-        <div class="dial-track" aria-hidden="true"></div>
-        <ul>
-          {
-            destinations.map((destination) => (
-              <li
-                class:list={[
-                  'dial-station',
-                  { 'dial-station--active': destination.active },
-                  { 'dial-station--language': destination.key === 'language' },
-                ]}
-                data-dial-station={destination.key}
-              >
-                <a
-                  class="dial-link"
-                  href={destination.href}
-                  aria-current={destination.active ? 'page' : undefined}
-                  aria-label={destination.accessibleLabel}
-                  lang={destination.lang}
-                  hreflang={destination.hreflang}
-                  data-navigation-link
+        <span class="dial-terminus dial-terminus--start" aria-hidden="true">
+          <span class="frequency-terminus frequency-terminus--start">
+            {
+              terminusTicks.map((tick) => (
+                <span class={`frequency-terminus__tick frequency-terminus__tick--${tick}`} />
+              ))
+            }
+          </span>
+        </span>
+        <div class="dial-stations">
+          <ul>
+            {
+              destinations.map((destination) => (
+                <li
+                  class:list={['dial-station', { 'dial-station--active': destination.active }]}
+                  data-dial-station={destination.key}
                 >
-                  <span class="dial-frequency" aria-hidden="true">
-                    {destination.active ? '7.83 Hz' : ''}
-                  </span>
-                  <span class="dial-marker" aria-hidden="true" />
-                  <span class="dial-label">{destination.label}</span>
-                </a>
-              </li>
-            ))
-          }
-        </ul>
+                  <a
+                    class="dial-link"
+                    href={destination.href}
+                    aria-current={destination.active ? 'page' : undefined}
+                    data-navigation-link
+                  >
+                    <span class="dial-frequency" aria-hidden="true">
+                      {destination.active ? '7.83 Hz' : ''}
+                    </span>
+                    <span class="frequency-segment frequency-segment--station" aria-hidden="true">
+                      {frequencyTicks.map((tick) => (
+                        <span class={`frequency-tick frequency-tick--${tick}`} />
+                      ))}
+                      <span class="dial-marker frequency-marker" />
+                    </span>
+                    <span class="dial-label">{destination.label}</span>
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+          <span
+            class:list={[
+              'dial-cursor',
+              activeDestinationIndex >= 0
+                ? `dial-cursor--station-${activeDestinationIndex}`
+                : 'dial-cursor--origin',
+              { 'dial-cursor--visible': activeDestinationIndex >= 0 },
+            ]}
+            data-dial-cursor
+            aria-hidden="true"></span>
+        </div>
+        <span class="dial-terminus dial-terminus--end" aria-hidden="true">
+          <span class="frequency-terminus frequency-terminus--end">
+            {
+              terminusTicks.map((tick) => (
+                <span class={`frequency-terminus__tick frequency-terminus__tick--${tick}`} />
+              ))
+            }
+          </span>
+        </span>
       </nav>
+
+      <a
+        class="language-switch"
+        href={languageHref}
+        aria-label={languageAccessibleLabel}
+        lang={alternateDocumentLang}
+        hreflang={alternateDocumentLang}
+        data-language-switch
+        data-navigation-link
+      >
+        <span class="language-switch__control" aria-hidden="true">
+          <span class:list={['language-switch__option', { 'is-selected': locale === 'sq' }]}
+            >SQ</span
+          >
+          <span class:list={['language-switch__option', { 'is-selected': locale === 'en' }]}
+            >EN</span
+          >
+        </span>
+      </a>
 
       <p class="overlay-context">{copy.global.address}</p>
     </div>
@@ -150,7 +206,6 @@ const hasCompactFrequency = page !== 'home';
     position: sticky;
     z-index: 80;
     top: 0;
-    border-block: 1px solid var(--color-gray-dark);
     background: var(--color-black);
   }
 
@@ -159,7 +214,6 @@ const hasCompactFrequency = page !== 'home';
     grid-template-columns: clamp(15.5rem, 22vw, 19rem) minmax(0, 1fr);
     align-items: stretch;
     min-height: var(--header-height);
-    border-inline: 1px solid var(--color-gray-dark);
     background: var(--color-black);
   }
 
@@ -202,6 +256,8 @@ const hasCompactFrequency = page !== 'home';
   }
 
   .navigation-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(7.25rem, 9vw, 8.5rem);
     min-width: 0;
   }
 
@@ -210,67 +266,248 @@ const hasCompactFrequency = page !== 'home';
   }
 
   .dial-navigation {
-    --dial-line-y: 3.78rem;
     position: relative;
+    display: grid;
+    grid-template-columns: 3fr minmax(0, 30fr) 3fr;
     height: 100%;
     min-height: var(--header-height);
     overflow: hidden;
   }
 
-  .dial-track {
-    position: absolute;
-    z-index: 0;
-    top: var(--dial-line-y);
-    right: 10%;
-    left: 10%;
-    height: 1px;
-    background: var(--color-slate-dark);
+  .language-switch {
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    min-height: var(--header-height);
+    padding: 0.75rem;
+    border-left: 1px solid var(--color-gray-dark);
+    color: var(--color-white);
+    text-decoration: none;
+  }
+
+  .language-switch__control {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(2.5rem, 1fr));
+    min-width: 5.5rem;
+    overflow: hidden;
+    border: 1px solid var(--color-slate-light);
+    border-radius: 999px;
+    background: var(--color-black);
+    transition: border-color 180ms ease;
+  }
+
+  .language-switch__option {
+    display: grid;
+    place-items: center;
+    min-height: 2rem;
+    padding: 0.25rem 0.45rem;
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    line-height: 1;
+  }
+
+  .language-switch__option + .language-switch__option {
+    border-left: 1px solid var(--color-slate-light);
+  }
+
+  .language-switch__option.is-selected {
+    background: var(--color-white);
+    color: var(--color-black);
+  }
+
+  .language-switch:hover .language-switch__control {
+    border-color: var(--color-white);
+  }
+
+  .language-switch:focus-visible {
+    outline: 2px solid var(--color-white);
+    outline-offset: -0.45rem;
+  }
+
+  .frequency-segment {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 1.6rem;
     pointer-events: none;
   }
 
-  .dial-track::after {
+  .frequency-segment::before,
+  .frequency-segment::after {
     position: absolute;
-    top: -0.32rem;
-    right: 0;
-    bottom: -0.32rem;
-    left: 0;
-    background: repeating-linear-gradient(
-      to right,
-      transparent 0,
-      transparent calc(4.166% - 1px),
-      var(--color-slate-light) calc(4.166% - 1px),
-      var(--color-slate-light) 4.166%
-    );
+    top: 50%;
+    width: 2px;
+    height: 1.125rem;
+    border-radius: 999px;
+    background: var(--color-white);
     content: '';
-    opacity: 0.72;
+    opacity: 0.86;
+    transform: translate(-50%, -50%);
   }
 
-  .dial-track::before {
-    position: absolute;
-    top: -0.55rem;
-    right: 0;
-    bottom: -0.55rem;
+  .frequency-segment::before {
     left: 0;
-    background: repeating-linear-gradient(
-      to right,
-      transparent 0,
-      transparent calc(20% - 1px),
-      var(--color-white) calc(20% - 1px),
-      var(--color-white) 20%
-    );
-    content: '';
-    opacity: 0.82;
+  }
+
+  .frequency-segment::after {
+    left: 100%;
+  }
+
+  .frequency-tick {
+    position: absolute;
+    top: 50%;
+    width: 2px;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--color-slate-light);
+    opacity: 0.78;
+    transform: translate(-50%, -50%);
+  }
+
+  .frequency-tick--outer-start {
+    left: calc(100% / 6);
+  }
+
+  .frequency-tick--inner-start {
+    left: calc(100% / 3);
+  }
+
+  .frequency-tick--inner-end {
+    left: calc(200% / 3);
+  }
+
+  .frequency-tick--outer-end {
+    left: calc(500% / 6);
+  }
+
+  .frequency-marker {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .frequency-terminus {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 1.6rem;
+    pointer-events: none;
+  }
+
+  .frequency-terminus__tick {
+    position: absolute;
+    top: 50%;
+    width: 2px;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--color-slate-light);
+    opacity: 0.78;
+    transform: translate(-50%, -50%);
+  }
+
+  .frequency-terminus--start .frequency-terminus__tick--edge,
+  .frequency-terminus--end .frequency-terminus__tick--inner {
+    left: calc(100% / 3);
+  }
+
+  .frequency-terminus--start .frequency-terminus__tick--inner,
+  .frequency-terminus--end .frequency-terminus__tick--edge {
+    left: calc(200% / 3);
+  }
+
+  .frequency-terminus__tick--edge {
+    opacity: 0.34;
+  }
+
+  .dial-terminus {
+    display: grid;
+    grid-template-rows: 1.6rem 1.6rem minmax(2.2rem, auto);
+    align-content: center;
+    min-height: var(--header-height);
+    padding: 0.65rem 0 0.45rem;
+  }
+
+  .dial-terminus--start {
+    grid-column: 1;
+  }
+
+  .dial-terminus--end {
+    grid-column: 3;
+  }
+
+  .dial-terminus .frequency-terminus {
+    grid-row: 2;
+  }
+
+  .dial-stations {
+    position: relative;
+    grid-column: 2;
+    min-width: 0;
+    height: 100%;
   }
 
   .dial-navigation ul {
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     height: 100%;
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  .dial-cursor {
+    --dial-cursor-position: -4.166667%;
+    position: absolute;
+    z-index: 3;
+    top: calc(50% - 0.2rem);
+    left: var(--dial-cursor-position);
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--color-signal-red);
+    border-radius: 50%;
+    background: var(--color-signal-red);
+    box-shadow:
+      0 0 0 3px var(--color-black),
+      0 0 0 5px var(--color-signal-red),
+      0 0 0.7rem rgb(255 1 1 / 38%);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition:
+      left 200ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      top 200ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 80ms linear,
+      border-color 120ms ease,
+      background-color 120ms ease,
+      box-shadow 120ms ease;
+  }
+
+  .dial-cursor--visible {
+    opacity: 1;
+  }
+
+  .dial-cursor--resetting {
+    transition: none;
+  }
+
+  .dial-cursor--station-0 {
+    --dial-cursor-position: 12.5%;
+  }
+
+  .dial-cursor--station-1 {
+    --dial-cursor-position: 37.5%;
+  }
+
+  .dial-cursor--station-2 {
+    --dial-cursor-position: 62.5%;
+  }
+
+  .dial-cursor--station-3 {
+    --dial-cursor-position: 87.5%;
   }
 
   .dial-station {
@@ -285,7 +522,7 @@ const hasCompactFrequency = page !== 'home';
     width: 100%;
     min-width: 2.75rem;
     min-height: var(--header-height);
-    padding: 0.65rem 0.3rem 0.45rem;
+    padding: 0.65rem 0 0.45rem;
     color: var(--color-white);
     text-align: center;
     text-decoration: none;
@@ -307,7 +544,6 @@ const hasCompactFrequency = page !== 'home';
   }
 
   .dial-marker {
-    align-self: center;
     width: 1rem;
     height: 1rem;
     border: 2px solid var(--color-white);
@@ -322,7 +558,7 @@ const hasCompactFrequency = page !== 'home';
   .dial-label {
     align-self: start;
     max-width: 100%;
-    padding-top: 0.28rem;
+    padding: 0.28rem 0.3rem 0;
     font-size: clamp(0.61rem, 0.78vw, 0.78rem);
     font-weight: 750;
     letter-spacing: clamp(0.06em, 0.12vw, 0.13em);
@@ -332,7 +568,7 @@ const hasCompactFrequency = page !== 'home';
 
   .dial-link:hover .dial-marker {
     background: var(--color-white);
-    transform: scale(1.08);
+    transform: translate(-50%, -50%) scale(1.08);
   }
 
   .dial-link:focus-visible {
@@ -359,21 +595,28 @@ const hasCompactFrequency = page !== 'home';
 
   .dial-station--active .dial-marker,
   .dial-station--active .dial-link:hover .dial-marker {
-    border-color: var(--color-signal-red);
-    background: var(--color-signal-red);
-    box-shadow:
-      0 0 0 3px var(--color-black),
-      0 0 0 5px var(--color-signal-red),
-      0 0 0.7rem rgb(255 1 1 / 38%);
-    transform: none;
+    border-color: var(--color-white);
+    background: var(--color-black);
+    box-shadow: none;
+    transform: translate(-50%, -50%);
   }
 
   .dial-station--active .dial-link:focus-visible .dial-marker {
     box-shadow:
       0 0 0 3px var(--color-black),
-      0 0 0 5px var(--color-signal-red),
-      0 0 0 8px var(--color-black),
-      0 0 0 10px var(--color-white);
+      0 0 0 6px var(--color-white);
+  }
+
+  .dial-navigation[data-tuning] .dial-station--active .dial-link {
+    color: var(--color-white);
+  }
+
+  .dial-navigation[data-tuning] .dial-station--active .dial-frequency {
+    opacity: 0.36;
+  }
+
+  .dial-navigation[data-tuning] .dial-station--tuning-target .dial-link {
+    color: var(--color-signal-red);
   }
 
   .overlay-header,
@@ -417,43 +660,23 @@ const hasCompactFrequency = page !== 'home';
       overflow: hidden;
     }
 
-    .compact-frequency__track {
+    .compact-frequency__scale {
       position: absolute;
-      top: 2.04rem;
+      top: 1.24rem;
       right: clamp(0.45rem, 3vw, 1.5rem);
       left: clamp(0.45rem, 3vw, 1.5rem);
-      height: 1px;
-      background: var(--color-slate-dark);
-    }
-
-    .compact-frequency__track::after {
-      position: absolute;
-      top: -0.26rem;
-      right: 0;
-      bottom: -0.26rem;
-      left: 0;
-      background: repeating-linear-gradient(
-        to right,
-        transparent 0,
-        transparent calc(10% - 1px),
-        var(--color-slate-light) calc(10% - 1px),
-        var(--color-slate-light) 10%
-      );
-      content: '';
-      opacity: 0.8;
+      display: grid;
+      grid-template-columns: 3fr 6fr 3fr;
+      height: 1.6rem;
     }
 
     .compact-frequency__station {
-      position: absolute;
       z-index: 1;
-      top: 1.53rem;
-      left: 50%;
       width: 1.05rem;
       height: 1.05rem;
       border: 2px solid var(--color-white);
       border-radius: 50%;
       background: var(--color-black);
-      transform: translateX(-50%);
     }
 
     .compact-frequency__label {
@@ -519,8 +742,8 @@ const hasCompactFrequency = page !== 'home';
 
     .navigation-shell {
       grid-column: 1 / -1;
-      min-height: 28rem;
-      border-top: 1px solid var(--color-gray-dark);
+      grid-template-columns: 1fr;
+      min-height: 27rem;
       background: var(--color-black);
     }
 
@@ -529,7 +752,8 @@ const hasCompactFrequency = page !== 'home';
       z-index: 140;
       inset: 0;
       display: grid;
-      grid-template-rows: auto minmax(24rem, 1fr) auto;
+      grid-template-rows: auto minmax(23rem, 1fr) auto auto;
+      grid-template-columns: 1fr;
       width: 100%;
       height: 100vh;
       height: 100dvh;
@@ -551,7 +775,6 @@ const hasCompactFrequency = page !== 'home';
       min-height: calc(4.75rem + env(safe-area-inset-top));
       padding: env(safe-area-inset-top) max(1rem, env(safe-area-inset-right)) 0
         max(1rem, env(safe-area-inset-left));
-      border-bottom: 1px solid var(--color-gray-dark);
       background: var(--color-black);
     }
 
@@ -585,66 +808,135 @@ const hasCompactFrequency = page !== 'home';
 
     .dial-navigation {
       --dial-x: clamp(2.8rem, 17vw, 5.25rem);
+      display: grid;
+      grid-template-rows: 3fr minmax(19rem, 24fr) 3fr;
+      grid-template-columns: 1fr;
       height: auto;
-      min-height: 26rem;
+      min-height: 23.75rem;
       overflow: visible;
       padding: clamp(1rem, 3vh, 2rem) max(1rem, env(safe-area-inset-right)) clamp(1rem, 3vh, 2rem)
         max(1rem, env(safe-area-inset-left));
     }
 
-    .dial-track {
-      top: clamp(2.85rem, 10%, 4.1rem);
-      right: auto;
-      bottom: clamp(2.85rem, 10%, 4.1rem);
-      left: calc(max(1rem, env(safe-area-inset-left)) + var(--dial-x));
-      width: 1px;
-      height: auto;
-      background: var(--color-slate-dark);
-    }
-
-    .dial-track::after {
-      top: 0;
-      right: -0.38rem;
-      bottom: 0;
-      left: -0.38rem;
-      background: repeating-linear-gradient(
-        to bottom,
-        transparent 0,
-        transparent calc(5% - 1px),
-        var(--color-slate-light) calc(5% - 1px),
-        var(--color-slate-light) 5%
-      );
-    }
-
-    .dial-track::before {
-      top: 0;
-      right: -0.55rem;
-      bottom: 0;
-      left: -0.55rem;
-      background: repeating-linear-gradient(
-        to bottom,
-        transparent 0,
-        transparent calc(25% - 1px),
-        var(--color-white) calc(25% - 1px),
-        var(--color-white) 25%
-      );
-    }
-
     .dial-navigation ul {
       display: grid;
       grid-template-columns: 1fr;
-      grid-template-rows: repeat(5, minmax(4.75rem, 1fr));
+      grid-template-rows: repeat(4, minmax(4.75rem, 1fr));
       min-height: 100%;
     }
 
+    .dial-stations {
+      grid-row: 2;
+      grid-column: 1;
+      width: 100%;
+      min-height: 19rem;
+    }
+
+    .dial-cursor {
+      top: var(--dial-cursor-position);
+      left: var(--dial-x);
+      width: 1.15rem;
+      height: 1.15rem;
+    }
+
     .dial-link {
+      position: relative;
       grid-template-rows: auto;
       grid-template-columns: calc(var(--dial-x) * 2) minmax(0, 1fr);
       align-content: center;
       justify-items: start;
+      height: 100%;
       min-height: 4.75rem;
-      padding: 0.35rem 0.25rem;
+      padding: 0 0.25rem;
       text-align: left;
+    }
+
+    .frequency-segment--station {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: calc(var(--dial-x) * 2);
+      height: auto;
+    }
+
+    .frequency-segment--station::before,
+    .frequency-segment--station::after {
+      left: 50%;
+      width: 1.125rem;
+      height: 2px;
+    }
+
+    .frequency-segment--station::before {
+      top: 0;
+    }
+
+    .frequency-segment--station::after {
+      top: 100%;
+    }
+
+    .frequency-segment--station .frequency-tick {
+      left: 50%;
+      width: 0.5rem;
+      height: 2px;
+    }
+
+    .frequency-segment--station .frequency-tick--outer-start {
+      top: calc(100% / 6);
+    }
+
+    .frequency-segment--station .frequency-tick--inner-start {
+      top: calc(100% / 3);
+    }
+
+    .frequency-segment--station .frequency-tick--inner-end {
+      top: calc(200% / 3);
+    }
+
+    .frequency-segment--station .frequency-tick--outer-end {
+      top: calc(500% / 6);
+    }
+
+    .dial-terminus {
+      display: grid;
+      grid-template-rows: 1fr;
+      grid-template-columns: calc(var(--dial-x) * 2) minmax(0, 1fr);
+      width: 100%;
+      min-height: 2.375rem;
+      padding: 0;
+    }
+
+    .dial-terminus--start {
+      grid-row: 1;
+      grid-column: 1;
+    }
+
+    .dial-terminus--end {
+      grid-row: 3;
+      grid-column: 1;
+    }
+
+    .dial-terminus .frequency-terminus {
+      grid-row: 1;
+      grid-column: 1;
+      width: 100%;
+      height: 100%;
+    }
+
+    .dial-terminus .frequency-terminus__tick {
+      left: 50%;
+      width: 0.5rem;
+      height: 2px;
+    }
+
+    .dial-terminus .frequency-terminus--start .frequency-terminus__tick--edge,
+    .dial-terminus .frequency-terminus--end .frequency-terminus__tick--inner {
+      top: calc(100% / 3);
+    }
+
+    .dial-terminus .frequency-terminus--start .frequency-terminus__tick--inner,
+    .dial-terminus .frequency-terminus--end .frequency-terminus__tick--edge {
+      top: calc(200% / 3);
     }
 
     .dial-frequency {
@@ -658,10 +950,6 @@ const hasCompactFrequency = page !== 'home';
 
     .dial-marker {
       z-index: 1;
-      grid-row: 1 / span 2;
-      grid-column: 1;
-      align-self: center;
-      justify-self: center;
       width: 1.15rem;
       height: 1.15rem;
     }
@@ -675,12 +963,30 @@ const hasCompactFrequency = page !== 'home';
       letter-spacing: 0.14em;
     }
 
+    .language-switch {
+      grid-column: 1;
+      justify-self: center;
+      min-width: 8rem;
+      min-height: 2.75rem;
+      margin: 0 max(1rem, env(safe-area-inset-right)) 1rem max(1rem, env(safe-area-inset-left));
+      padding: 0;
+      border-left: 0;
+    }
+
+    .language-switch__control {
+      grid-template-columns: repeat(2, minmax(3.25rem, 1fr));
+      min-width: 7.25rem;
+    }
+
+    .language-switch:focus-visible {
+      outline-offset: 0.2rem;
+    }
+
     .overlay-context {
       display: block;
       margin: 0;
       padding: 1rem max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
         max(1rem, env(safe-area-inset-left));
-      border-top: 1px solid var(--color-gray-dark);
       color: var(--color-pale-slate);
       font-size: 0.61rem;
       font-weight: 650;
@@ -691,20 +997,22 @@ const hasCompactFrequency = page !== 'home';
 
   @media (min-width: 64rem) {
     .navigation-shell {
-      display: block;
+      display: grid;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .dial-link,
     .dial-marker,
+    .dial-cursor,
+    .language-switch__control,
     .nav-toggle :global(.nav-toggle__icon) {
       transition: none;
     }
   }
 
   @media (forced-colors: active) {
-    .dial-station--active .dial-marker,
+    .dial-cursor,
     .compact-frequency--active .compact-frequency__station {
       border-color: Highlight;
       background: Highlight;
