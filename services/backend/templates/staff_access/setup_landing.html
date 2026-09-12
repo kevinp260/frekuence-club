@@ -1,0 +1,20 @@
+{% extends "staff_access/auth_base.html" %} {% load static %} {% block staff_auth_content %}
+<p id="setup-status" class="staff-auth__note">Checking your single-use setup link…</p>
+<form
+  method="post"
+  action="{% url 'frekuence_staff:staff_setup_claim' %}"
+  class="staff-form"
+  data-staff-setup-claim
+>
+  {% csrf_token %}
+  <div class="staff-form__field" data-manual-invitation hidden>
+    <label for="id_invitation">Setup code</label>
+    <input id="id_invitation" name="invitation" type="password" autocomplete="off" required />
+    <p class="help">Paste the value after <code>#invite=</code> from your setup link.</p>
+  </div>
+  <button type="submit" class="staff-button staff-button--primary" data-manual-invitation hidden>
+    Continue
+  </button>
+</form>
+<script src="{% static 'staff_access/setup-claim.js' %}" defer></script>
+{% endblock %}

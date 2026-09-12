@@ -415,3 +415,42 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   repository-wide frontend-check tool alone uses a filtered root build context.
 - Historical checkpoint path statements remain unchanged because they accurately describe the
   repository when those decisions landed. This section is the authoritative current path map.
+
+## Post-Phase-2 staff access and optional TOTP refinement
+
+- The owner approved a deliberate change from the Phase 2 mandatory-TOTP baseline: TOTP is optional
+  per individual staff account, including superusers. Password authentication, strong-password
+  validation, session/CSRF protection, staff authorization, Axes throttling, sanitized client-IP
+  attribution, and the absence of public signup remain unchanged. This usability trade-off is
+  explicit; production access reviews should record which accounts have enabled the stronger
+  control.
+- Password and authenticator verification are separate screens. A confirmed TOTP device always
+  triggers the second step; an account without one completes password-only sign-in. Partial login
+  state is server-side, expires after 15 minutes or five rejected authenticator codes, and never
+  creates an authenticated session before successful token verification. Reaching the attempt
+  limit discards the partial state and requires the password step again.
+- Staff authorization uses five fixed presets over Django groups/permissions rather than exposing
+  Django's granular permission picker: Event viewer, Event editor, Event manager, Staff manager,
+  and Superuser. Editors work on drafts; managers additionally publish, feature, unpublish, and
+  delete events. Staff managers can maintain lower-role accounts but cannot see or affect another
+  Staff manager or a Superuser, assign their own role, or elevate access. Only a superuser can grant
+  or maintain Staff manager or Superuser access. User deletion remains disabled; deactivation
+  preserves event audit history.
+- Superusers and delegated Staff managers create named accounts in the focused Admin. New accounts
+  start with an unusable password and receive a one-time setup link that expires after 24 hours.
+  The raw random token is displayed once in the URL fragment, cleared before submission, stored
+  only as an HMAC digest, protected by CSRF when claimed, and never sent by an application email
+  service.
+- Setup asks the recipient to choose a strong password and explicitly offers authenticator setup or
+  an optional skip. Authenticated users can later enable TOTP under Account security, or disable it
+  only after re-entering both their password and a current token. Disabling changes the password
+  hash so other sessions become invalid while the current session is preserved.
+- Another authorized account manager can recover a permitted target after device loss by
+  re-authenticating and issuing a replacement setup link. Recovery invalidates the target
+  password/sessions and removes its TOTP devices. Staff managers cannot recover another Staff
+  manager or a Superuser; self-reset is rejected, recovery codes are not introduced, and the
+  existing private-file `provision_totp` command remains an operator fallback rather than the
+  routine onboarding path.
+- Staff UI work remains a restrained Django Admin customization: clearer password/OTP/setup forms,
+  corrected dashboard contrast, visible focus, and reusable account-security controls. It is not a
+  parallel staff application and changes no event, API, frontend, or container-topology contract.

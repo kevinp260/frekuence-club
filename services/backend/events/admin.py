@@ -1,7 +1,8 @@
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html, format_html_join
-from django_otp.admin import OTPAdminSite
+
+from staff_access.site import staff_admin_site
 
 from .forms import EventAdminForm
 from .models import Event
@@ -10,16 +11,6 @@ from .services import (
     save_event_from_request,
     unpublish_event_from_request,
 )
-
-
-class FrekuenceStaffAdminSite(OTPAdminSite):
-    site_header = "Frekuence staff"
-    site_title = "Frekuence staff"
-    index_title = "Event management"
-    site_url = None
-
-
-staff_admin_site = FrekuenceStaffAdminSite(name="frekuence_staff")
 
 
 @admin.register(Event, site=staff_admin_site)
@@ -89,6 +80,21 @@ class EventAdmin(admin.ModelAdmin):
         ),
     )
 
+    def has_publish_permission(self, request):
+        return request.user.has_perm("events.publish_event")
+
+    def has_change_permission(self, request, obj=None):
+        allowed = super().has_change_permission(request, obj)
+        if not allowed or obj is None or self.has_publish_permission(request):
+            return allowed
+        return obj.publication_status != Event.PublicationStatus.PUBLISHED
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly = list(super().get_readonly_fields(request, obj))
+        if not self.has_publish_permission(request):
+            readonly.extend(("publication_status", "is_featured"))
+        return tuple(dict.fromkeys(readonly))
+
     @admin.display(description="Processed poster")
     def poster_preview(self, event):
         if not event.poster_480:
@@ -134,7 +140,10 @@ class EventAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         save_event_from_request(obj, request.user)
 
-    @admin.action(description="Publish selected events after validation")
+    @admin.action(
+        description="Publish selected events after validation",
+        permissions=("publish",),
+    )
     def publish_selected(self, request, queryset):
         published = 0
         for event in queryset:
@@ -147,7 +156,10 @@ class EventAdmin(admin.ModelAdmin):
         if published:
             self.message_user(request, f"Published {published} event(s).", level=messages.SUCCESS)
 
-    @admin.action(description="Return selected events to draft")
+    @admin.action(
+        description="Return selected events to draft",
+        permissions=("publish",),
+    )
     def unpublish_selected(self, request, queryset):
         for event in queryset:
             unpublish_event_from_request(event, request.user)

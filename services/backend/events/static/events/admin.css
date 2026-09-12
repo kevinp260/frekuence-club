@@ -16,6 +16,12 @@
   --body-fg: #161616;
   --selected-bg: #dedcd5;
   --selected-row: #e4e2dc;
+  --hairline-color: #aaa89f;
+  --border-color: #85837b;
+  --error-fg: #9f0000;
+  --message-success-bg: #dcebdc;
+  --message-warning-bg: #fff4c5;
+  --message-error-bg: #f7d8d8;
 }
 
 #header {
@@ -59,17 +65,105 @@
 .inline-group,
 .submit-row,
 #changelist-filter {
-  border: 1px solid #bab9c5;
+  border: 1px solid var(--border-color);
   box-shadow: none;
+}
+
+.module h2,
+.module caption,
+.inline-group h2 {
+  background: #161616;
+  color: #fff;
+}
+
+#content-related,
+#content-related .module {
+  background: #fff;
+  color: #161616;
+}
+
+#content-related h2,
+#content-related h3,
+#content-related p,
+#content-related li,
+#content-related span {
+  color: #161616;
+}
+
+#content-related a {
+  color: #7b0000;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+#content-related .actionlist {
+  border-top-color: var(--border-color);
+}
+
+#result_list thead th a,
+#result_list thead th a:link,
+#result_list thead th a:visited {
+  color: #6f0000;
+}
+
+#changelist-filter li a {
+  display: flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding-block: 0.15rem;
+}
+
+div.breadcrumbs a {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+input[type='checkbox'][name$='-clear'] {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0.25rem;
 }
 
 .button,
 input[type='submit'],
 input[type='button'],
-.submit-row input {
+.submit-row input,
+.staff-button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 2.75rem;
-  border-radius: 0;
+  padding: 0.65rem 1rem;
+  border: 2px solid transparent;
+  border-radius: 0.2rem;
   font-weight: 700;
+  line-height: 1.25;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.staff-button--primary,
+.staff-button--danger {
+  background: #b80000;
+  color: #fff;
+}
+
+.staff-button--primary:hover,
+.staff-button--danger:hover {
+  background: #760000;
+  color: #fff;
+}
+
+.staff-button--secondary {
+  border-color: #161616;
+  background: #fff;
+  color: #161616;
+}
+
+.staff-button--secondary:hover {
+  background: #dedcd5;
+  color: #050505;
 }
 
 .form-row input.vTextField,
@@ -111,6 +205,191 @@ input[type='submit']:focus-visible {
   outline-offset: 2px;
 }
 
+.staff-auth #header {
+  justify-content: center;
+}
+
+.staff-auth #header,
+.staff-auth #content {
+  box-sizing: border-box;
+}
+
+.staff-auth #content {
+  padding: clamp(1.25rem, 5vw, 3.5rem) 1rem;
+}
+
+.staff-auth__shell {
+  display: grid;
+  width: 100%;
+  place-items: start center;
+}
+
+.staff-auth__card {
+  box-sizing: border-box;
+  width: min(100%, 34rem);
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border: 1px solid var(--border-color);
+  border-top: 3px solid #b80000;
+  border-radius: 0.25rem;
+  background: #fff;
+  box-shadow: 0 1rem 2.5rem rgb(0 0 0 / 12%);
+}
+
+.staff-auth__intro {
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--hairline-color);
+  margin-bottom: 1.25rem;
+}
+
+.staff-auth__intro h1 {
+  margin: 0.2rem 0 0.45rem;
+  color: #161616;
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  line-height: 1.1;
+}
+
+.staff-auth__intro p,
+.staff-auth__note {
+  color: #46453f;
+}
+
+.staff-auth__eyebrow {
+  margin: 0;
+  color: #8f0000 !important;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.staff-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.staff-form__field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.staff-form__field label,
+.staff-invitation label {
+  color: #161616;
+  font-weight: 700;
+}
+
+.staff-form__field input:not([type='checkbox']),
+.staff-form__field select,
+.staff-form__field textarea,
+.staff-invitation textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.65rem 0.75rem;
+  border: 2px solid #66645e;
+  border-radius: 0.2rem;
+  background: #fff;
+  color: #111;
+  font-size: 1rem;
+}
+
+.staff-form__field input[type='checkbox'] {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0 0.35rem 0 0;
+  accent-color: #b80000;
+}
+
+.staff-form__field:has(input[type='checkbox']) {
+  grid-template-columns: auto 1fr;
+  align-items: start;
+}
+
+.staff-form__field:has(input[type='checkbox']) label {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.staff-form__field:has(input[type='checkbox']) input {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.staff-form__field .help,
+.staff-form__choice-note {
+  margin: 0;
+  color: #52514b;
+  font-size: 0.85rem;
+}
+
+.staff-form__errors,
+.staff-warning {
+  padding: 0.75rem;
+  border-left: 4px solid #b80000;
+  background: #f7d8d8;
+  color: #680000;
+}
+
+.staff-form__errors ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.staff-status {
+  padding: 0.8rem;
+  border-left: 4px solid #5e5d57;
+  background: #dedcd5;
+}
+
+.staff-status--enabled {
+  border-left-color: #20723b;
+  background: #dcebdc;
+  color: #123f22;
+}
+
+.staff-security,
+.staff-invitation {
+  max-width: 48rem;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid var(--border-color);
+  background: #fff;
+}
+
+.staff-invitation textarea {
+  display: block;
+  margin-block: 0.5rem 1rem;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+
+.staff-totp {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+  margin-bottom: 1.25rem;
+}
+
+.staff-totp__qr {
+  display: block;
+  width: min(100%, 18rem);
+  height: auto;
+  border: 0.75rem solid #fff;
+}
+
+.staff-totp__key {
+  display: block;
+  max-width: 100%;
+  padding: 0.65rem;
+  background: #dedcd5;
+  color: #161616;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+[data-manual-invitation][hidden] {
+  display: none;
+}
+
 @media (max-width: 1024px) {
   #header {
     height: auto;
@@ -119,5 +398,32 @@ input[type='submit']:focus-visible {
 
   .frekuence-branding__eyebrow {
     font-size: 0.58rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .frekuence-branding__signal {
+    width: 2.25rem;
+  }
+
+  .staff-auth #header {
+    padding-inline: 1rem;
+  }
+
+  .staff-auth__card {
+    padding: 1.15rem;
+  }
+
+  .staff-button {
+    width: 100%;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --body-bg: #efeee8;
+    --body-fg: #161616;
+    --darkened-bg: #dedcd5;
+    --body-quiet-color: #46453f;
   }
 }

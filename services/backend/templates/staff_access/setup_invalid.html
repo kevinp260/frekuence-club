@@ -1,0 +1,11 @@
+{% extends "staff_access/auth_base.html" %} {% block staff_auth_content %}
+<p>
+  This setup link is invalid, expired, or has already been used. Ask a superuser to issue a new
+  link.
+</p>
+<p>
+  <a class="staff-button staff-button--secondary" href="{% url 'frekuence_staff:login' %}"
+    >Return to sign in</a
+  >
+</p>
+{% endblock %}

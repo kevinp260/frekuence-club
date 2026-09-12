@@ -212,18 +212,62 @@ policy while adapting the generated TLS server.
 
 ## Staff accounts and TOTP
 
-There is no public signup. Create named staff accounts and TOTP devices only as explicit one-off
-operations. Use a private absolute directory outside this repository and media/static storage:
+There is no public signup. Bootstrap the first named superuser as an explicit one-off operation:
 
 ```sh
 docker compose --profile tools run --rm backend-migrate python manage.py createsuperuser
+```
+
+Sign in at `/staff/` with that account. TOTP is optional per account: a user with no confirmed
+authenticator signs in with a password, while a user who enables it receives a separate
+authenticator-code step after the password succeeds. Five rejected authenticator codes discard the
+partial sign-in and require the password step again. **Account security** in the staff header lets
+the current user enable TOTP by scanning a QR code, or disable it by confirming both the account
+password and a current code. Disabling changes the password hash and invalidates other sessions.
+
+Staff access uses one role selector backed by Django permissions:
+
+| Role          | Event access                       | Staff-account access                       |
+| ------------- | ---------------------------------- | ------------------------------------------ |
+| Event viewer  | Read events                        | None                                       |
+| Event editor  | Read, create, and edit drafts      | None                                       |
+| Event manager | Manage drafts and published events | None                                       |
+| Staff manager | Full event management              | Create/edit/deactivate ordinary staff      |
+| Superuser     | Full event management              | Manage all staff and grant elevated access |
+
+Event publishing, featuring, unpublishing, and deletion require Event manager access or higher.
+Event editors can still read published records, but cannot modify them. Staff managers cannot see,
+change, or reset another Staff manager or a Superuser and cannot assign either of those roles; only
+a Superuser can grant or maintain equal or higher administrative access. Accounts are deactivated
+instead of deleted so event-creator/updater audit history remains intact.
+
+Superusers and Staff managers provision users from **Staff accounts → Add staff account**. The new
+account has no usable password and cannot be used until the recipient completes the generated setup
+link. The raw bearer token is shown once in the URL fragment, is stored only as a digest, expires
+after 24 hours, and is accepted once. Send the complete link through a private channel. The
+recipient chooses a strong password and may connect an authenticator immediately or explicitly
+skip it. No email is sent by the application.
+
+If a user loses a device, another authorized account manager can open that staff account and choose
+**Reset access**. The manager must re-enter their own password and, if enabled on their account, a
+current authenticator code. Reset access invalidates the target password and sessions, removes the
+target authenticator, and returns a new one-time setup link. A Staff manager cannot reset another
+Staff manager or a Superuser, and nobody can reset their own account through this flow; operator
+ownership of an emergency superuser remains required.
+
+The `provision_totp` command remains an operator-only recovery/bootstrap fallback. If it is needed,
+use a private absolute directory outside the repository and media/static storage:
+
+```sh
 docker compose --profile tools run --rm --volume /absolute/private-directory:/private \
   backend-migrate python manage.py provision_totp STAFF_USERNAME --output /private/staff-totp.png
 ```
 
-The QR file is mode `0600`; its secret is never printed. Transfer it securely and delete it after
-enrollment. Day-to-day staff use the migrated `Event editors` group, not shared superuser accounts.
-Production recipients, recovery, and emergency-account ownership remain owner/operator TODOs.
+The fallback QR is mode `0600`; its secret is never printed. Transfer it securely and delete it
+after enrollment. Day-to-day staff use the lowest suitable named role, not shared superuser accounts.
+Production recipients, credential custody, and emergency-account ownership remain owner/operator
+TODOs. Because TOTP is now an owner-approved optional control rather than a production requirement,
+the operator should record which production accounts enable it as part of access review.
 
 ## Development fixtures
 

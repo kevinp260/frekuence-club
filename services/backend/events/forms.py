@@ -40,16 +40,30 @@ class EventAdminForm(forms.ModelForm):
         widgets: ClassVar = {
             "description_sq": forms.Textarea(attrs={"rows": 8}),
             "description_en": forms.Textarea(attrs={"rows": 8}),
+            "starts_at": forms.SplitDateTimeWidget(
+                date_attrs={"aria-label": "Start date"},
+                time_attrs={"aria-label": "Start time"},
+            ),
+            "ends_at": forms.SplitDateTimeWidget(
+                date_attrs={"aria-label": "End date"},
+                time_attrs={"aria-label": "End time"},
+            ),
+            "doors_at": forms.SplitDateTimeWidget(
+                date_attrs={"aria-label": "Doors date"},
+                time_attrs={"aria-label": "Doors time"},
+            ),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["lineup_text"].initial = "\n".join(self.instance.lineup or [])
-        self.fields["poster"].widget.attrs["accept"] = "image/jpeg,image/png,image/webp"
-        self.fields["poster"].help_text = (
-            "JPEG, PNG, or WebP only; maximum 15 MiB and 40 megapixels. "
-            "Responsive WebP copies are generated automatically."
-        )
+        if "lineup_text" in self.fields:
+            self.fields["lineup_text"].initial = "\n".join(self.instance.lineup or [])
+        if "poster" in self.fields:
+            self.fields["poster"].widget.attrs["accept"] = "image/jpeg,image/png,image/webp"
+            self.fields["poster"].help_text = (
+                "JPEG, PNG, or WebP only; maximum 15 MiB and 40 megapixels. "
+                "Responsive WebP copies are generated automatically."
+            )
 
     def clean_lineup_text(self):
         lineup = [

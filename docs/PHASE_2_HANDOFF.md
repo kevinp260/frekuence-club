@@ -10,6 +10,13 @@ This is not production launch approval. The owner and operator inputs under
 [Production signoff](#production-signoff) must be completed on the real deployment environment
 before the site is described as production-signed-off or real events are published.
 
+Post-Phase-2 staff-access refinement: the original handoff required TOTP for all staff accounts.
+The current, owner-approved policy makes TOTP optional per account, separates it into a second
+screen only when enabled, and adds in-app onboarding, bounded role presets, and delegated recovery.
+The authoritative current procedure is
+[Staff accounts and TOTP](DEPLOYMENT.md#staff-accounts-and-totp); the historical checkpoint 8
+evidence remains unchanged.
+
 ## Delivered capabilities
 
 - Bilingual Albanian (`sq-AL`) and English public routes with translation parity, reciprocal
@@ -24,8 +31,9 @@ before the site is described as production-signed-off or real events are publish
 - PostgreSQL as the production event source of truth, with Django domain validation, bilingual
   event content, publication/lifecycle separation, featured-event rules, audit attribution, and
   a focused event-only Django Admin.
-- Staff session authentication with CSRF protection, strong passwords, least privilege, TOTP MFA,
-  login throttling, and sanitized client-address attribution. There is no public signup.
+- Staff session authentication with CSRF protection, strong passwords, fixed least-privilege event
+  and staff-management roles, optional per-account TOTP, login throttling, and sanitized
+  client-address attribution. There is no public signup.
 - A versioned anonymous read-only event API that exposes published localized fields and managed
   poster derivatives only, with bounded queries, deterministic ordering, ETags, and conditional
   requests.
@@ -58,9 +66,10 @@ nonce CSP, and does not expose internal service names.
 
 Astro public routes neither authenticate with nor use Django staff session state, and browser
 JavaScript makes no request to the private API origin. Anonymous API clients can use only the
-documented published read model and safe methods. `/staff/` uses Django sessions, CSRF, TOTP, rate
-limiting, and event-editor authorization. The gateway serves processed derivatives but denies
-original media paths. Secrets remain runtime-only and must never use Astro `PUBLIC_*` variables.
+documented published read model and safe methods. `/staff/` uses Django sessions, CSRF, optional
+per-account TOTP, rate limiting, and fixed role-based event/staff authorization. The gateway serves
+processed derivatives but denies original media paths. Secrets remain runtime-only and must never
+use Astro `PUBLIC_*` variables.
 
 The authoritative operational detail—including environment requirements, route limits, proxy
 headers, staff enrollment, and exact commands—is [the deployment guide](DEPLOYMENT.md).
@@ -175,9 +184,9 @@ All of the following remain unresolved:
   favicon/source icons; approved cymatic pattern SVGs and monoline icons; licensed body-font files
   or Montserrat-only approval; amber/yellow UI status; and replacement/removal of all temporary
   brand exports.
-- Staff and secrets: named production staff recipients, TOTP enrollment/recovery, emergency-
-  account ownership, final production hosts/origins, Django secret key, and unique PostgreSQL
-  credentials.
+- Staff and secrets: named production staff recipients, credential and optional-TOTP custody,
+  emergency-account ownership, final production hosts/origins, Django secret key, and unique
+  PostgreSQL credentials.
 - Operations: real host deployment; public DNS and TLS/Certbot verification; encrypted matched
   backup destination, retention, automation, restore owner, and tested real-data restoration;
   monitoring/alert provider and destination; and demonstrated alert delivery.

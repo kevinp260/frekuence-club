@@ -17,7 +17,8 @@ The following owner inputs remain unresolved and block a final production-ready 
 - approved Albanian and English event copy and poster alternative text
 - poster publication rights and any required photographer, designer, or artist credits
 - final cyan, magenta, and green decorative signal token values
-- staff account recipients, TOTP enrollment/recovery procedure, and emergency-account ownership
+- staff account recipients and role assignments, production credential/TOTP custody, and
+  emergency-account ownership
 - database and poster-media backup destination, retention, restore owner, and alert destination
 - final operator-supplied production hosts/origins, Django secret key, and PostgreSQL credentials
 

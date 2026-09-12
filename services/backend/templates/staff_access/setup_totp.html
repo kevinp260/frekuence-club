@@ -1,0 +1,17 @@
+{% extends "staff_access/auth_base.html" %}
+
+{% block staff_auth_content %}
+<div class="staff-totp">
+  <img class="staff-totp__qr" src="{{ qr_data_url }}" alt="Authenticator setup QR code">
+  <details>
+    <summary>Cannot scan the QR?</summary>
+    <p>Enter this setup key manually:</p>
+    <code class="staff-totp__key">{{ manual_key }}</code>
+  </details>
+</div>
+<form method="post" class="staff-form" novalidate>
+  {% csrf_token %}
+  {% include "staff_access/form_fields.html" %}
+  <button type="submit" class="staff-button staff-button--primary">Confirm authenticator</button>
+</form>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "admin/base_site.html" %}
+
+{% block bodyclass %}staff-auth{% endblock %}
+{% block nav-breadcrumbs %}{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+{% block content_title %}{% endblock %}
+{% block content_subtitle %}{% endblock %}
+
+{% block content %}
+<main class="staff-auth__shell">
+  <section class="staff-auth__card" aria-labelledby="staff-auth-title">
+    <header class="staff-auth__intro">
+      <p class="staff-auth__eyebrow">Secure staff access</p>
+      <h1 id="staff-auth-title">{{ title }}</h1>
+      {% if subtitle %}<p>{{ subtitle }}</p>{% endif %}
+    </header>
+    {% block staff_auth_content %}{% endblock %}
+  </section>
+</main>
+{% endblock %}

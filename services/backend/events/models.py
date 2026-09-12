@@ -107,6 +107,7 @@ class Event(models.Model):
 
     class Meta:
         ordering = ["starts_at", "title_sq"]  # noqa: RUF012
+        permissions = [("publish_event", "Can publish event")]  # noqa: RUF012
         constraints = [  # noqa: RUF012
             models.CheckConstraint(
                 condition=Q(starts_at__isnull=True)

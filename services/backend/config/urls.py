@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.urls import include, path
 from django.views.decorators.http import require_GET
 
-from events.admin import staff_admin_site
+from staff_access.site import staff_admin_site
 
 
 @require_GET

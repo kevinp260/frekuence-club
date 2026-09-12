@@ -2,6 +2,7 @@ import { Buffer } from 'node:buffer';
 import { createHmac } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 
+import AxeBuilder from '@axe-core/playwright';
 import { chromium } from '@playwright/test';
 
 const baseURL = process.env.STAFF_BASE_URL;
@@ -42,35 +43,55 @@ async function assertUsable(page, expectedPath) {
       globalThis.document.documentElement.clientWidth,
   );
   if (overflow) throw new Error(`Page has horizontal overflow at ${page.viewportSize()?.width}px.`);
+  const accessibility = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+    .analyze();
+  if (accessibility.violations.length) {
+    throw new Error(
+      `Accessibility violations on ${expectedPath}: ${accessibility.violations
+        .map(
+          (violation) =>
+            `${violation.id} (${violation.nodes.map((node) => node.target.join(' ')).join(', ')})`,
+        )
+        .join(', ')}`,
+    );
+  }
 }
 
 await mkdir('/output', { recursive: true });
 const browser = await chromium.launch({ headless: true });
-const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+const page = await context.newPage();
 
 try {
   await page.goto(`${baseURL}/staff/login/`, { waitUntil: 'networkidle' });
+  await assertUsable(page, '/staff/login/');
+  await page.screenshot({ path: '/output/staff-login-1440x1000.png', fullPage: true });
   await page.locator('input[name="username"]').fill(username);
   await page.locator('input[name="password"]').fill(password);
-  let deviceSelect = page.locator('select[name="otp_device"]');
-  if (!(await deviceSelect.count())) {
-    await page.locator('input[type="submit"]:not([name="otp_challenge"])').click();
-    await page.waitForLoadState('networkidle');
-    deviceSelect = page.locator('select[name="otp_device"]');
-  }
-  const deviceValue = await deviceSelect
-    .locator('option')
-    .evaluateAll((options) => options.map((option) => option.value).find(Boolean));
-  if (!deviceValue) throw new Error('The review account has no selectable TOTP device.');
-  await deviceSelect.selectOption(deviceValue);
-  await page.locator('input[name="otp_token"]').fill(totpAt(totpKey));
-  await page.locator('input[type="submit"]:not([name="otp_challenge"])').click();
+  await page.locator('button[type="submit"]').click();
   await page.waitForLoadState('networkidle');
-  if (new URL(page.url()).pathname === '/staff/login/') {
-    const error = await page.locator('.errornote').textContent();
+  await assertUsable(page, '/staff/login/verify/');
+  await page.screenshot({ path: '/output/staff-otp-1440x1000.png', fullPage: true });
+  await page.locator('input[name="otp_token"]').fill(totpAt(totpKey));
+  await page.locator('button[type="submit"]').click();
+  await page.waitForLoadState('networkidle');
+  if (new URL(page.url()).pathname.startsWith('/staff/login/')) {
+    const error = await page.locator('[role="alert"]').first().textContent();
     throw new Error(`Staff review login failed: ${error?.trim() || 'unknown form error'}`);
   }
 
+  await assertUsable(page, '/staff/');
+  await page.screenshot({ path: '/output/staff-dashboard-1440x1000.png', fullPage: true });
+
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await page.goto(`${baseURL}/staff/staff_access/staffaccount/add/`, {
+    waitUntil: 'networkidle',
+  });
+  await assertUsable(page, '/staff/staff_access/staffaccount/add/');
+  await page.screenshot({ path: '/output/staff-account-role-1024x900.png', fullPage: true });
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(`${baseURL}/staff/events/event/`, { waitUntil: 'networkidle' });
   await assertUsable(page, '/staff/events/event/');
   await page.screenshot({ path: '/output/staff-events-1440x1000.png', fullPage: true });
@@ -86,4 +107,6 @@ try {
   await browser.close();
 }
 
-console.log('Captured staff event list at 1440px and event editor at 1024px.');
+console.log(
+  'Captured password, OTP, dashboard, staff role, event list, and event editor screens; Axe and overflow checks passed.',
+);

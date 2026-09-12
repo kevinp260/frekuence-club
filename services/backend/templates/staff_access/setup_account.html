@@ -1,0 +1,10 @@
+{% extends "staff_access/auth_base.html" %}
+
+{% block staff_auth_content %}
+<form method="post" class="staff-form" novalidate>
+  {% csrf_token %}
+  {% include "staff_access/form_fields.html" %}
+  <p class="staff-form__choice-note">Two-factor authentication is optional. If you enable it, future sign-ins will always require the current authenticator code.</p>
+  <button type="submit" class="staff-button staff-button--primary">Save and continue</button>
+</form>
+{% endblock %}

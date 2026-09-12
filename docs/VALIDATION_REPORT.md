@@ -1,3 +1,84 @@
+# Post-Phase-2 staff access and optional TOTP validation
+
+Validated on 2026-09-12 in the local `main` worktree based on
+`0480ef58bf233a815c5df6ac27c438aa069b45e0`. This owner-approved refinement makes TOTP optional
+per staff account, separates password and authenticator verification, adds in-app staff onboarding
+and recovery, adds simple role-based staff maintenance, and corrects staff-interface contrast and
+form clarity. It changes no public frontend route, event content field or API contract, container
+topology, production content, or Phase 2 checkpoint history.
+
+## Access, onboarding, and recovery behavior
+
+- Staff without a confirmed authenticator sign in with their username and password. Staff with a
+  confirmed device complete a separate authenticator-code screen; the bounded partial-login state
+  does not authenticate the browser before a valid token is supplied.
+- One role selector maps Event viewer, Event editor, Event manager, Staff manager, and Superuser to
+  bounded Django permissions. Editors create and edit drafts; managers additionally publish,
+  feature, unpublish, and delete events. Staff managers maintain lower-role accounts but cannot see
+  or affect another Staff manager or a Superuser or assign equal/higher access. Only a superuser can
+  grant or maintain Staff manager or Superuser access. Account deletion remains disabled;
+  deactivation preserves event audit history.
+- A superuser or delegated Staff manager can create a permitted named account. The account starts
+  with an unusable password and receives a single-use setup link with a 24-hour expiry. The raw
+  random token is shown only in the URL fragment, cleared before its CSRF-protected claim, and
+  stored in PostgreSQL only as an HMAC digest.
+- Setup applies Django's strong-password validation and lets the recipient enable an authenticator
+  immediately or explicitly skip it. Authenticated staff can enable TOTP later. Disabling it
+  requires the account password and a current authenticator code.
+- Another authorized account manager may reset a permitted staff member after device loss, but
+  must re-enter their own password and, when enabled, their own authenticator code. The reset
+  invalidates the target's password and sessions, removes its TOTP devices, and issues a
+  replacement one-time setup link. Self-reset is rejected, and Staff managers cannot reset another
+  Staff manager or a Superuser.
+- Session authentication, CSRF, staff-only authorization, Axes throttling and sanitized client-IP
+  handling remain in force. There is still no public signup, email delivery, recovery-code system,
+  shared staff credential, or custom parallel administration application.
+
+## Interface review evidence
+
+Six captures under [`docs/review/staff-access/`](review/staff-access/README.md) cover the password
+screen, separate OTP screen, staff dashboard, single-role account form, event list, and event editor
+at 1440 × 1000 or practical-laptop widths. The pinned Playwright capture ran Axe against WCAG
+2/2.1/2.2 A/AA rules and checked every captured page for horizontal overflow. The review corrected
+low-contrast Django dashboard/recent-action states, unclear form controls, small action targets,
+missing accessible names on split date/time inputs, and ambiguous extra Save actions on one-time
+account provisioning. The final capture had no Axe violation or page-level overflow.
+
+## Commands actually run
+
+| Command                                                          | Result                                                                                                                                                                                                                                                     |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Focused staff/event authorization suite                          | Passed: 41/41 tests covering role mappings, provisioning, promotion, deactivation, target scoping, draft/public event boundaries, login, TOTP, CSRF, and recovery                                                                                          |
+| `docker compose --profile tools run --rm --build backend-check`  | Passed on the final role hierarchy: Ruff formatting and lint, Django checks and deployment checks, two new migration leaves with no model drift, 94/94 tests in 22.836 seconds, and `pip-audit` with no known vulnerabilities                              |
+| `npm run build`                                                  | Passed: formatting/lint, 14/14 architecture tests, 22/22 frontend unit tests, 0 Astro errors/warnings/hints across 61 files, Astro Node build, and 8-route/59-file production-output validation                                                            |
+| Final `npm run check`                                            | Passed after documentation formatting: formatting/lint, 14/14 architecture tests, 22/22 frontend unit tests, and 0 Astro errors, warnings, or hints across 61 files                                                                                        |
+| `docker compose --profile tools run --rm --build frontend-check` | Passed: formatting/lint, 14/14 architecture tests, 22/22 frontend unit tests, 0 Astro diagnostics across 61 files, 8-route/59-file production validation, and 72/72 browser/integration/accessibility tests; 38 opt-in visual captures skipped as designed |
+| `npm run smoke:production-integration`                           | Passed: explicit production migrations, published synthetic-event rendering through Astro, sitemap/detail coverage, empty optional event fields, and the required direct-Django HTTP-to-HTTPS redirect                                                     |
+| `npm run smoke:production-topology`                              | Passed: pinned Nginx validation, explicit migration/static jobs, gateway/public/API/staff/static/media/security checks, sanitized Axes client isolation, four healthy services, and database/media/static persistence across normal recreation             |
+| Final `npm run smoke:integrated-qa`                              | Passed with the role migrations: full isolated gateway verification plus matched backup and isolated restoration retained staff authorization, TOTP devices, published/draft boundaries, API/public routes, derivatives, and 404s                          |
+| Staff visual capture workflow                                    | Passed: six captures generated against the Dockerized backend; Axe WCAG A/AA scan and horizontal-overflow checks reported no violations                                                                                                                    |
+| `docker compose config --quiet`                                  | Passed: the Compose model resolved successfully without a topology change                                                                                                                                                                                  |
+| Final `git diff --check`                                         | Passed with no whitespace errors after documentation formatting                                                                                                                                                                                            |
+
+The first integrated smoke rerun used the previous expectation that a successful password step
+must create no session cookie. The new two-step design intentionally creates an anonymous,
+server-side partial-flow session. The assertion was corrected to prove that this session cannot
+open `/staff/`; the full isolated smoke then passed. No authentication control was weakened to
+satisfy the check.
+
+Final code review found that the password step retained Axes throttling but the newly separate OTP
+step had only a time limit. A five-failure attempt bound now discards the partial session and forces
+password reauthentication. The new regression proves the first four failures remain anonymous and
+the fifth removes the partial state; the complete backend gate passed afterward.
+
+This change deliberately reduces the original Phase 2 requirement from mandatory TOTP to an
+owner-approved optional per-account control. Production launch remains unsigned: the owner and
+operator must still assign named recipients, decide and record which accounts enable TOTP, retain
+a separately controlled emergency superuser, and complete the deployment, DNS/TLS, monitoring,
+backup, credential, real-content, legal, and brand-asset responsibilities in the handoff.
+
+---
+
 # Post-Phase-2 animated segmented frequency dial validation
 
 Validated on 2026-09-12 in the local `main` worktree based on

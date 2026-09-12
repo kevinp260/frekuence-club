@@ -1,0 +1,12 @@
+{% extends "staff_access/auth_base.html" %} {% block staff_auth_content %}
+<p class="staff-warning">
+  Disabling 2FA removes the authenticator requirement from future sign-ins. Other active sessions
+  will be invalidated.
+</p>
+<form method="post" class="staff-form" novalidate>
+  {% csrf_token %} {% include "staff_access/form_fields.html" %}
+  <button type="submit" class="staff-button staff-button--danger">
+    Disable two-factor authentication
+  </button>
+</form>
+{% endblock %}

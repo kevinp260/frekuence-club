@@ -76,7 +76,8 @@ test('integrated fixtures and assertions cover the approved event and security m
     assert.match(fixture, new RegExp(slug));
     assert.match(verifier, new RegExp(slug));
   }
-  assert.match(verifier, /Password-only staff login created a session/);
+  assert.match(verifier, /partialStaffAccess/);
+  assert.match(verifier, /\/staff\/login\/verify\//);
   assert.match(verifier, /Non-staff user reached the staff session boundary/);
   assert.match(verifier, /csrfmiddlewaretoken/);
   assert.match(verifier, /content-security-policy/);

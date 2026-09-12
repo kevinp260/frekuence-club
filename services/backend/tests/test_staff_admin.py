@@ -4,7 +4,7 @@ from axes.models import AccessAttempt
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django_otp import DEVICE_ID_SESSION_KEY
@@ -12,6 +12,7 @@ from django_otp.oath import totp
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from events.models import Event
+from events.services import save_event_from_request
 
 from .helpers import event_fields
 
@@ -47,6 +48,21 @@ class StaffAdminTests(TestCase):
         session[DEVICE_ID_SESSION_KEY] = (device or self.device).persistent_id
         session.save()
         return client
+
+    def event_manager_client(self):
+        manager = get_user_model().objects.create_user(
+            username="event-manager",
+            password="Correct-horse-battery-783",
+            is_staff=True,
+        )
+        manager.groups.add(Group.objects.get(name="Event managers"))
+        device = TOTPDevice.objects.create(
+            user=manager,
+            name="Manager authenticator",
+            confirmed=True,
+            key="3132333435363738393031323334353637383930",
+        )
+        return self.verified_client(user=manager, device=device), manager
 
     def draft_admin_payload(self, **overrides):
         fields = event_fields(poster=None)
@@ -105,8 +121,52 @@ class StaffAdminTests(TestCase):
         )
         self.assertEqual(permission_models, {"event"})
         self.assertFalse(self.user.has_perm("auth.change_user"))
+        self.assertTrue(self.user.has_perm("events.view_event"))
+        self.assertTrue(self.user.has_perm("events.add_event"))
+        self.assertTrue(self.user.has_perm("events.change_event"))
+        self.assertFalse(self.user.has_perm("events.delete_event"))
+        self.assertFalse(self.user.has_perm("events.publish_event"))
 
-    def test_password_login_requires_a_valid_totp_token(self):
+    def test_event_editor_can_save_drafts_but_cannot_publish_or_edit_public_events(self):
+        draft = Event(slug="editor-draft")
+        save_event_from_request(draft, self.user)
+        self.assertEqual(draft.publication_status, Event.PublicationStatus.DRAFT)
+
+        draft.publication_status = Event.PublicationStatus.PUBLISHED
+        with self.assertRaises(PermissionDenied):
+            save_event_from_request(draft, self.user)
+
+        published = Event(
+            **event_fields(
+                slug="manager-published",
+                publication_status=Event.PublicationStatus.PUBLISHED,
+            )
+        )
+        published.save()
+        published_page = self.verified_client().get(
+            reverse("frekuence_staff:events_event_change", args=(published.pk,)),
+            secure=True,
+        )
+        self.assertEqual(published_page.status_code, 200)
+        self.assertNotContains(published_page, 'name="_save"')
+
+    def test_role_specific_event_admin_controls_are_simple_and_enforced(self):
+        editor_page = self.verified_client().get(
+            reverse("frekuence_staff:events_event_add"), secure=True
+        )
+        self.assertEqual(editor_page.status_code, 200)
+        self.assertNotContains(editor_page, 'name="publication_status"')
+        self.assertNotContains(editor_page, 'name="is_featured"')
+
+        manager_client, manager = self.event_manager_client()
+        manager_page = manager_client.get(reverse("frekuence_staff:events_event_add"), secure=True)
+        self.assertEqual(manager_page.status_code, 200)
+        self.assertContains(manager_page, 'name="publication_status"')
+        self.assertContains(manager_page, 'name="is_featured"')
+        self.assertTrue(manager.has_perm("events.publish_event"))
+        self.assertTrue(manager.has_perm("events.delete_event"))
+
+    def test_password_login_requires_a_separate_valid_totp_step(self):
         login_url = reverse("frekuence_staff:login")
         response = self.client.post(
             login_url,
@@ -114,7 +174,11 @@ class StaffAdminTests(TestCase):
             secure=True,
             REMOTE_ADDR="192.0.2.10",
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(
+            response,
+            reverse("frekuence_staff:login_verify"),
+            fetch_redirect_response=False,
+        )
         self.assertNotIn("_auth_user_id", self.client.session)
 
         token = totp(
@@ -125,14 +189,8 @@ class StaffAdminTests(TestCase):
             drift=self.device.drift,
         )
         response = self.client.post(
-            login_url,
-            {
-                "username": self.user.username,
-                "password": "Correct-horse-battery-783",
-                "otp_device": self.device.persistent_id,
-                "otp_token": str(token).zfill(self.device.digits),
-                "next": reverse("frekuence_staff:index"),
-            },
+            reverse("frekuence_staff:login_verify"),
+            {"otp_token": str(token).zfill(self.device.digits)},
             secure=True,
             REMOTE_ADDR="192.0.2.10",
         )
@@ -193,6 +251,19 @@ class StaffAdminTests(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
+    def test_split_schedule_inputs_have_accessible_names(self):
+        response = self.verified_client().get(
+            reverse("frekuence_staff:events_event_add"),
+            secure=True,
+        )
+
+        self.assertContains(response, 'aria-label="Start date"')
+        self.assertContains(response, 'aria-label="Start time"')
+        self.assertContains(response, 'aria-label="End date"')
+        self.assertContains(response, 'aria-label="End time"')
+        self.assertContains(response, 'aria-label="Doors date"')
+        self.assertContains(response, 'aria-label="Doors time"')
+
     def test_admin_ignores_supplied_actor_ids_and_uses_request_user(self):
         attacker = get_user_model().objects.create_superuser(
             username="attacker", password="Correct-horse-battery-783"
@@ -211,7 +282,8 @@ class StaffAdminTests(TestCase):
 
     def test_safe_publish_action_rejects_incomplete_event(self):
         event = Event.objects.create(slug="incomplete-publish")
-        response = self.verified_client().post(
+        client, _manager = self.event_manager_client()
+        response = client.post(
             reverse("frekuence_staff:events_event_changelist"),
             {
                 "action": "publish_selected",
@@ -229,7 +301,7 @@ class StaffAdminTests(TestCase):
     def test_safe_publish_and_unpublish_actions_attribute_request_user(self):
         event = Event(**event_fields(slug="action-publish"))
         event.save()
-        client = self.verified_client()
+        client, manager = self.event_manager_client()
         action_url = reverse("frekuence_staff:events_event_changelist")
         response = client.post(
             action_url,
@@ -243,7 +315,7 @@ class StaffAdminTests(TestCase):
         self.assertEqual(response.status_code, 302)
         event.refresh_from_db()
         self.assertEqual(event.publication_status, Event.PublicationStatus.PUBLISHED)
-        self.assertEqual(event.updated_by, self.user)
+        self.assertEqual(event.updated_by, manager)
 
         client.post(
             action_url,
@@ -280,7 +352,8 @@ class StaffAdminTests(TestCase):
             publication_status=Event.PublicationStatus.PUBLISHED,
             is_featured="on",
         )
-        response = self.verified_client().post(
+        client, manager = self.event_manager_client()
+        response = client.post(
             reverse("frekuence_staff:events_event_change", args=(second.pk,)),
             payload,
             secure=True,
@@ -291,7 +364,7 @@ class StaffAdminTests(TestCase):
         second.refresh_from_db()
         self.assertFalse(first.is_featured)
         self.assertTrue(second.is_featured)
-        self.assertEqual(second.updated_by, self.user)
+        self.assertEqual(second.updated_by, manager)
 
     def test_strong_password_validation_and_secure_cookie_settings(self):
         with self.assertRaises(ValidationError):
@@ -338,19 +411,37 @@ class StaffAdminTests(TestCase):
         )
 
 
-class EventEditorMigrationTests(TestCase):
-    def test_event_editor_group_contains_exactly_event_crud_permissions(self):
-        group = Group.objects.get(name="Event editors")
-        actual = set(group.permissions.values_list("codename", flat=True))
-        self.assertEqual(
-            actual,
-            {"add_event", "change_event", "delete_event", "view_event"},
-        )
+class StaffRoleMigrationTests(TestCase):
+    def test_staff_roles_map_to_the_expected_bounded_permissions(self):
+        expected = {
+            "Event viewers": {"view_event"},
+            "Event editors": {"add_event", "change_event", "view_event"},
+            "Event managers": {
+                "add_event",
+                "change_event",
+                "delete_event",
+                "publish_event",
+                "view_event",
+            },
+            "Staff managers": {
+                "add_event",
+                "change_event",
+                "delete_event",
+                "manage_staff_accounts",
+                "publish_event",
+                "view_event",
+            },
+        }
+        for group_name, expected_permissions in expected.items():
+            actual = set(
+                Group.objects.get(name=group_name).permissions.values_list("codename", flat=True)
+            )
+            self.assertEqual(actual, expected_permissions)
 
     def test_expected_event_permissions_exist(self):
         self.assertEqual(
             Permission.objects.filter(
                 content_type__app_label="events", content_type__model="event"
             ).count(),
-            4,
+            5,
         )

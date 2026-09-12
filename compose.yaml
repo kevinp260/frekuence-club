@@ -261,7 +261,7 @@ services:
       - application
     user: '${FREKUENCE_HOST_UID:-1000}:${FREKUENCE_HOST_GID:-1000}'
     volumes:
-      - ./docs/review/phase-2-backend-foundation:/output
+      - ./docs/review/staff-access:/output
     init: true
     read_only: true
     tmpfs:

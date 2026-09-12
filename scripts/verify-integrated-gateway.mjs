@@ -129,11 +129,7 @@ async function login({ username, password, device, includeOtp }) {
     password,
     next: '/staff/',
   });
-  if (includeOtp) {
-    form.set('otp_device', device);
-    form.set('otp_token', totpAt(totpKey));
-  }
-  const response = await read('/staff/login/', {
+  let response = await read('/staff/login/', {
     method: 'POST',
     headers: {
       ...publicHeaders,
@@ -142,6 +138,39 @@ async function login({ username, password, device, includeOtp }) {
       Origin: 'https://frekuence.club',
     },
     body: Buffer.from(form.toString()),
+  });
+  for (const [name, value] of cookies(response)) jar.set(name, value);
+  if (
+    !includeOtp ||
+    response.status !== 302 ||
+    response.headers.get('location') !== '/staff/login/verify/'
+  ) {
+    return { response, jar };
+  }
+
+  assert.ok(device, 'The expected staff authenticator device is missing.');
+  const verificationPage = await read('/staff/login/verify/', {
+    headers: { ...publicHeaders, Cookie: cookieHeader(jar) },
+  });
+  assert.equal(verificationPage.status, 200);
+  for (const [name, value] of cookies(verificationPage)) jar.set(name, value);
+  const verificationCsrf = verificationPage.body.match(
+    /name="csrfmiddlewaretoken" value="([^"]+)"/,
+  )?.[1];
+  assert.ok(verificationCsrf, 'Staff OTP verification CSRF state is missing.');
+  const verificationForm = new URLSearchParams({
+    csrfmiddlewaretoken: verificationCsrf,
+    otp_token: totpAt(totpKey),
+  });
+  response = await read('/staff/login/verify/', {
+    method: 'POST',
+    headers: {
+      ...publicHeaders,
+      Cookie: cookieHeader(jar),
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Origin: 'https://frekuence.club',
+    },
+    body: Buffer.from(verificationForm.toString()),
   });
   for (const [name, value] of cookies(response)) jar.set(name, value);
   return { response, jar };
@@ -421,8 +450,13 @@ if (mode === 'source') {
     device: staffDevice,
     includeOtp: false,
   });
-  assert.equal(passwordOnly.response.status, 200);
-  assert.ok(!passwordOnly.jar.has('sessionid'), 'Password-only staff login created a session.');
+  assert.equal(passwordOnly.response.status, 302);
+  assert.equal(passwordOnly.response.headers.get('location'), '/staff/login/verify/');
+  const partialStaffAccess = await read('/staff/events/event/', {
+    headers: { ...publicHeaders, Cookie: cookieHeader(passwordOnly.jar) },
+  });
+  assert.equal(partialStaffAccess.status, 302);
+  assert.match(partialStaffAccess.headers.get('location') || '', /^\/staff\/login\//);
 
   const nonStaff = await login({
     username: nonStaffUsername,

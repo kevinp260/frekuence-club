@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %} {% block content %}
+<div class="staff-security">
+  <h1>Account security</h1>
+  {% if device %}
+  <p class="staff-status staff-status--enabled">
+    <strong>Two-factor authentication is enabled.</strong>
+  </p>
+  <p>
+    Your authenticator code is required after your password whenever you start a new staff session.
+  </p>
+  <a
+    class="staff-button staff-button--danger"
+    href="{% url 'frekuence_staff:staff_security_disable' %}"
+    >Disable two-factor authentication</a
+  >
+  {% else %}
+  <p class="staff-status">
+    <strong>Two-factor authentication is optional and currently off.</strong>
+  </p>
+  <p>Enable it to require a changing authenticator code in addition to your password.</p>
+  <a
+    class="staff-button staff-button--primary"
+    href="{% url 'frekuence_staff:staff_security_enable' %}"
+    >Enable two-factor authentication</a
+  >
+  {% endif %}
+</div>
+{% endblock %}

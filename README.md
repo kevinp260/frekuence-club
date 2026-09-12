@@ -83,8 +83,14 @@ Only `gateway` publishes a port, at
 gateway is not connected to PostgreSQL's network. Migrations and `collectstatic` are explicit jobs;
 normal service startup performs neither. Development fixtures require an explicit opt-in profile
 and runtime-only credentials, and the production backend image contains no fixture command. Staff
-provisioning, TOTP enrollment, deployment, backup, restore, and rollback procedures are documented
-in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+authorization uses one simple role selector: Event viewer, Event editor, Event manager, Staff
+manager, or Superuser. A superuser or delegated Staff manager can create named accounts and copy a
+single-use, 24-hour setup link; only a superuser can grant Staff manager or Superuser access.
+Accounts are deactivated rather than deleted so event audit history remains intact. Recipients choose a strong
+password and can connect an authenticator during setup or later under **Account security**. TOTP is
+optional per account and, when enabled, appears as a separate sign-in step. Provisioning, recovery,
+deployment, backup, restore, and rollback procedures are documented in
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 The checkpoint 5 API remains JSON-only and read-only. Astro consumes it privately, while the
 gateway exposes the same read-only contract under the public origin:
@@ -107,7 +113,7 @@ misrepresenting an outage as an empty programme.
 
 Phase 2 implementation and its nine checkpoints are complete, but production launch is not signed
 off. Production DNS/TLS, host deployment, encrypted backup storage/restoration, monitoring, owner
-staff credentials and MFA ownership/recovery, real event content, legal details, and approved
+staff credentials and optional-TOTP/emergency-account custody, real event content, legal details, and approved
 original brand assets remain operator- or owner-dependent. The concise status, scope boundary, and
 responsibility map are in [docs/PHASE_2_HANDOFF.md](docs/PHASE_2_HANDOFF.md); unresolved source
 inputs remain in [docs/CONTENT_TODOS.md](docs/CONTENT_TODOS.md) and

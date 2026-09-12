@@ -11,5 +11,7 @@ services/frontend/public/favicons/*
 services/frontend/public/og/*
 assets/brand/*.pdf
 docs/PHASE_1_IMPLEMENTATION_BRIEF.md
+services/backend/templates/admin/base_site.html
+services/backend/templates/staff_access/*.html
 **/lighthouse-report.json
 **/lighthouse-fixtures-report.json

@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "django_otp.plugins.otp_totp",
     "rest_framework",
     "events.apps.EventsConfig",
+    "staff_access.apps.StaffAccessConfig",
 ]
 
 MIDDLEWARE = [
@@ -186,6 +187,7 @@ AXES_HTTP_RESPONSE_CODE = 429
 AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
 AXES_SENSITIVE_PARAMETERS = ["password", "otp_token"]
 AXES_CLIENT_IP_CALLABLE = "config.client_ip.get_axes_client_ip_address"
+OTP_TOTP_ISSUER = "Frekuence Club"
 
 LOGGING = {
     "version": 1,
@@ -199,6 +201,11 @@ LOGGING = {
     "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "structured"}},
     "loggers": {
         "events.audit": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "staff_access.audit": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
         "axes.watch_login": {"handlers": ["console"], "level": "WARNING", "propagate": False},
     },
 }

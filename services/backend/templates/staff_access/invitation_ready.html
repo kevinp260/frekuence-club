@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %} {% block content %}
+<div class="staff-invitation">
+  <h1>Staff setup link ready</h1>
+  <p>
+    Copy this link now and send it securely to <strong>{{ target.username }}</strong>. It is shown
+    only on this page, expires at {{ expires_at }}, and can be used once.
+  </p>
+  <label for="staff-setup-link">Single-use setup link</label>
+  <textarea id="staff-setup-link" rows="4" readonly spellcheck="false">
+{{ invitation_url }}</textarea>
+  <p class="staff-warning">
+    Anyone with this link can set the account password. Do not send it through a public channel or
+    place it in logs.
+  </p>
+  <p>
+    <a
+      class="staff-button staff-button--secondary"
+      href="{% url 'frekuence_staff:staff_access_staffaccount_changelist' %}"
+      >Return to staff accounts</a
+    >
+  </p>
+</div>
+{% endblock %}

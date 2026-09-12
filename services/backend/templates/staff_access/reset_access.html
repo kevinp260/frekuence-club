@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %} {% block content %}
+<div class="staff-security">
+  <h1>Reset access for {{ target.username }}</h1>
+  <p class="staff-warning">
+    This invalidates the user’s password and active sessions, removes their authenticator, and
+    creates a new single-use setup link.
+  </p>
+  <form method="post" class="staff-form" novalidate>
+    {% csrf_token %} {% include "staff_access/form_fields.html" %}
+    <button type="submit" class="staff-button staff-button--danger">
+      Reset access and create link
+    </button>
+  </form>
+</div>
+{% endblock %}

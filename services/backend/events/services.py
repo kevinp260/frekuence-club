@@ -15,17 +15,35 @@ def select_homepage_primary(at=None):
     return candidates.filter(is_featured=True).first() or candidates.first()
 
 
-def _require_event_permission(user, event):
+def _require_event_permission(user, event, previous_state=None):
     permission = "events.add_event" if event._state.adding else "events.change_event"
     if not user.is_authenticated or not user.is_active or not user.is_staff:
         raise PermissionDenied("Active staff access is required.")
     if not user.has_perm(permission):
         raise PermissionDenied("You do not have permission to save this event.")
+    if user.has_perm("events.publish_event"):
+        return
+    was_published = bool(
+        previous_state and previous_state["publication_status"] == Event.PublicationStatus.PUBLISHED
+    )
+    publication_changed = bool(
+        previous_state
+        and (
+            previous_state["publication_status"] != event.publication_status
+            or previous_state["is_featured"] != event.is_featured
+        )
+    )
+    if (
+        was_published
+        or publication_changed
+        or event.publication_status == Event.PublicationStatus.PUBLISHED
+        or event.is_featured
+    ):
+        raise PermissionDenied("Event manager access is required to publish public changes.")
 
 
 @transaction.atomic
 def save_event_from_request(event, user):
-    _require_event_permission(user, event)
     is_new = event._state.adding
     previous_state = None
     if not is_new:
@@ -35,6 +53,7 @@ def save_event_from_request(event, user):
             .values("publication_status", "event_status", "is_featured")
             .get()
         )
+    _require_event_permission(user, event, previous_state)
     if is_new:
         event.created_by = user
     event.updated_by = user

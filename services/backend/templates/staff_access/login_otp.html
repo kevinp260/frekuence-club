@@ -1,0 +1,10 @@
+{% extends "staff_access/auth_base.html" %}
+
+{% block staff_auth_content %}
+<form method="post" class="staff-form" novalidate>
+  {% csrf_token %}
+  {% include "staff_access/form_fields.html" %}
+  <button type="submit" class="staff-button staff-button--primary">Verify and sign in</button>
+</form>
+<p class="staff-auth__note"><a href="{% url 'frekuence_staff:login' %}">Use a different account</a></p>
+{% endblock %}
