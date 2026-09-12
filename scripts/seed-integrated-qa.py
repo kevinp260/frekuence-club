@@ -47,7 +47,7 @@ nonstaff_device = TOTPDevice.objects.create(
 
 now = timezone.now()
 image_buffer = io.BytesIO()
-image = Image.new("RGB", (240, 360), "#c81d52")
+image = Image.new("RGB", (240, 300), "#c81d52")
 image.save(image_buffer, format="PNG")
 image.close()
 

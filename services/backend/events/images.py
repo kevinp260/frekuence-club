@@ -18,6 +18,9 @@ DERIVATIVE_WIDTHS = {
     "poster_1440": 1440,
     "poster_social": 1200,
 }
+POSTER_ASPECT_WIDTH = 4
+POSTER_ASPECT_HEIGHT = 5
+POSTER_ASPECT_TOLERANCE = 0.01
 
 
 @dataclass(frozen=True)
@@ -54,7 +57,7 @@ def _read_upload(upload):
     if not data:
         raise ValidationError("The poster file is empty.")
     if len(data) > settings.EVENT_POSTER_MAX_BYTES:
-        raise ValidationError("The poster exceeds the 15 MiB upload limit.")
+        raise ValidationError("The poster exceeds the 25 MiB upload limit.")
     return data
 
 
@@ -68,7 +71,7 @@ def inspect_poster(upload):
             warnings.simplefilter("error", Image.DecompressionBombWarning)
             with Image.open(io.BytesIO(data)) as probe:
                 detected_format = probe.format
-                width, height = probe.size
+                encoded_width, encoded_height = probe.size
                 probe.verify()
     except (
         Image.DecompressionBombError,
@@ -86,16 +89,28 @@ def inspect_poster(upload):
         raise ValidationError("The poster extension does not match its decoded image format.")
     if declared_mime and declared_mime not in rule["mime_types"]:
         raise ValidationError("The poster content type does not match its decoded image format.")
-    if width <= 0 or height <= 0:
+    if encoded_width <= 0 or encoded_height <= 0:
         raise ValidationError("The poster must have non-zero dimensions.")
-    if width * height > settings.EVENT_POSTER_MAX_PIXELS:
+    if encoded_width * encoded_height > settings.EVENT_POSTER_MAX_PIXELS:
         raise ValidationError("The poster exceeds the 40 megapixel decoded-image limit.")
 
     try:
         with Image.open(io.BytesIO(data)) as decoded:
             decoded.load()
+            normalized = ImageOps.exif_transpose(decoded)
+            try:
+                width, height = normalized.size
+            finally:
+                if normalized is not decoded:
+                    normalized.close()
     except (UnidentifiedImageError, OSError, ValueError) as error:
         raise ValidationError("The poster is malformed or cannot be safely decoded.") from error
+
+    expected = width * POSTER_ASPECT_HEIGHT
+    actual = height * POSTER_ASPECT_WIDTH
+    tolerance = max(expected, actual) * POSTER_ASPECT_TOLERANCE
+    if abs(expected - actual) > tolerance:
+        raise ValidationError("Upload a 4:5 portrait poster, ideally 1600 x 2000 pixels.")
 
     return InspectedPoster(data, detected_format, rule["suffix"], width, height)
 

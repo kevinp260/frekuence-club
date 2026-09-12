@@ -92,6 +92,15 @@ optional per account and, when enabled, appears as a separate sign-in step. Prov
 deployment, backup, restore, and rollback procedures are documented in
 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
+Staff can save a new event draft with only its poster; every other editable event field is optional
+while drafting. Publication still requires the bilingual title, summary and description, start/end
+times, and a successfully processed poster so public pages never rely on artwork alone. Poster
+uploads use a **4:5 portrait** canvas, ideally **1600 x 2000 px**. WebP or JPEG is preferred; PNG is
+accepted. The decoded image may contain at most 40 megapixels and the file at most 25 MiB. The
+backend strips metadata and produces managed responsive WebP derivatives. Event slugs are generated
+server-side from the available title plus the Tirana event date; title-only drafts receive a stable
+unique suffix, and poster-only drafts receive an internal provisional slug.
+
 The checkpoint 5 API remains JSON-only and read-only. Astro consumes it privately, while the
 gateway exposes the same read-only contract under the public origin:
 

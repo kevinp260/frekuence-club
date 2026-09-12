@@ -9,7 +9,7 @@ from events.models import Event
 
 
 def image_upload(
-    *, name="poster.png", image_format="PNG", content_type="image/png", size=(120, 180), exif=None
+    *, name="poster.png", image_format="PNG", content_type="image/png", size=(160, 200), exif=None
 ):
     output = io.BytesIO()
     image = Image.new("RGB", size, "#ff3737")

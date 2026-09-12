@@ -303,6 +303,34 @@ test('fixture homepage selects the valid featured event and limits the upcoming 
   expect(results.violations).toEqual([]);
 });
 
+test('event posters use one uncropped 4:5 presentation across public views', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+
+  for (const route of ['/', '/events/', '/events/visual-fixture-featured-field/', '/en/']) {
+    await page.goto(`${fixtureOrigin}${route}`);
+    const posters = page.locator(
+      '.next-signal__poster img, .event-deck__card img, .event-card__poster img, .event-detail__poster img',
+    );
+    expect(await posters.count()).toBeGreaterThan(0);
+    const presentations = await posters.evaluateAll((images) =>
+      images.map((image) => {
+        const container = image.closest(
+          '.next-signal__poster, .event-deck__card, .event-card__poster, .event-detail__poster',
+        );
+        return {
+          aspectRatio: container ? getComputedStyle(container).aspectRatio : null,
+          objectFit: getComputedStyle(image).objectFit,
+        };
+      }),
+    );
+    expect(presentations.every(({ objectFit }) => objectFit === 'contain')).toBe(true);
+    expect(
+      presentations.every(({ aspectRatio }) => aspectRatio === '4 / 5'),
+      `${route}: ${JSON.stringify(presentations)}`,
+    ).toBe(true);
+  }
+});
+
 test('event index separates upcoming events from past frequencies', async ({ page }) => {
   await page.goto(`${fixtureOrigin}/events/`);
   const upcoming = page.getByRole('region', { name: 'Eventet e ardhshme' });

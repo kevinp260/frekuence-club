@@ -118,8 +118,8 @@ Gateway routes are deliberately narrow:
 | every other `/media/` path   | 404, including real managed original paths                                             |
 | `/healthz`                   | gateway-local health response; `no-store`                                              |
 
-The default body limit is 1 MiB. `/staff/` accepts at most 16 MiB total, leaving bounded multipart
-overhead above Django's 15 MiB poster-file limit; Django independently verifies file bytes,
+The default body limit is 1 MiB. `/staff/` accepts at most 26 MiB total, leaving bounded multipart
+overhead above Django's 25 MiB poster-file limit; Django independently verifies file bytes,
 decoded pixels, and content. Gateway connect timeout is 5 seconds; normal upstream reads/sends are
 35 seconds and staff reads/sends are 60 seconds.
 
@@ -182,8 +182,14 @@ Do not record private API hostnames or runtime secrets in deployment evidence.
 `deploy/nginx/frekuence.club.conf.example` is an HTTP bootstrap template, not a file to copy over an
 unknown host configuration blindly. It proxies every request only to the loopback gateway. It
 overwrites `Host`, client IP, forwarding chain, scheme, and port, clears generic `Forwarded` and
-request nonce headers, and does not emit a CSP. Its 16 MiB outer request limit permits the bounded
+request nonce headers, and does not emit a CSP. Its 26 MiB outer request limit permits the bounded
 staff upload through to gateway; gateway still enforces the smaller route-specific/public limits.
+
+The checked-in host example and gateway agree on the 26 MiB staff request envelope. Operators who
+already installed an earlier host configuration must update its `client_max_body_size` and reload
+Nginx; changing only the repository file does not alter the live host. Django accepts a maximum
+25 MiB encoded poster, verifies JPEG/PNG/WebP content, enforces a 40-megapixel decoded limit, and
+requires a 4:5 portrait canvas (ideally 1600 x 2000 px).
 
 Review the template against the host's logging/default-site conventions, install it through the
 host's normal sites workflow, validate, and reload:

@@ -57,13 +57,23 @@ class PosterValidationTests(SimpleTestCase):
     @override_settings(EVENT_POSTER_MAX_BYTES=32)
     def test_excessive_encoded_bytes_are_rejected_before_decode(self):
         upload = SimpleUploadedFile("poster.png", b"x" * 33, content_type="image/png")
-        with self.assertRaisesMessage(ValidationError, "15 MiB"):
+        with self.assertRaisesMessage(ValidationError, "25 MiB"):
             inspect_poster(upload)
 
     @override_settings(EVENT_POSTER_MAX_PIXELS=100)
     def test_excessive_decoded_pixels_are_rejected(self):
         with self.assertRaisesMessage(ValidationError, "40 megapixel"):
             inspect_poster(image_upload(size=(11, 10)))
+
+    def test_non_portrait_or_wrong_aspect_ratio_is_rejected(self):
+        for size in ((160, 160), (1080, 1920), (2000, 1600)):
+            with self.subTest(size=size):
+                with self.assertRaisesMessage(ValidationError, "4:5 portrait"):
+                    inspect_poster(image_upload(size=size))
+
+    def test_small_export_rounding_difference_is_accepted(self):
+        inspected = inspect_poster(image_upload(size=(1620, 2026)))
+        self.assertEqual((inspected.width, inspected.height), (1620, 2026))
 
 
 class PosterProcessingTests(TestCase):
@@ -84,7 +94,7 @@ class PosterProcessingTests(TestCase):
             name="../../attacker-name.jpg",
             image_format="JPEG",
             content_type="image/jpeg",
-            size=(120, 60),
+            size=(100, 80),
             exif=exif,
         )
         event = Event(**event_fields(slug="secure-poster", poster=upload))
@@ -93,19 +103,19 @@ class PosterProcessingTests(TestCase):
         self.assertNotIn("attacker-name", event.poster.name)
         self.assertNotIn("..", event.poster.name)
         self.assertTrue(event.poster.name.startswith("events/originals/"))
-        self.assertEqual(event.poster_metadata["original"]["width"], 60)
-        self.assertEqual(event.poster_metadata["original"]["height"], 120)
+        self.assertEqual(event.poster_metadata["original"]["width"], 80)
+        self.assertEqual(event.poster_metadata["original"]["height"], 100)
 
         with event.poster.open("rb") as stored:
             with Image.open(io.BytesIO(stored.read())) as normalized_original:
-                self.assertEqual(normalized_original.size, (60, 120))
+                self.assertEqual(normalized_original.size, (80, 100))
                 self.assertFalse(normalized_original.getexif())
                 self.assertNotIn("exif", normalized_original.info)
 
         with event.poster_480.open("rb") as stored:
             with Image.open(io.BytesIO(stored.read())) as derivative:
                 self.assertEqual(derivative.format, "WEBP")
-                self.assertEqual(derivative.size, (60, 120))
+                self.assertEqual(derivative.size, (80, 100))
                 self.assertFalse(derivative.getexif())
                 self.assertNotIn("exif", derivative.info)
 
@@ -113,7 +123,7 @@ class PosterProcessingTests(TestCase):
         event = Event(**event_fields(slug="replace-poster"))
         event.save()
         old_names = event.media_names()
-        event.poster = image_upload(name="replacement.png", size=(200, 300))
+        event.poster = image_upload(name="replacement.png", size=(200, 250))
         with self.captureOnCommitCallbacks(execute=True):
             event.save()
         new_names = event.media_names()

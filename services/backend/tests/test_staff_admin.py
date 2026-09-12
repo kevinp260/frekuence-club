@@ -14,7 +14,7 @@ from django_otp.plugins.otp_totp.models import TOTPDevice
 from events.models import Event
 from events.services import save_event_from_request
 
-from .helpers import event_fields
+from .helpers import event_fields, image_upload
 
 
 class StaffAdminTests(TestCase):
@@ -166,6 +166,29 @@ class StaffAdminTests(TestCase):
         self.assertTrue(manager.has_perm("events.publish_event"))
         self.assertTrue(manager.has_perm("events.delete_event"))
 
+    def test_editor_can_create_a_poster_only_draft_with_an_automatic_slug(self):
+        add_url = reverse("frekuence_staff:events_event_add")
+        page = self.verified_client().get(add_url, secure=True)
+        self.assertNotContains(page, 'name="slug"')
+        self.assertContains(page, "4:5 portrait")
+        self.assertContains(page, "1600 x 2000")
+
+        client = self.verified_client()
+        response = client.post(
+            add_url,
+            {"poster": image_upload(), "_save": "Save"},
+            secure=True,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        event = Event.objects.get()
+        self.assertEqual(event.publication_status, Event.PublicationStatus.DRAFT)
+        self.assertEqual(event.event_status, Event.EventStatus.SCHEDULED)
+        self.assertEqual(event.slug, f"event-{event.pk.hex[:12]}")
+        self.assertEqual(event.created_by, self.user)
+        listing = client.get(reverse("frekuence_staff:events_event_changelist"), secure=True)
+        self.assertContains(listing, f"Untitled draft · {event.slug}")
+
     def test_password_login_requires_a_separate_valid_totp_step(self):
         login_url = reverse("frekuence_staff:login")
         response = self.client.post(
@@ -271,12 +294,13 @@ class StaffAdminTests(TestCase):
         payload = self.draft_admin_payload(
             created_by=str(attacker.pk),
             updated_by=str(attacker.pk),
+            poster=image_upload(),
         )
         response = self.verified_client().post(
             reverse("frekuence_staff:events_event_add"), payload, secure=True
         )
         self.assertEqual(response.status_code, 302)
-        event = Event.objects.get(slug="development-test-event")
+        event = Event.objects.get(title_sq="Titull prove")
         self.assertEqual(event.created_by, self.user)
         self.assertEqual(event.updated_by, self.user)
 

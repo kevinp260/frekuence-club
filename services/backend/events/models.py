@@ -8,6 +8,7 @@ from django.core.validators import MaxLengthValidator, RegexValidator
 from django.db import models, transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.text import slugify
 
 from .images import process_poster
 from .validators import validate_lineup, validate_plain_text, validate_poster_extension
@@ -160,6 +161,40 @@ class Event(models.Model):
     def __str__(self):
         return self.title_sq or self.title_en or self.slug or str(self.id)
 
+    def _provisional_slug(self):
+        return f"event-{self.pk.hex[:12]}"
+
+    def _assign_slug(self):
+        provisional = self._provisional_slug()
+        if self.slug and self.slug != provisional:
+            return
+
+        title = self.title_sq or self.title_en
+        if not title:
+            self.slug = provisional
+            return
+
+        if self.starts_at:
+            event_date = (
+                timezone.localtime(self.starts_at).date()
+                if timezone.is_aware(self.starts_at)
+                else self.starts_at.date()
+            )
+            unique_suffix = event_date.isoformat()
+        else:
+            unique_suffix = self.pk.hex[:8]
+        suffix_length = len(unique_suffix) + 1
+        title_slug = slugify(title)[: 160 - suffix_length].strip("-") or "event"
+        base = f"{title_slug}-{unique_suffix}"
+        candidate = base
+        index = 2
+        existing = type(self).objects.exclude(pk=self.pk)
+        while existing.filter(slug=candidate).exists():
+            index_suffix = f"-{index}"
+            candidate = f"{base[: 160 - len(index_suffix)].rstrip('-')}{index_suffix}"
+            index += 1
+        self.slug = candidate
+
     @property
     def is_past(self):
         return bool(self.ends_at and self.ends_at <= timezone.now())
@@ -269,6 +304,7 @@ class Event(models.Model):
         ]
 
     def save(self, *args, **kwargs):  # noqa: DJ012
+        self._assign_slug()
         previous_media = []
         if self.pk:
             previous = type(self).objects.filter(pk=self.pk).first()

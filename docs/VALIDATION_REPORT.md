@@ -1,3 +1,59 @@
+# Post-Phase-2 event authoring and poster presentation validation
+
+Validated on 2026-09-12 in the local `main` worktree based on
+`33ba25db6d0626b76efc4096015160f8ed001af1`. This refinement lets staff create a
+poster-only draft, generates event slugs server-side, standardizes new posters on a 4:5 canvas,
+uses consistent uncropped public poster frames, and raises the end-to-end staff upload envelope.
+It does not weaken the established publication requirements or alter the public API, event
+selection, routes, authentication, container topology, or production content.
+
+## Behavior and security coverage
+
+- The event form marks only the poster as required for a new draft. Blank publication/lifecycle
+  controls resolve safely to Draft/Scheduled, and clearing the sole poster is rejected. Publishing
+  still requires bilingual title, summary and description, start/end times, and processed poster
+  metadata.
+- Staff cannot submit a slug. Poster-only drafts receive a UUID-based provisional slug; titled
+  drafts use the title plus Tirana event date when present or a short UUID suffix when not. A
+  collision receives a numeric suffix, and a stable non-provisional slug is not rewritten later.
+- Poster ingestion requires a 4:5 portrait canvas with one-percent export tolerance. It continues
+  to verify decoded JPEG, PNG or WebP content, reject SVG/spoofed/malformed input, normalize EXIF
+  orientation, strip metadata, randomize storage paths, enforce 40 megapixels, and create managed
+  responsive WebP derivatives. The encoded limit is 25 MiB; Django, gateway and host-example
+  request envelopes are aligned at 26 MiB.
+- Homepage primary posters, playing-card posters, event-index posters and event-detail posters all
+  use a bounded 4:5 frame. The shared image uses `object-fit: contain`, so standard artwork fills
+  the frame without cropping and legacy nonstandard artwork remains fully visible with black
+  letterboxing.
+
+## Commands actually run
+
+| Command                                                          | Result                                                                                                                                                                                                                     |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docker compose --profile tools run --rm --build backend-check`  | Passed final state: Ruff format/lint, no model drift, Django system/deployment checks, migrations, 101/101 tests in 11.376 seconds, and no known dependency vulnerabilities                                                |
+| `npm run check`                                                  | Passed final state: formatting/lint, 14/14 architecture tests, 22/22 frontend unit tests, and 0 Astro errors, warnings or hints across 61 files                                                                            |
+| `npm run build`                                                  | Passed final state: the same checks, mixed Astro Node build, and 8-route/59-file production-output validation                                                                                                              |
+| `npm run test:e2e`                                               | Passed final state: 73/73 browser/integration/accessibility tests and 38 opt-in visual tests skipped as designed; includes the cross-route 4:5/uncropped-poster regression                                                 |
+| `npm run test:visual`                                            | Passed: 38/38 captures. Desktop/mobile homepage and event-detail captures were manually reviewed for complete, bounded poster presentation                                                                                 |
+| `docker compose --profile tools run --rm --build frontend-check` | Passed final state: formatting/lint, 14/14 architecture tests, 22/22 frontend unit tests, 0 Astro diagnostics, 8-route/59-file production validation, and 73/73 browser/integration/accessibility tests                    |
+| `npm run smoke:production-integration`                           | Passed: explicit production migrations, generated 4:5 synthetic poster processing, localized Astro homepage/index/detail/sitemap routes, and direct untrusted Django HTTP redirect                                         |
+| `npm run smoke:production-topology`                              | Passed: pinned gateway validation, explicit deploy jobs, public/API/staff/static/media/security checks, 27 MiB oversized-request rejection, four healthy services, and database/media/static persistence across recreation |
+| `docker compose config --quiet`                                  | Passed: the resolved production topology remains valid                                                                                                                                                                     |
+| Host-example Nginx `nginx -t`                                    | Passed with the example mounted read-only into the pinned unprivileged gateway image                                                                                                                                       |
+| `git diff --check`                                               | Passed on the final implementation and documentation worktree                                                                                                                                                              |
+
+The browser command was first attempted in the restricted sandbox and its application build
+passed, but Playwright could not bind `127.0.0.1:4310` (`EPERM`). The identical suite was rerun
+with local-loopback permission and passed. A first version of the new layout assertion measured
+rotated card bounding boxes instead of their CSS canvas; the assertion was corrected to verify
+the actual `aspect-ratio` contract and `object-fit`, then the focused and complete suites passed.
+
+The live host Nginx configuration is operator-managed. A production update must copy or merge the
+new 26 MiB `client_max_body_size`, run `sudo nginx -t`, and reload Nginx; the repository validation
+does not claim that a deployed host was modified.
+
+---
+
 # Post-Phase-2 staff access and optional TOTP validation
 
 Validated on 2026-09-12 in the local `main` worktree based on

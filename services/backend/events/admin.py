@@ -17,7 +17,7 @@ from .services import (
 class EventAdmin(admin.ModelAdmin):
     form = EventAdminForm
     list_display = (
-        "title_sq",
+        "event_label",
         "starts_at",
         "event_status",
         "publication_status",
@@ -31,6 +31,7 @@ class EventAdmin(admin.ModelAdmin):
     actions = ("publish_selected", "unpublish_selected")
     readonly_fields = (
         "id",
+        "slug",
         "poster_preview",
         "poster_metadata_display",
         "published_at",
@@ -40,7 +41,13 @@ class EventAdmin(admin.ModelAdmin):
         "updated_by",
     )
     fieldsets = (
-        ("Identity", {"fields": ("id", "slug")}),
+        (
+            "Identity",
+            {
+                "fields": ("id", "slug"),
+                "description": "The event ID and web address are generated automatically.",
+            },
+        ),
         (
             "Albanian",
             {
@@ -82,6 +89,10 @@ class EventAdmin(admin.ModelAdmin):
 
     def has_publish_permission(self, request):
         return request.user.has_perm("events.publish_event")
+
+    @admin.display(description="Event", ordering="title_sq")
+    def event_label(self, event):
+        return event.title_sq or event.title_en or f"Untitled draft · {event.slug}"
 
     def has_change_permission(self, request, obj=None):
         allowed = super().has_change_permission(request, obj)

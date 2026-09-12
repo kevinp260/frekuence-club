@@ -17,7 +17,6 @@ class EventAdminForm(forms.ModelForm):
     class Meta:
         model = Event
         fields = (
-            "slug",
             "title_sq",
             "title_en",
             "summary_sq",
@@ -56,14 +55,34 @@ class EventAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = False
         if "lineup_text" in self.fields:
             self.fields["lineup_text"].initial = "\n".join(self.instance.lineup or [])
         if "poster" in self.fields:
+            self.fields["poster"].required = not bool(self.instance.poster)
             self.fields["poster"].widget.attrs["accept"] = "image/jpeg,image/png,image/webp"
             self.fields["poster"].help_text = (
-                "JPEG, PNG, or WebP only; maximum 15 MiB and 40 megapixels. "
-                "Responsive WebP copies are generated automatically."
+                "Use a 4:5 portrait poster, ideally 1600 x 2000 px. WebP or JPEG is preferred; "
+                "PNG is accepted. Maximum 25 MiB and 40 megapixels. Responsive WebP copies are "
+                "generated automatically."
             )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data["publication_status"] = (
+            cleaned_data.get("publication_status") or Event.PublicationStatus.DRAFT
+        )
+        cleaned_data["event_status"] = (
+            cleaned_data.get("event_status") or Event.EventStatus.SCHEDULED
+        )
+        return cleaned_data
+
+    def clean_poster(self):
+        poster = self.cleaned_data.get("poster")
+        if not poster:
+            raise forms.ValidationError("Upload a poster to save this event.")
+        return poster
 
     def clean_lineup_text(self):
         lineup = [

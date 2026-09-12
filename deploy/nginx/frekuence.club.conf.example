@@ -12,8 +12,8 @@ server {
     server_name frekuence.club;
 
     # Allow the gateway's bounded staff-upload route; the gateway applies a
-    # smaller 1 MiB default everywhere else and Django enforces 15 MiB/file.
-    client_max_body_size 16m;
+    # smaller 1 MiB default everywhere else and Django enforces 25 MiB/file.
+    client_max_body_size 26m;
     client_body_timeout 15s;
 
     location / {

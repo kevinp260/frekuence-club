@@ -43,11 +43,11 @@ class Command(BaseCommand):
 
         event = Event.objects.filter(slug="development-fixture-not-a-real-event").first()
         if event is None:
-            image = Image.new("RGB", (900, 1200), "#111111")
+            image = Image.new("RGB", (800, 1000), "#111111")
             draw = ImageDraw.Draw(image)
-            draw.rectangle((45, 45, 855, 1155), outline="#ff3737", width=12)
+            draw.rectangle((40, 40, 760, 960), outline="#ff3737", width=12)
             draw.multiline_text(
-                (90, 480),
+                (80, 390),
                 "DEVELOPMENT FIXTURE\nNOT A REAL EVENT\nDO NOT PUBLISH",
                 fill="#ffffff",
                 spacing=24,

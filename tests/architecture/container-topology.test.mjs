@@ -88,7 +88,7 @@ test('gateway owns routing and limits without replacing the Astro CSP', () => {
   assert.match(gatewayConfig, /location \^~ \/static\//);
   assert.match(gatewayConfig, /location \^~ \/media\/events\/derivatives\//);
   assert.match(gatewayConfig, /location \^~ \/media\/ \{\n {8}return 404;/);
-  assert.match(gatewayConfig, /client_max_body_size 16m/);
+  assert.match(gatewayConfig, /client_max_body_size 26m/);
   assert.match(gatewayConfig, /proxy_set_header X-Forwarded-Proto \$frekuence_original_scheme/);
   assert.match(gatewayConfig, /default \$remote_addr;/);
   assert.match(gatewayConfig, /proxy_set_header X-Forwarded-For \$frekuence_client_address/);
@@ -114,7 +114,7 @@ test('host Nginx overwrites forwarded headers and passes application CSP through
   assert.match(hostConfig, /proxy_pass http:\/\/127\.0\.0\.1:3010/);
   assert.match(hostConfig, /proxy_set_header X-Forwarded-For \$remote_addr/);
   assert.match(hostConfig, /proxy_set_header X-Forwarded-Proto \$scheme/);
-  assert.match(hostConfig, /client_max_body_size 16m/);
+  assert.match(hostConfig, /client_max_body_size 26m/);
   assert.doesNotMatch(hostConfig, /add_header Content-Security-Policy/i);
 });
 

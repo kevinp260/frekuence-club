@@ -11,7 +11,7 @@ from events.forms import EventAdminForm
 from events.models import Event
 from events.services import save_event_from_request, select_homepage_primary
 
-from .helpers import event_fields
+from .helpers import event_fields, image_upload
 
 
 class EventModelTests(TestCase):
@@ -58,6 +58,38 @@ class EventModelTests(TestCase):
         event = Event(slug="Invalid_Slug")
         with self.assertRaises(ValidationError):
             event.full_clean()
+
+    def test_slug_is_generated_from_title_and_date_with_collision_suffix(self):
+        start = timezone.now() + timedelta(days=7)
+        first = Event(title_sq="Natë Testimi", starts_at=start, poster=image_upload())
+        first.save()
+        second = Event(title_sq="Natë Testimi", starts_at=start, poster=image_upload())
+        second.save()
+
+        expected_base = f"nate-testimi-{timezone.localtime(start).date().isoformat()}"
+        self.assertEqual(first.slug, expected_base)
+        self.assertEqual(second.slug, f"{expected_base}-2")
+
+    def test_poster_only_draft_gets_a_provisional_slug_then_a_stable_public_slug(self):
+        event = Event(poster=image_upload())
+        event.save()
+        self.assertEqual(event.slug, f"event-{event.pk.hex[:12]}")
+
+        event.title_en = "Synthetic Draft"
+        event.starts_at = timezone.now() + timedelta(days=4)
+        event.save()
+        generated_slug = event.slug
+        self.assertRegex(generated_slug, r"^synthetic-draft-\d{4}-\d{2}-\d{2}$")
+
+        event.title_en = "Renamed before publication"
+        event.save()
+        self.assertEqual(event.slug, generated_slug)
+
+    def test_title_without_a_date_still_gets_a_readable_unique_slug(self):
+        event = Event(title_sq="Natë pa datë", poster=image_upload())
+        event.save()
+
+        self.assertRegex(event.slug, r"^nate-pa-date-[0-9a-f]{8}$")
 
     def test_lineup_is_an_ordered_bounded_list(self):
         event = Event(slug="invalid-lineup", lineup="not-a-list")
@@ -231,3 +263,13 @@ class EventModelTests(TestCase):
             "poster_480",
         ):
             self.assertNotIn(field, form_fields)
+
+    def test_staff_form_requires_only_a_poster_and_explains_the_standard(self):
+        form = EventAdminForm()
+        required_fields = {name for name, field in form.fields.items() if field.required}
+
+        self.assertEqual(required_fields, {"poster"})
+        self.assertNotIn("slug", form.fields)
+        self.assertIn("4:5 portrait", form.fields["poster"].help_text)
+        self.assertIn("1600 x 2000", form.fields["poster"].help_text)
+        self.assertIn("25 MiB", form.fields["poster"].help_text)

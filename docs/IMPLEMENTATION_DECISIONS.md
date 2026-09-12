@@ -246,8 +246,8 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
   duplicate upstream frame, MIME-sniffing, referrer, permissions, cross-origin-opener, and HSTS
   headers before emitting one consistent set; HSTS is present only for a trusted original HTTPS
   request.
-- The default request-body limit is 1 MiB and the staff route permits 16 MiB total, leaving bounded
-  multipart overhead above the independently enforced 15 MiB poster-file limit. Connect timeout is
+- The default request-body limit is 1 MiB and the staff route permits 26 MiB total, leaving bounded
+  multipart overhead above the independently enforced 25 MiB poster-file limit. Connect timeout is
   5 seconds, normal proxy reads/sends are 35 seconds, and staff reads/sends are 60 seconds. Public
   and static paths reject non-read methods at the gateway; the Django API retains its native
   GET/HEAD/OPTIONS and 405 contract, while Admin retains its form/CSRF methods.
@@ -454,3 +454,23 @@ Recheck the exact dependency compatibility matrix at the checkpoint that adds ea
 - Staff UI work remains a restrained Django Admin customization: clearer password/OTP/setup forms,
   corrected dashboard contrast, visible focus, and reusable account-security controls. It is not a
   parallel staff application and changes no event, API, frontend, or container-topology contract.
+
+## Post-Phase-2 event authoring and poster presentation refinement
+
+- A staff event can be saved as a draft with only a poster. Every other editable form field is
+  optional while drafting and blank lifecycle/publication choices safely resolve to Scheduled and
+  Draft. The established publication guard remains unchanged: publicly visible events still need
+  bilingual accessible content, start/end instants, and a successfully processed poster.
+- Slugs are no longer staff input. The server generates a stable slug from the first available
+  localized title and the Tirana event date, uses a short UUID suffix when a title exists before a
+  date, and uses an internal provisional UUID-based slug for poster-only drafts. Same-title/date
+  collisions receive a numeric suffix. Existing stable slugs are not rewritten during later edits.
+- New posters use a 4:5 portrait canvas, ideally 1600 x 2000 px. A one-percent aspect tolerance
+  accommodates harmless export rounding. Verified WebP and JPEG are preferred and PNG remains
+  accepted; SVG, spoofed and malformed input remains rejected. The encoded-file bound increases
+  from the historical 15 MiB value to 25 MiB, with a 26 MiB staff request envelope at both proxy
+  layers and Django's existing 40-megapixel decoded bound.
+- All public event-poster slots now use a 4:5 container and the shared poster component renders with
+  `object-fit: contain`. Standard posters therefore fill the intended canvas without cropping;
+  previously stored nonstandard artwork remains completely visible with black letterboxing rather
+  than being cut off or expanding a page unpredictably.
