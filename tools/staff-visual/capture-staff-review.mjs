@@ -82,7 +82,31 @@ try {
   }
 
   await assertUsable(page, '/staff/');
+  const relatedPanelHeightDifference = await page.locator('#content-related').evaluate((panel) => {
+    const module = panel.querySelector('.module');
+    if (!module) throw new Error('The Recent Actions module is missing.');
+    return Math.abs(panel.getBoundingClientRect().height - module.getBoundingClientRect().height);
+  });
+  if (relatedPanelHeightDifference > 1) {
+    throw new Error('The Recent Actions panel is taller than its content module.');
+  }
   await page.screenshot({ path: '/output/staff-dashboard-1440x1000.png', fullPage: true });
+
+  await page.goto(`${baseURL}/staff/security/`, { waitUntil: 'networkidle' });
+  await assertUsable(page, '/staff/security/');
+  const securityActionColors = await page.locator('.staff-button').evaluate((action) => {
+    const styles = getComputedStyle(action);
+    return { background: styles.backgroundColor, foreground: styles.color };
+  });
+  if (
+    securityActionColors.background !== 'rgb(184, 0, 0)' ||
+    securityActionColors.foreground !== 'rgb(255, 255, 255)'
+  ) {
+    throw new Error(
+      `Unexpected 2FA action colors: ${securityActionColors.background} / ${securityActionColors.foreground}`,
+    );
+  }
+  await page.screenshot({ path: '/output/staff-security-1440x1000.png', fullPage: true });
 
   await page.setViewportSize({ width: 1024, height: 900 });
   await page.goto(`${baseURL}/staff/staff_access/staffaccount/add/`, {
@@ -108,5 +132,5 @@ try {
 }
 
 console.log(
-  'Captured password, OTP, dashboard, staff role, event list, and event editor screens; Axe and overflow checks passed.',
+  'Captured password, OTP, dashboard, account security, staff role, event list, and event editor screens; layout, contrast, Axe, and overflow checks passed.',
 );

@@ -132,7 +132,6 @@ class FrekuenceStaffAdminSite(OTPAdminSite):
         context = self._context(
             request,
             title="Staff sign in",
-            subtitle="Enter your staff username and password to continue.",
             form=form,
             next=request.GET.get("next", request.POST.get("next", "")),
             **(extra_context or {}),

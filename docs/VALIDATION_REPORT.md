@@ -36,27 +36,28 @@ topology, production content, or Phase 2 checkpoint history.
 
 ## Interface review evidence
 
-Six captures under [`docs/review/staff-access/`](review/staff-access/README.md) cover the password
-screen, separate OTP screen, staff dashboard, single-role account form, event list, and event editor
-at 1440 × 1000 or practical-laptop widths. The pinned Playwright capture ran Axe against WCAG
-2/2.1/2.2 A/AA rules and checked every captured page for horizontal overflow. The review corrected
-low-contrast Django dashboard/recent-action states, unclear form controls, small action targets,
-missing accessible names on split date/time inputs, and ambiguous extra Save actions on one-time
-account provisioning. The final capture had no Axe violation or page-level overflow.
+Seven captures under [`docs/review/staff-access/`](review/staff-access/README.md) cover the password
+screen, separate OTP screen, staff dashboard, account-security state, single-role account form,
+event list, and event editor at 1440 × 1000 or practical-laptop widths. The pinned Playwright
+capture ran Axe against WCAG 2/2.1/2.2 A/AA rules and checked every captured page for horizontal
+overflow. The review corrected low-contrast Django dashboard/recent-action states, excess Recent
+Actions panel height, the normal-state 2FA action contrast, unclear form controls, small action
+targets, missing accessible names on split date/time inputs, and ambiguous extra Save actions on
+one-time account provisioning. The final capture had no Axe violation or page-level overflow.
 
 ## Commands actually run
 
 | Command                                                          | Result                                                                                                                                                                                                                                                     |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Focused staff/event authorization suite                          | Passed: 41/41 tests covering role mappings, provisioning, promotion, deactivation, target scoping, draft/public event boundaries, login, TOTP, CSRF, and recovery                                                                                          |
-| `docker compose --profile tools run --rm --build backend-check`  | Passed on the final role hierarchy: Ruff formatting and lint, Django checks and deployment checks, two new migration leaves with no model drift, 94/94 tests in 22.836 seconds, and `pip-audit` with no known vulnerabilities                              |
+| `docker compose --profile tools run --rm --build backend-check`  | Passed after the final staff UI adjustments: Ruff formatting and lint, Django checks and deployment checks, two new migration leaves with no model drift, 94/94 tests in 22.105 seconds, and `pip-audit` with no known vulnerabilities                     |
 | `npm run build`                                                  | Passed: formatting/lint, 14/14 architecture tests, 22/22 frontend unit tests, 0 Astro errors/warnings/hints across 61 files, Astro Node build, and 8-route/59-file production-output validation                                                            |
 | Final `npm run check`                                            | Passed after documentation formatting: formatting/lint, 14/14 architecture tests, 22/22 frontend unit tests, and 0 Astro errors, warnings, or hints across 61 files                                                                                        |
 | `docker compose --profile tools run --rm --build frontend-check` | Passed: formatting/lint, 14/14 architecture tests, 22/22 frontend unit tests, 0 Astro diagnostics across 61 files, 8-route/59-file production validation, and 72/72 browser/integration/accessibility tests; 38 opt-in visual captures skipped as designed |
 | `npm run smoke:production-integration`                           | Passed: explicit production migrations, published synthetic-event rendering through Astro, sitemap/detail coverage, empty optional event fields, and the required direct-Django HTTP-to-HTTPS redirect                                                     |
 | `npm run smoke:production-topology`                              | Passed: pinned Nginx validation, explicit migration/static jobs, gateway/public/API/staff/static/media/security checks, sanitized Axes client isolation, four healthy services, and database/media/static persistence across normal recreation             |
 | Final `npm run smoke:integrated-qa`                              | Passed with the role migrations: full isolated gateway verification plus matched backup and isolated restoration retained staff authorization, TOTP devices, published/draft boundaries, API/public routes, derivatives, and 404s                          |
-| Staff visual capture workflow                                    | Passed: six captures generated against the Dockerized backend; Axe WCAG A/AA scan and horizontal-overflow checks reported no violations                                                                                                                    |
+| Staff visual capture workflow                                    | Passed: seven captures generated against the Dockerized backend; explicit Recent Actions sizing and 2FA resolved-color assertions, Axe WCAG A/AA scans, and horizontal-overflow checks all passed                                                          |
 | `docker compose config --quiet`                                  | Passed: the Compose model resolved successfully without a topology change                                                                                                                                                                                  |
 | Final `git diff --check`                                         | Passed with no whitespace errors after documentation formatting                                                                                                                                                                                            |
 

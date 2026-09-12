@@ -195,6 +195,8 @@ class StaffLoginFlowTests(TestCase):
         password_page = self.client.get(reverse("frekuence_staff:login"), secure=True)
         self.assertContains(password_page, 'name="password"')
         self.assertNotContains(password_page, 'name="otp_token"')
+        self.assertNotContains(password_page, "Enter your staff username and password to continue.")
+        self.assertNotContains(password_page, "If two-factor authentication is enabled")
 
         TOTPDevice.objects.create(user=self.user, name="Authenticator", confirmed=True)
         self.client.post(
