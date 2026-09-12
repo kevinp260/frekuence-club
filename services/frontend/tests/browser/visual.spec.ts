@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 const fixtureOrigin = 'http://127.0.0.1:4322';
 const unavailableOrigin = 'http://127.0.0.1:4323';
+const frequencyDialReview = join(process.cwd(), '../../docs/review/frequency-dial-navigation');
 const fixturePoster = join(
   process.cwd(),
   'src/content/event-fixtures/poster-magenta-field.visual-fixture.png',
@@ -191,7 +192,7 @@ test('capture frequency dial horizontal desktop navigation', async ({ page }) =>
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await page.locator('.site-header').screenshot({
-    path: 'docs/review/frequency-dial-navigation/horizontal-desktop-1440.png',
+    path: join(frequencyDialReview, 'horizontal-desktop-1440.png'),
   });
 });
 
@@ -199,7 +200,7 @@ test('capture frequency dial horizontal navigation at its breakpoint', async ({ 
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.goto('/about/');
   await page.locator('.site-header').screenshot({
-    path: 'docs/review/frequency-dial-navigation/horizontal-navigation-1024.png',
+    path: join(frequencyDialReview, 'horizontal-navigation-1024.png'),
   });
 });
 
@@ -207,7 +208,7 @@ test('capture frequency dial compact closed navigation', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/policy/');
   await page.locator('.site-header').screenshot({
-    path: 'docs/review/frequency-dial-navigation/compact-closed-390.png',
+    path: join(frequencyDialReview, 'compact-closed-390.png'),
   });
 });
 
@@ -220,7 +221,7 @@ for (const viewport of [
     await page.goto(viewport.width === 390 ? '/policy/' : '/en/about/');
     await page.locator('.nav-toggle').click();
     await page.screenshot({
-      path: `docs/review/frequency-dial-navigation/mobile-overlay-${viewport.width}.png`,
+      path: join(frequencyDialReview, `mobile-overlay-${viewport.width}.png`),
     });
   });
 }
@@ -230,7 +231,7 @@ test('capture frequency dial keyboard focus state', async ({ page }) => {
   await page.goto('/policy/');
   await page.locator('[data-dial-station="visit"] a').focus();
   await page.locator('.site-header').screenshot({
-    path: 'docs/review/frequency-dial-navigation/keyboard-focus-1440.png',
+    path: join(frequencyDialReview, 'keyboard-focus-1440.png'),
   });
 });
 
@@ -238,7 +239,7 @@ test('capture frequency dial active page state', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/events/');
   await page.locator('.site-header').screenshot({
-    path: 'docs/review/frequency-dial-navigation/active-page-1440.png',
+    path: join(frequencyDialReview, 'active-page-1440.png'),
   });
 });
 
@@ -250,7 +251,7 @@ test('capture frequency dial no-JavaScript fallback', async ({ browser }) => {
   const page = await context.newPage();
   await page.goto('/');
   await page.screenshot({
-    path: 'docs/review/frequency-dial-navigation/no-javascript-fallback-390.png',
+    path: join(frequencyDialReview, 'no-javascript-fallback-390.png'),
     fullPage: true,
   });
   await context.close();

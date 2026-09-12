@@ -6,12 +6,12 @@ import tseslint from 'typescript-eslint';
 export default defineConfig(
   {
     ignores: [
-      '.astro/**',
-      'dist/**',
-      'dist-fixtures/**',
-      'node_modules/**',
-      'playwright-report/**',
-      'test-results/**',
+      '**/.astro/**',
+      '**/dist/**',
+      '**/dist-fixtures/**',
+      '**/node_modules/**',
+      '**/playwright-report/**',
+      '**/test-results/**',
     ],
   },
   eslint.configs.recommended,
@@ -27,7 +27,7 @@ export default defineConfig(
     },
   },
   {
-    files: ['scripts/**/*.mjs', 'tests/**/*.mjs'],
+    files: ['**/*.mjs'],
     languageOptions: {
       globals: {
         console: 'readonly',
@@ -37,7 +37,7 @@ export default defineConfig(
     },
   },
   {
-    files: ['src/scripts/**/*.js'],
+    files: ['src/scripts/**/*.js', 'services/frontend/src/scripts/**/*.js'],
     languageOptions: {
       globals: {
         document: 'readonly',

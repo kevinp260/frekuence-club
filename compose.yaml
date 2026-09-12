@@ -2,8 +2,8 @@ services:
   gateway:
     image: frekuence-gateway:${FREKUENCE_GATEWAY_TAG:-local}
     build:
-      context: .
-      dockerfile: Dockerfile.gateway
+      context: ./services/gateway
+      dockerfile: Dockerfile
     ports:
       - '127.0.0.1:${FREKUENCE_GATEWAY_PORT:-3010}:8080'
     depends_on:
@@ -38,7 +38,7 @@ services:
   web:
     image: frekuence-website:${FREKUENCE_WEB_TAG:-local}
     build:
-      context: .
+      context: ./services/frontend
       dockerfile: Dockerfile
     environment:
       FREKUENCE_EVENT_API_ORIGIN: ${FREKUENCE_EVENT_API_ORIGIN:-http://backend:8000}
@@ -98,7 +98,7 @@ services:
   backend:
     image: frekuence-backend:${FREKUENCE_BACKEND_TAG:-local}
     build:
-      context: ./backend
+      context: ./services/backend
       dockerfile: Dockerfile
       target: runtime
     environment: &backend-environment
@@ -150,7 +150,7 @@ services:
     image: frekuence-backend-check:${FREKUENCE_BACKEND_TAG:-local}
     profiles: ['tools']
     build:
-      context: ./backend
+      context: ./services/backend
       dockerfile: Dockerfile
       target: test
     environment:
@@ -181,7 +181,7 @@ services:
     image: frekuence-backend:${FREKUENCE_BACKEND_TAG:-local}
     profiles: ['tools']
     build:
-      context: ./backend
+      context: ./services/backend
       dockerfile: Dockerfile
       target: runtime
     command: ['python', 'manage.py', 'migrate', '--noinput']
@@ -203,7 +203,7 @@ services:
     image: frekuence-backend:${FREKUENCE_BACKEND_TAG:-local}
     profiles: ['tools']
     build:
-      context: ./backend
+      context: ./services/backend
       dockerfile: Dockerfile
       target: runtime
     command: ['python', 'manage.py', 'collectstatic', '--noinput']
@@ -221,7 +221,7 @@ services:
     image: frekuence-backend-check:${FREKUENCE_BACKEND_TAG:-local}
     profiles: ['fixtures']
     build:
-      context: ./backend
+      context: ./services/backend
       dockerfile: Dockerfile
       target: test
     command: ['python', 'manage.py', 'seed_dev_data']
@@ -247,9 +247,8 @@ services:
     image: frekuence-staff-visual:${FREKUENCE_BACKEND_TAG:-local}
     profiles: ['tools']
     build:
-      context: .
-      dockerfile: Dockerfile.staff-visual
-      target: staff-visual
+      context: ./tools/staff-visual
+      dockerfile: Dockerfile
     environment:
       STAFF_BASE_URL: http://backend:8000
       FREKUENCE_DEV_ADMIN_USERNAME: ${FREKUENCE_DEV_ADMIN_USERNAME:-}
@@ -277,8 +276,7 @@ services:
     profiles: ['tools']
     build:
       context: .
-      dockerfile: Dockerfile.staff-visual
-      target: frontend-check
+      dockerfile: tools/frontend-check/Dockerfile
     init: true
     network_mode: none
     tmpfs:

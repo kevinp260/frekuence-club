@@ -1,0 +1,51 @@
+{
+  "name": "@frekuence/frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.14.0 <25"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "npm run check && npm run build:app",
+    "build:app": "astro build && npm run validate:production",
+    "start": "node dist/server/entry.mjs",
+    "preview": "node dist/server/entry.mjs",
+    "assets:generate": "node scripts/generate-brand-derivatives.mjs",
+    "check": "npm run format:check && npm run lint && astro check && npm run test:unit",
+    "check:astro": "astro check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format:repository": "prettier --config ../../.prettierrc.json --ignore-path ../../.prettierignore --plugin=prettier-plugin-astro --write ../..",
+    "format:repository:check": "prettier --config ../../.prettierrc.json --ignore-path ../../.prettierignore --plugin=prettier-plugin-astro --check ../..",
+    "lint": "eslint .",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "node --test --test-isolation=none tests/unit/*.test.mjs",
+    "test:e2e": "npm run build && playwright test",
+    "test:visual": "npm run build && CAPTURE_VISUALS=true playwright test tests/browser/visual.spec.ts",
+    "audit:lighthouse": "node scripts/run-lighthouse.mjs",
+    "audit:lighthouse:fixtures": "npm run build && FREKUENCE_LIGHTHOUSE_FIXTURES=true node scripts/run-lighthouse.mjs",
+    "audit:lighthouse:integrated": "npm run build && FREKUENCE_LIGHTHOUSE_FIXTURES=true LIGHTHOUSE_ROUTES='/,/en/,/events/visual-fixture-featured-field/,/en/events/visual-fixture-featured-field/' node scripts/run-lighthouse.mjs",
+    "validate:production": "node scripts/validate-production.mjs"
+  },
+  "dependencies": {
+    "@astrojs/node": "11.1.5",
+    "@lucide/astro": "1.34.0",
+    "astro": "7.2.8",
+    "zod": "4.5.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@axe-core/playwright": "4.10.2",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.62.1",
+    "eslint": "10.9.1",
+    "eslint-plugin-astro": "1.7.0",
+    "lighthouse": "13.4.1",
+    "prettier": "3.9.6",
+    "prettier-plugin-astro": "0.14.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.68.0"
+  }
+}

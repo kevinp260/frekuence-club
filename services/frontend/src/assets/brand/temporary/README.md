@@ -1,8 +1,8 @@
 # Temporary brand exports
 
-These bitmap files were exported directly from `BrandBook_FREKUENCE_Compressed.pdf`,
-the visual authority supplied by the owner. They have not been redrawn, traced, or
-reinterpreted.
+These bitmap files were exported directly from the
+[owner-supplied brand book](../../../../../../assets/brand/BrandBook_FREKUENCE_Compressed.pdf), the
+visual authority supplied by the owner. They have not been redrawn, traced, or reinterpreted.
 
 - `frekuence-symbol-black.png` and `frekuence-symbol-white.png` come from the approved
   monochrome symbol shown in the logo-guideline pages.

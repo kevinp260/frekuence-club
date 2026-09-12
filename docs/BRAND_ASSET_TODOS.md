@@ -1,7 +1,8 @@
 # Brand asset TODOs
 
-The supplied brand book remains the visual authority. The current site uses direct temporary
-bitmap exports isolated under `src/assets/brand/temporary/`; no logo has been redrawn.
+The supplied brand book at `../assets/brand/BrandBook_FREKUENCE_Compressed.pdf` remains the visual
+authority. The current site uses direct temporary bitmap exports isolated under
+`../services/frontend/src/assets/brand/temporary/`; no logo has been redrawn.
 
 Before final production signoff, obtain and approve:
 
@@ -15,5 +16,5 @@ Before final production signoff, obtain and approve:
 - confirmation whether amber/yellow is photography-only or an approved UI color
 - replacement of every temporary export followed by removal of the temporary directory
 
-The current Montserrat variable WOFF2 comes from the official Google Fonts distribution and
-is stored with its Open Font License in `src/assets/fonts/`.
+The current Montserrat variable WOFF2 comes from the official Google Fonts distribution and is
+stored with its Open Font License in `../services/frontend/src/assets/fonts/`.

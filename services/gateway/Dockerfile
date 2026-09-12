@@ -1,6 +1,6 @@
 FROM nginxinc/nginx-unprivileged:1.30.4-alpine3.24@sha256:93722936b82ec8a1178d48448e619226680d2de3706a1640800e186cd5fa7fd3
 
-COPY --chown=101:101 deploy/nginx/container.conf /etc/nginx/conf.d/default.conf
+COPY --chown=101:101 nginx/default.conf /etc/nginx/conf.d/default.conf
 
 USER 101:101
 EXPOSE 8080

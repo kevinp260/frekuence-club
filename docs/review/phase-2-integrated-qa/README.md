@@ -1,7 +1,8 @@
 # Phase 2 integrated QA visual evidence
 
 These captures are checkpoint 8 review evidence. They use only the unmistakably synthetic event
-responses from `scripts/mock-events-api.mjs` and Playwright's non-production poster interception;
+responses from `services/frontend/scripts/mock-events-api.mjs` and Playwright's non-production
+poster interception;
 they do not publish or infer a real event.
 
 - `homepage-events-320.png` verifies the event-led homepage at the minimum supported width.

@@ -1,7 +1,7 @@
 # Frekuence Club website
 
-This repository contains the bilingual Astro frontend for Frekuence Club in Tirana. Albanian is
-served at the root and English under `/en/`.
+This repository contains the bilingual Frekuence Club application and its deployment tooling.
+Albanian is served at the root and English under `/en/`.
 
 Phase 2 checkpoints 1–9 implement the approved signal-interference design system, event-led public
 pages, the private Django/PostgreSQL event-management foundation, its published-only events API,
@@ -13,10 +13,24 @@ isolated on a separate internal database network. Event-dependent routes render 
 stable editorial and error routes remain prerendered. Reservations, payments, public accounts,
 analytics, tracking, and third-party embeds remain out of scope.
 
+## Repository layout
+
+- `services/frontend/` contains the independently locked Astro application, its production image,
+  tests, generated public assets, and frontend-only tooling.
+- `services/backend/` contains the Django application, migrations, tests, and production/check
+  image stages.
+- `services/gateway/` contains the unprivileged container Nginx image and private gateway
+  configuration. The operator-managed host example remains under `deploy/nginx/`.
+- `tools/` contains non-runtime validation utilities. Root `scripts/` and `tests/architecture/`
+  cover cross-service behavior.
+- Root Compose, environment placeholders, documentation, and `assets/` are shared repository
+  concerns. PostgreSQL uses its pinned upstream image and has no empty source directory.
+
 ## Local commands
 
 ```sh
 npm ci
+npm run setup
 FREKUENCE_EVENT_API_ORIGIN=http://127.0.0.1:8000 npm run dev
 npm run check
 npm run build
@@ -27,17 +41,23 @@ npm run audit:lighthouse:fixtures
 npm run audit:lighthouse:integrated
 ```
 
-`npm run build` runs formatting, linting, Astro diagnostics, unit checks, the mixed SSR/prerender
-build, and production-output validation. Browser tests use the local Google Chrome installation by
-default; set `CHROME_PATH` when Chrome is installed elsewhere. The Lighthouse command starts
-and stops its own loopback mock API and Astro server, then enforces the documented score and Core
-Web Vitals thresholds.
+The root package is a command façade with no application dependencies. `npm run setup` performs
+the locked frontend install in `services/frontend/`; the familiar root commands then delegate to
+that service and include repository architecture checks where applicable. Direct service commands
+may use `npm --prefix services/frontend run <command>`.
 
-Browser and visual tests use unmistakably synthetic records from `scripts/mock-events-api.mjs`.
-The three renamed poster assets under `src/content/event-fixtures/` are served only through
-Playwright request interception. Application code does not load them, and production validation
-fails if fixture names, private API configuration, source maps, or environment files leak into
-browser-readable output.
+`npm run build` runs repository formatting, linting, architecture and frontend unit checks, Astro
+diagnostics, the mixed SSR/prerender build, and production-output validation. Browser tests use the
+local Google Chrome installation by default; set `CHROME_PATH` when Chrome is installed elsewhere.
+The Lighthouse command starts and stops its own loopback mock API and Astro server, then enforces
+the documented score and Core Web Vitals thresholds.
+
+Browser and visual tests use unmistakably synthetic records from
+`services/frontend/scripts/mock-events-api.mjs`. The three renamed poster assets under
+`services/frontend/src/content/event-fixtures/` are served only through Playwright request
+interception. Application code does not load them, and production validation fails if fixture
+names, private API configuration, source maps, or environment files leak into browser-readable
+output.
 
 The checked-in favicons and social image are derivatives of the temporary, approved brand
 exports. Regenerate them with `npm run assets:generate` after changing those source exports.

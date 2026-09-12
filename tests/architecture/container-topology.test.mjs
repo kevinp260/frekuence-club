@@ -4,9 +4,9 @@ import test from 'node:test';
 
 const [compose, gatewayConfig, hostConfig, gatewayDockerfile, deployment] = await Promise.all([
   readFile(new URL('../../compose.yaml', import.meta.url), 'utf8'),
-  readFile(new URL('../../deploy/nginx/container.conf', import.meta.url), 'utf8'),
+  readFile(new URL('../../services/gateway/nginx/default.conf', import.meta.url), 'utf8'),
   readFile(new URL('../../deploy/nginx/frekuence.club.conf.example', import.meta.url), 'utf8'),
-  readFile(new URL('../../Dockerfile.gateway', import.meta.url), 'utf8'),
+  readFile(new URL('../../services/gateway/Dockerfile', import.meta.url), 'utf8'),
   readFile(new URL('../../docs/DEPLOYMENT.md', import.meta.url), 'utf8'),
 ]);
 
@@ -33,6 +33,31 @@ function documentationSection(heading, nextHeading) {
   assert.notEqual(end, -1, `missing ${nextHeading}`);
   return deployment.slice(start, end);
 }
+
+test('first-party build contexts follow the services and tools layout', () => {
+  assert.match(
+    serviceBlock('gateway'),
+    /build:\n {6}context: \.\/services\/gateway\n {6}dockerfile: Dockerfile/,
+  );
+  assert.match(
+    serviceBlock('web'),
+    /build:\n {6}context: \.\/services\/frontend\n {6}dockerfile: Dockerfile/,
+  );
+  for (const service of [
+    'backend',
+    'backend-check',
+    'backend-migrate',
+    'backend-static',
+    'backend-fixtures',
+  ]) {
+    assert.match(serviceBlock(service), /context: \.\/services\/backend/);
+  }
+  assert.match(serviceBlock('staff-visual'), /context: \.\/tools\/staff-visual/);
+  assert.match(
+    serviceBlock('frontend-check'),
+    /context: \.\n {6}dockerfile: tools\/frontend-check\/Dockerfile/,
+  );
+});
 
 test('only the unprivileged pinned gateway publishes a loopback port', () => {
   const gateway = serviceBlock('gateway');

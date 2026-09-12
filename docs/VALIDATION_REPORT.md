@@ -1,3 +1,79 @@
+# Post-Phase-2 service-layout validation
+
+Validated on 2026-09-12 on `chore/services-layout`, created from merged creative-navigation
+baseline `a480a994450d02fd9b5c5ccfc85044c6191af093`. This is a repository-organization change:
+Astro, Django, and the container gateway now own independent directories under `services/`;
+non-runtime container tools live under `tools/`; cross-service tests remain at repository root;
+and shared documentation, deployment configuration, scripts, and source assets remain root
+concerns. PostgreSQL still uses its pinned upstream image and intentionally has no empty service
+directory.
+
+Application source, routes, event and API behavior, database schema and migrations, proxy rules,
+ports, internal service names, networks, named volumes, security controls, production content, and
+the completed Phase 2 handoff did not change. Compose build contexts and repository command paths
+were updated to match the new ownership boundaries. The root npm package is now a dependency-free
+command facade; the Astro package and lockfile are owned by `services/frontend/`, and the staff
+visual tool has its own exact Playwright pin and lockfile.
+
+## Service-layout commands actually run
+
+| Command                                                                                | Result                                                                                                                                                                                                            |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pre-change `npm run check`                                                             | Passed: 67 Astro-visible files, 0 diagnostics, and 34/34 unit tests                                                                                                                                               |
+| Pre-change `npm run build`                                                             | Passed: 8 prerendered routes and 59 production files                                                                                                                                                              |
+| Pre-change `docker compose config --quiet`                                             | Passed                                                                                                                                                                                                            |
+| Pre-change backend Docker gate                                                         | Passed: formatting/lint, migration and Django checks, 69 tests, and no known vulnerabilities                                                                                                                      |
+| Pre-change frontend Docker gate                                                        | Passed: 65 container-visible files, 0 Astro diagnostics, 34 unit tests, 8-route/59-file build, and 68 browser tests; 38 opt-in visual cases skipped as designed                                                   |
+| `npm ci`                                                                               | Passed for the dependency-free root command facade: 1 package audited, 0 vulnerabilities                                                                                                                          |
+| `npm run setup`                                                                        | Passed: 508 frontend packages installed, 509 packages audited, 0 vulnerabilities                                                                                                                                  |
+| `npm run check`                                                                        | Passed: repository/frontend Prettier and ESLint, 14/14 architecture tests, 22/22 frontend unit tests, and 0 Astro errors, warnings, or hints across 61 frontend files                                             |
+| `npm run build`                                                                        | Passed: the complete check reran, Astro Node built successfully, and production validation found 8 prerendered routes and 59 production files                                                                     |
+| `npm run test:e2e`                                                                     | Passed: 14/14 architecture tests, production build, and 68/68 browser/integration/accessibility tests; 38 opt-in visual cases skipped as designed                                                                 |
+| `npm run test:visual`                                                                  | Passed: 14/14 architecture tests, production build, and 38/38 visual captures                                                                                                                                     |
+| Focused frequency-dial output-path capture                                             | Passed: 1/1 Chromium case wrote to the authoritative root review directory after its path correction, with no change to the committed screenshot                                                                  |
+| `npm run audit:lighthouse:integrated`                                                  | Passed all four localized synthetic routes; exact results below                                                                                                                                                   |
+| `docker compose config`                                                                | Passed: the rendered configuration contained 190 lines and preserved the existing services, networks, volumes, restrictions, and gateway-only host binding                                                        |
+| `docker compose --profile tools build gateway web backend staff-visual frontend-check` | Passed: all five reorganized first-party images built from their new service/tool contexts                                                                                                                        |
+| `docker compose --profile tools run --rm --build backend-check`                        | Passed: Ruff format/lint, migration and Django system/deployment checks, 69 tests, and no known installed-environment vulnerabilities                                                                             |
+| `docker compose --profile tools run --rm --build frontend-check`                       | Passed: 14 architecture tests, 22 frontend unit tests, 0 Astro diagnostics across 61 frontend files, 8-route/59-file build validation, and 68 browser tests; 38 visual cases skipped as designed                  |
+| `npm run smoke:production-integration`                                                 | Passed: production-equivalent Django/Astro integration and direct untrusted Django HTTP redirect                                                                                                                  |
+| `npm run smoke:production-topology`                                                    | Passed: gateway-only binding, public/API/staff/static/media/security behavior, client-IP separation, health checks, explicit jobs, and persistence across recreation                                              |
+| `npm run smoke:integrated-qa`                                                          | Passed: complete source-stack verification, matched PostgreSQL/media backup, isolated restoration into separate disposable volumes, restored staff/public/API behavior, real 404, restrictions, and health checks |
+| Gateway Nginx `nginx -t`                                                               | Passed through the Compose gateway image after the configuration move                                                                                                                                             |
+| Host-example Nginx `nginx -t`                                                          | Passed with the unchanged example mounted read-only into the exactly pinned unprivileged Nginx image                                                                                                              |
+| Relative Markdown link verifier                                                        | Passed: all 37 relative links across 18 Markdown files resolve to existing repository files                                                                                                                       |
+| `git diff --check`                                                                     | Passed with no whitespace errors                                                                                                                                                                                  |
+
+The integrated Lighthouse results were:
+
+| Route                                       | Performance | Accessibility | Best practices | SEO |      LCP | CLS |
+| ------------------------------------------- | ----------: | ------------: | -------------: | --: | -------: | --: |
+| `/`                                         |          99 |           100 |             96 | 100 | 1,990 ms |   0 |
+| `/en/`                                      |          99 |           100 |             96 | 100 | 2,047 ms |   0 |
+| `/events/visual-fixture-featured-field/`    |          99 |           100 |             96 | 100 | 1,818 ms |   0 |
+| `/en/events/visual-fixture-featured-field/` |          99 |           100 |             96 | 100 | 1,820 ms |   0 |
+
+The first post-move browser-gate attempt stopped during formatting because generated `.astro`
+type files were included by the new service-local formatter; they are now explicitly ignored as
+generated output. The first root lint attempt exposed ESLint 10's working-directory boundary; the
+root facade now invokes the frontend-owned pinned binary with its explicit service configuration.
+Both corrections affect tooling scope only. Every successful result above was obtained afterward.
+
+The staged-path audit also found that the full visual run had initially written eight duplicate
+frequency-dial captures below the frontend service because those review paths were relative to the
+old repository-root working directory. The visual test now resolves those destinations back to
+the shared root `docs/review/` tree. The accidental duplicates were removed, the focused 1/1
+capture above verified the corrected destination, and the authoritative screenshot content did
+not change.
+
+Production and public behavior remained visually and functionally identical, so no new review
+screenshots were committed. The full visual suite and four-route Lighthouse audit passed against
+the reorganized frontend. Real host/DNS/TLS, encrypted backup storage, monitoring, real owner
+credentials, approved content, and original brand assets remain operator/owner validations from
+the Phase 2 handoff; this path refactor does not claim or alter them.
+
+---
+
 # Post-Phase-2 frequency dial navigation validation
 
 Validated on 2026-09-11 on `feat/frequency-dial-navigation`, created from merged Phase 2 checkpoint
